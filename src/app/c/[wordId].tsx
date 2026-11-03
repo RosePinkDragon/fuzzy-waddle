@@ -140,7 +140,7 @@ function Challenge({ word, from }: { word: Word; from: string }) {
           {won ? challenge.solvedTitle : challenge.failedTitle}
         </Txt>
         <Txt size={14} lh={1.35} color={colors.muted} align="center">
-          {won ? challenge.solvedLine(from || undefined) : `${displayAnswer(word.answer)}. ${challenge.failedLine}`}
+          {won ? challenge.solvedLine(from || undefined) : `${displayAnswer(word.answer, word.display)}. ${challenge.failedLine}`}
         </Txt>
       </View>
       <View style={styles.buttons}>

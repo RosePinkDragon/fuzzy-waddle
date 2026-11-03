@@ -21,6 +21,8 @@ export interface WordEntry {
   /** Shown by the slot-2 power-up. */
   extraClue: string;
   status: WordStatus;
+  /** Optional: how to write the answer in sentences when title case gets it wrong (e.g. "IPL"). */
+  display?: string;
 }
 
 /** A word entry tagged with the category it came from. */

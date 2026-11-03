@@ -46,5 +46,8 @@ describe('answers and auto-reveal', () => {
     expect(displayAnswer('KUCH KUCH HOTA HAI')).toBe('Kuch Kuch Hota Hai');
     expect(displayAnswer('GATEWAY OF INDIA')).toBe('Gateway of India');
     expect(displayAnswer('3 IDIOTS')).toBe('3 Idiots');
+    expect(displayAnswer('PK')).toBe('PK');
+    expect(displayAnswer('MUNNA BHAI MBBS')).toBe('Munna Bhai MBBS');
+    expect(displayAnswer('IPL', 'IPL')).toBe('IPL');
   });
 });

@@ -73,7 +73,7 @@ export function FlopView({ theme, run, best, isNewBest, onRestart, onChangeDiffi
         <Txt size={14} lh={1.35} color={colors.muted} align="center">
           {ui.answerWas(copy.answerNoun)}
           <Txt size={14} weight={800} lh={1.35} color={colors.text}>
-            {displayAnswer(word.answer)}
+            {displayAnswer(word.answer, word.display)}
           </Txt>
           {`${answerSuffix(theme, word)}.`}
         </Txt>

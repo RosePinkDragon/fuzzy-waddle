@@ -50,12 +50,18 @@ export function isSolved(answer: string, correct: Iterable<string>): boolean {
   return true;
 }
 
-/** Display form for sentences: "KUCH KUCH HOTA HAI" -> "Kuch Kuch Hota Hai". */
+/**
+ * Display form for sentences: "KUCH KUCH HOTA HAI" -> "Kuch Kuch Hota Hai".
+ * Words with no vowels (PK, LBW, MBBS) stay uppercase. An entry can set
+ * `display` when the rule gets it wrong (e.g. IPL).
+ */
 const SMALL_WORDS = new Set(['OF', 'THE', 'AND', 'IN', 'ON', 'AT', 'TO', 'FOR']);
-export function displayAnswer(answer: string): string {
+export function displayAnswer(answer: string, display?: string): string {
+  if (display) return display;
   return answer
     .split(' ')
     .map((w, i) => {
+      if (!/[AEIOU]/.test(w)) return w;
       if (i > 0 && SMALL_WORDS.has(w)) return w.toLowerCase();
       return w.charAt(0) + w.slice(1).toLowerCase();
     })

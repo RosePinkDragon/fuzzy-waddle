@@ -34,6 +34,7 @@ describe('word bank', () => {
     expect(w.extraClue.trim().length).toBeGreaterThan(5);
     expect(w.clue.length).toBeLessThanOrEqual(MAX_CLUE);
     expect(w.extraClue.length).toBeLessThanOrEqual(MAX_CLUE);
+    if (w.display !== undefined) expect(w.display.toUpperCase()).toBe(w.answer);
   });
 
   it.each(ALL_WORDS.map((w) => [w.id, w] as const))('%s does not give the answer away in its clues', (_id, w) => {
