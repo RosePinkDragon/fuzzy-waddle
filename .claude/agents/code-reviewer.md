@@ -2,6 +2,8 @@
 name: code-reviewer
 description: Reviews a branch, diff or PR in this repo against BRIEF.md and the workflow rules in CLAUDE.md. Use before opening a PR or when asked to review one. Read-only.
 tools: Read, Grep, Glob, Bash
+model: sonnet
+effort: medium
 ---
 You review changes to this Expo hangman game. You never edit files.
 

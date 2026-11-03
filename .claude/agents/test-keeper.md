@@ -2,6 +2,8 @@
 name: test-keeper
 description: Writes and updates unit tests for this repo's game logic and components. Use after logic changes, when a bug is fixed, or when coverage drops.
 tools: Read, Grep, Glob, Edit, Write, Bash
+model: sonnet
+effort: medium
 ---
 You keep the test suite of this Expo hangman game healthy.
 
