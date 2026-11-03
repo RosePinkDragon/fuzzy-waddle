@@ -29,7 +29,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 | `npm run words:check` | The word-bank tests, then a report: tier counts per category (flags any under 5), answers repeated across categories, and the `draft` list. Exits 1 on problems. | When words change, and before a release |
 | `node scripts/render-mockups.js` | Renders `design/source/*.dc.html` to PNGs and lists layout problems | Making or reviewing mockups |
 | `npm run port-scenes` | Ports scene SVGs from the mockups into `src/themes/scenes/ported/` | After changing scene art |
-| `npm run issue:brief -- <n>` | Prints a brief of an issue in about 150 lines: title, labels, user story, criteria, priority, estimate, linked issues and PRs, file paths, and **[Role]** and owner comments newest first with links. Says what it cut. `--json` prints the same content as JSON, and `--max-lines` changes the limit. Read only: GETs through `gh api` (REST). | Briefing an agent on an issue instead of handing it the whole thread |
+| `npm run issue:brief -- <n>` | Prints a brief of an issue in at most 150 lines (`--max-lines`, at least 40): title, labels, user story, criteria, priority, estimate, linked issues and PRs, file paths, and **[Role]** and owner comments newest first with links. Says what it cut. `--json` prints the same trimmed content as JSON, plus `cut` and `textLines`; the line limit applies to the text, not the pretty-printed JSON. Read only: GETs through `gh api` (REST). | Briefing an agent on an issue instead of handing it the whole thread |
 
 Planned, not built yet: `npm run simulate:game` (#46).
 

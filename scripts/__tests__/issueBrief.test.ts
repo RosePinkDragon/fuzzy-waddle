@@ -101,6 +101,61 @@ describe('buildBrief', () => {
   });
 });
 
+describe('buildBrief line limit (review on #52)', () => {
+  // 180 linked issues and 120 file paths, with short sections and no long comments.
+  const refs = Array.from({ length: 180 }, (_, i) => `#${1000 + i}`).join(' ');
+  const paths = Array.from({ length: 120 }, (_, i) => `src/dir${i}/file${i}.ts`).join(' ');
+  const body = `## User story\nAs a player.\n\n## Acceptance criteria\n- one\n\n## Details\n${refs}\n${paths}\n\n## Priority\nP3\n\n## Estimate\nS`;
+  const big = { ...issue, body };
+  const texts = [body, ...comments.map((c) => c.body)];
+  const totalLinks = extractLinks(texts, 'RosePinkDragon/fuzzy-waddle', issue.number).length;
+  const totalFiles = extractFiles(texts).length;
+
+  const count = (text: string, re: RegExp) => Number((text.match(re) || [])[1] || 0);
+
+  it('has more links and paths than any limit can show', () => {
+    expect(totalLinks).toBe(181);
+    expect(totalFiles).toBe(124);
+  });
+
+  it.each([150, 100, 60, 40])('keeps the text within --max-lines %i and reports the cuts accurately', (maxLines) => {
+    const { brief, text } = buildBrief(big, comments, { maxLines });
+    const lines = text.split('\n');
+    expect(lines.length).toBeLessThanOrEqual(maxLines);
+    expect(brief.textLines).toBe(lines.length);
+    expect(text).toContain('## Cut to fit');
+    expect(text).toContain(`Full issue: ${issue.html_url}`);
+
+    // What's shown plus what the notes say was left out adds up to everything found.
+    expect(brief.links.length + count(text, /- (\d+) linked issues? or PRs? left out/)).toBe(totalLinks);
+    expect(brief.files.length + count(text, /- (\d+) file paths? left out/)).toBe(totalFiles);
+    const shownLinks = lines.filter((l) => /^#\d+$/.test(l)).length;
+    expect(shownLinks).toBe(brief.links.length);
+  });
+
+  it('keeps the newest comment link when it has room', () => {
+    const { brief } = buildBrief(big, comments, { maxLines: 150 });
+    expect(brief.comments[0].url).toBe(comments[3].html_url);
+  });
+
+  it('puts the same trimmed content in the JSON as in the text', () => {
+    const { brief, text } = buildBrief(big, comments, { maxLines: 60 });
+    for (const l of brief.links) expect(text).toContain(`#${l.number}`);
+    for (const note of brief.cut) expect(text).toContain(note);
+    expect(brief).not.toHaveProperty('omitted');
+  });
+
+  it('cuts the text itself as a last resort, keeping the notes and the link', () => {
+    const many = Array.from({ length: 40 }, (_, i) => `- ${i}`).join('\n');
+    const tall = { ...issue, body: ['User story', 'Acceptance criteria', 'Priority', 'Estimate'].map((h) => `## ${h}\n${many}`).join('\n\n') };
+    const { brief, text } = buildBrief(tall, comments, { maxLines: 20 });
+    expect(text.split('\n').length).toBeLessThanOrEqual(20);
+    expect(text).toMatch(/more lines cut here to fit the limit/);
+    expect(text.split('\n').pop()).toBe(`Full issue: ${issue.html_url}`);
+    expect(brief.cut.at(-1)).toMatch(/^text cut by \d+ lines$/);
+  });
+});
+
 describe('issue-brief CLI', () => {
   beforeEach(() => execFileSync.mockReset());
 

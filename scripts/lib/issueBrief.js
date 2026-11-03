@@ -14,12 +14,16 @@
  * @typedef {{ number: number, title: string, state: string, labels: string[], url: string,
  *   sections: { userStory: BriefSection | null, criteria: BriefSection | null,
  *     priority: BriefSection | null, estimate: BriefSection | null },
- *   links: BriefLink[], files: string[], comments: BriefComment[], cut: string[] }} Brief
+ *   links: BriefLink[], files: string[], comments: BriefComment[], cut: string[], textLines: number,
+ *   omitted?: { otherComments: number, olderComments: number, links: number, files: number,
+ *     excerptsShortened: boolean, sections: Set<string> } }} Brief
  */
 
 const DEFAULT_MAX_LINES = 150;
 const EXCERPT_LINES = 6;
 const SHORT_EXCERPT_LINES = 3;
+/** The smallest --max-lines the command accepts. */
+const MIN_MAX_LINES = 40;
 
 /** Sections the issue templates produce, in the order the brief prints them. */
 const SECTIONS = [
@@ -152,6 +156,20 @@ function excerpt(lines, n) {
   return { excerpt: lines.slice(0, n), cutLines: Math.max(0, lines.length - n) };
 }
 
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** The "Cut to fit" notes, worked out from what the trimming left out. */
+function cutNotes(o, shownComments) {
+  const notes = [];
+  if (o.otherComments) notes.push(`${plural(o.otherComments, 'comment')} without a role tag from people other than the owner left out`);
+  if (o.excerptsShortened && shownComments) notes.push(`comment excerpts shortened to ${SHORT_EXCERPT_LINES} lines`);
+  if (o.sections.size) notes.push(`long sections shortened: ${[...o.sections].join(', ')}`);
+  if (o.olderComments) notes.push(`${plural(o.olderComments, 'older comment')} left out`);
+  if (o.links) notes.push(`${o.links} linked ${o.links === 1 ? 'issue or PR' : 'issues or PRs'} left out`);
+  if (o.files) notes.push(`${plural(o.files, 'file path')} left out`);
+  return notes;
+}
+
 function render(brief) {
   const out = [];
   out.push(`#${brief.number} ${brief.title}`);
@@ -166,14 +184,17 @@ function render(brief) {
       if (s.cutLines) out.push(`… ${s.cutLines} more lines cut; see the issue`);
     }
   }
+  const o = brief.omitted;
   out.push('', '## Linked issues and PRs');
-  out.push(
-    brief.links.length
-      ? brief.links.map((l) => (l.title ? `#${l.number} ${l.type === 'pr' ? '(PR) ' : ''}${l.title}${l.state ? ` [${l.state}]` : ''}` : `#${l.number}`)).join('\n')
-      : 'none',
-  );
+  if (!brief.links.length && !o.links) out.push('none');
+  for (const l of brief.links) {
+    out.push(l.title ? `#${l.number} ${l.type === 'pr' ? '(PR) ' : ''}${l.title}${l.state ? ` [${l.state}]` : ''}` : `#${l.number}`);
+  }
+  if (o.links) out.push(`… ${o.links} more`);
   out.push('', '## Files mentioned');
-  out.push(brief.files.length ? brief.files.map((f) => `- ${f}`).join('\n') : 'none');
+  if (!brief.files.length && !o.files) out.push('none');
+  for (const f of brief.files) out.push(`- ${f}`);
+  if (o.files) out.push(`… ${o.files} more`);
   out.push('', `## Role and owner comments (newest first, ${brief.comments.length} shown)`);
   if (!brief.comments.length) out.push('none');
   for (const c of brief.comments) {
@@ -182,87 +203,107 @@ function render(brief) {
     for (const l of c.excerpt) out.push(`    ${l}`);
     if (c.cutLines) out.push(`    … ${c.cutLines} more lines`);
   }
-  if (brief.cut.length) {
+  const notes = cutNotes(o, brief.comments.length);
+  if (notes.length) {
     out.push('', '## Cut to fit');
-    for (const note of brief.cut) out.push(`- ${note}`);
+    for (const note of notes) out.push(`- ${note}`);
     out.push(`Full issue: ${brief.url}`);
   }
+  // Any value with a line break would add lines the budget can't see, so split last.
   return out.join('\n').split('\n');
 }
 
 /**
- * Builds the brief.
+ * Builds the brief. The text is never longer than maxLines (default 150); the
+ * JSON is the same trimmed content, plus `cut` and `textLines`.
  * @param {object} issue    REST issue object
  * @param {object[]} comments REST comment objects
- * @param {object} [opts]   { repo, maxLines, links: { [number]: { title, type, state } } }
+ * @param {object} [opts]   { repo, owner, maxLines, links: { [number]: { title, type, state } } }
  * @returns {{ brief: Brief, text: string }}
  */
 function buildBrief(issue, comments, opts = {}) {
   const repo = opts.repo || 'RosePinkDragon/fuzzy-waddle';
-  // Leave room for the "Cut to fit" notes that trimming itself adds.
-  const maxLines = (opts.maxLines || DEFAULT_MAX_LINES) - 6;
+  const maxLines = opts.maxLines || DEFAULT_MAX_LINES;
   const owner = opts.owner || repo.split('/')[0];
   const sections = extractSections(issue.body);
   const texts = [issue.body, ...(comments || []).map((c) => c.body)];
   const { picked, skipped } = selectComments(comments, owner);
+  const allLinks = extractLinks(texts, repo, issue.number).map((n) => ({ number: n, ...((opts.links && opts.links[n]) || {}) }));
+  const allFiles = extractFiles(texts);
 
   /** @type {Brief} */
   const brief = {
     number: issue.number,
-    title: issue.title,
+    title: String(issue.title || '').replace(/\s+/g, ' '),
     state: issue.state,
     labels: (issue.labels || []).map((l) => (typeof l === 'string' ? l : l.name)),
     url: issue.html_url || `https://github.com/${repo}/issues/${issue.number}`,
     sections: { userStory: null, criteria: null, priority: null, estimate: null },
-    links: extractLinks(texts, repo, issue.number).map((n) => ({ number: n, ...((opts.links && opts.links[n]) || {}) })),
-    files: extractFiles(texts),
+    links: allLinks,
+    files: allFiles,
     comments: [],
     cut: [],
+    textLines: 0,
+    omitted: { otherComments: skipped, olderComments: 0, links: 0, files: 0, excerptsShortened: false, sections: new Set() },
   };
   for (const { key } of SECTIONS) {
     brief.sections[key] = sections[key] === null ? null : { lines: sections[key].split('\n'), cutLines: 0 };
   }
-  if (skipped) brief.cut.push(`${skipped} comment${skipped === 1 ? '' : 's'} without a role tag from people other than the owner left out`);
-
-  const setComments = (list, n) => {
-    brief.comments = list.map(({ lines, ...c }) => ({ ...c, ...excerpt(lines, n) }));
+  const o = brief.omitted;
+  const fits = () => render(brief).length <= maxLines;
+  const setComments = (count, n) => {
+    brief.comments = picked.slice(0, count).map(({ lines, ...c }) => ({ ...c, ...excerpt(lines, n) }));
+    o.olderComments = picked.length - count;
   };
-  setComments(picked, EXCERPT_LINES);
 
-  // Trim in steps until it fits: shorter excerpts, then fewer comments, then shorter sections.
-  if (render(brief).length > maxLines) {
-    setComments(picked, SHORT_EXCERPT_LINES);
-    brief.cut.push(`comment excerpts shortened to ${SHORT_EXCERPT_LINES} lines`);
-  }
-  // Then very long sections down to 40 lines, then older comments, then sections down to 3 lines.
-  const trimmed = new Set();
-  const trimSections = (floor) => {
-    let s;
-    const longest = () =>
-      SECTIONS.map(({ key }) => brief.sections[key])
-        .filter((x) => x && x.lines.length > floor)
-        .sort((x, y) => y.lines.length - x.lines.length)[0];
-    while (render(brief).length > maxLines && (s = longest())) {
-      s.lines.pop();
-      s.cutLines += 1;
-      trimmed.add(SECTIONS.find(({ key }) => brief.sections[key] === s).label);
+  // Each trimmable part, as [current length, drop one item].
+  const sectionParts = SECTIONS.map(({ key, label }) => {
+    const s = brief.sections[key];
+    return s && [() => s.lines.length, () => { s.lines.pop(); s.cutLines += 1; o.sections.add(label); }];
+  }).filter(Boolean);
+  const listParts = [
+    [() => brief.links.length, () => { brief.links = brief.links.slice(0, -1); o.links += 1; }],
+    [() => brief.files.length, () => { brief.files = brief.files.slice(0, -1); o.files += 1; }],
+  ];
+  /** Drops items from the longest part above the floor until the brief fits. */
+  const shrink = (parts, floor) => {
+    while (!fits()) {
+      const part = parts.filter(([len]) => len() > floor).sort(([a], [b]) => b() - a())[0];
+      if (!part) return;
+      part[1]();
     }
   };
-  trimSections(40);
-  let kept = picked.length;
-  while (render(brief).length > maxLines && kept > 0) {
-    kept -= 1;
-    setComments(picked.slice(0, kept), SHORT_EXCERPT_LINES);
-  }
-  trimSections(3);
-  if (trimmed.size) brief.cut.push(`long sections shortened: ${[...trimmed].join(', ')}`);
-  if (kept < picked.length) brief.cut.push(`${picked.length - kept} older comment${picked.length - kept === 1 ? '' : 's'} left out`);
-  if (brief.files.length > 20 && render(brief).length > maxLines) {
-    brief.cut.push(`${brief.files.length - 20} more file paths left out`);
-    brief.files = brief.files.slice(0, 20);
-  }
 
-  return { brief, text: render(brief).join('\n') };
+  // Trim in steps until it fits, cutting the least useful material first.
+  setComments(picked.length, EXCERPT_LINES);
+  if (!fits()) {
+    setComments(picked.length, SHORT_EXCERPT_LINES);
+    o.excerptsShortened = picked.some((c) => c.lines.length > SHORT_EXCERPT_LINES);
+  }
+  shrink(sectionParts, 40);
+  shrink(listParts, 15);
+  for (let kept = picked.length; !fits() && kept > 0; ) setComments((kept -= 1), SHORT_EXCERPT_LINES);
+  shrink([...sectionParts, ...listParts], 3);
+  shrink(sectionParts, 1);
+  shrink(listParts, 0);
+
+  let lines = render(brief);
+  brief.cut = cutNotes(o, brief.comments.length);
+  // Last resort, for very small limits: cut the middle of the text, but keep the
+  // header, the "Cut to fit" notes and the link to the full issue.
+  if (lines.length > maxLines) {
+    const at = lines.indexOf('## Cut to fit');
+    const tail = at === -1 ? [`Full issue: ${brief.url}`] : lines.slice(at);
+    const head = lines.slice(0, at === -1 ? lines.length : at - 1);
+    const keep = Math.max(0, maxLines - tail.length - 1);
+    const note = `… ${head.length - keep} more lines cut here to fit the limit`;
+    brief.cut.push(`text cut by ${head.length - keep} lines`);
+    lines = [...head.slice(0, keep), note, ...tail].slice(0, maxLines);
+  }
+  brief.textLines = lines.length;
+
+  const { omitted, ...out } = brief;
+  return { brief: /** @type {Brief} */ (out), text: lines.join('\n') };
 }
 
-module.exports = { buildBrief, extractSections, extractLinks, extractFiles, selectComments, cleanBody, DEFAULT_MAX_LINES };
+module.exports = { buildBrief, MIN_MAX_LINES, extractSections, extractLinks, extractFiles, selectComments, cleanBody, DEFAULT_MAX_LINES };

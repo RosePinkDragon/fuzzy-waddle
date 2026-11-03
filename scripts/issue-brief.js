@@ -8,11 +8,15 @@
  *   npm run issue:brief -- 47 --json
  *   npm run issue:brief -- 47 --max-lines 100 --repo owner/name
  *
+ * The limit applies to the text. --json prints the same trimmed content as
+ * pretty-printed JSON, which runs longer in lines; it adds `cut` (what was left
+ * out) and `textLines` (the text's length) so the skills can tell.
+ *
  * Read only: it sends GET requests through `gh api` (REST, because GraphQL is
  * blocked in the cloud sessions) and never changes the issue.
  */
 const { execFileSync } = require('child_process');
-const { buildBrief, DEFAULT_MAX_LINES } = require('./lib/issueBrief');
+const { buildBrief, DEFAULT_MAX_LINES, MIN_MAX_LINES } = require('./lib/issueBrief');
 
 const USAGE = 'Usage: npm run issue:brief -- <issue number> [--json] [--max-lines <n>] [--repo <owner/name>]';
 
@@ -29,7 +33,7 @@ function parseArgs(argv) {
   }
   if (opts.help) return opts;
   if (!opts.number) throw new Error(USAGE);
-  if (!Number.isInteger(opts.maxLines) || opts.maxLines < 40) throw new Error('--max-lines needs a whole number of at least 40');
+  if (!Number.isInteger(opts.maxLines) || opts.maxLines < MIN_MAX_LINES) throw new Error(`--max-lines needs a whole number of at least ${MIN_MAX_LINES}`);
   if (!/^[\w.-]+\/[\w.-]+$/.test(opts.repo || '')) throw new Error('--repo needs the form owner/name');
   return opts;
 }
