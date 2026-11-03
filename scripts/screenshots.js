@@ -34,6 +34,8 @@ const WIDTH = 390;
 const HEIGHTS = [844, 700];
 const SCREENS = ['home', 'difficulty', 'game', 'win', 'flop', 'challenge'];
 const SETTLE_MS = 700;
+/** Per-wait timeout, so a broken build fails in seconds rather than minutes. */
+const WAIT_MS = 10000;
 
 function fail(message) {
   console.error(`screenshots: ${message}`);
@@ -104,13 +106,20 @@ const TYPES = {
 /** Serves dist-test/ as a single-page app: unknown paths get index.html. */
 function serve() {
   const server = http.createServer((req, res) => {
-    const url = decodeURIComponent(req.url.split('?')[0]);
+    let url;
+    try {
+      url = decodeURIComponent(req.url.split('?')[0]);
+    } catch {
+      url = '/';
+    }
     let file = path.join(BUILD, url);
-    if (!file.startsWith(BUILD) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    if (!file.startsWith(BUILD + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
       file = path.join(BUILD, 'index.html');
     }
     res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream' });
-    fs.createReadStream(file).pipe(res);
+    fs.createReadStream(file)
+      .on('error', () => res.end())
+      .pipe(res);
   });
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(server)));
 }
@@ -163,8 +172,22 @@ class Shooter {
     ];
     await this.page.screenshot({ path: png });
     if (problems.length) this.failed++;
-    console.log(`${problems.length ? 'PROBLEMS' : 'ok'}  ${shown}`);
+    this.report(problems.length ? 'PROBLEMS' : 'ok', name, shown, problems);
+  }
+
+  report(status, name, shown, problems = []) {
+    console.log(`${status.padEnd(8)}  ${name}  ${WIDTH}x${this.height}  ${shown}`);
     for (const p of [...new Set(problems)]) console.log(`    ${p}`);
+  }
+
+  /** Runs one step; a failure is reported against it, and the sweep carries on. */
+  async attempt(name, fn) {
+    try {
+      await fn();
+    } catch (err) {
+      this.failed++;
+      this.report('PROBLEMS', name, '(no screenshot)', [`couldn't finish: ${err.message.split('\n')[0]}`]);
+    }
   }
 
   /**
@@ -240,7 +263,10 @@ class Shooter {
 
   async challenge(theme) {
     const word = this.words.find((w) => w.id.startsWith(`${theme}-`) && w.difficulty === 'easy');
-    if (!word) return; // Masala Mix has no words of its own, so no challenges.
+    if (!word) {
+      this.report('skipped', `${theme}-challenge`, `(${theme} has no words of its own, so no challenge links)`);
+      return;
+    }
     const accept = async () => {
       await this.open(`/c/${word.id}`, 'challenge-landing');
       await this.page.click(byTestId('accept-challenge'));
@@ -281,24 +307,21 @@ async function main() {
       // A fresh context per height, so saved bests and names don't leak between runs.
       const context = await browser.newContext({ viewport: { width: WIDTH, height }, deviceScaleFactor: 1 });
       const page = await context.newPage();
+      page.setDefaultTimeout(WAIT_MS);
       const shooter = new Shooter(page, height, opts, origin, words);
       try {
         if (want.has('home')) {
-          await shooter.open('/', 'home-screen');
-          await shooter.shot('home');
+          await shooter.attempt('home', async () => {
+            await shooter.open('/', 'home-screen');
+            await shooter.shot('home');
+          });
         }
-        for (const theme of opts.themes) {
-          try {
-            await shooter.run(theme, want);
-          } catch (err) {
-            shooter.failed++;
-            console.log(`PROBLEMS  ${theme} at ${height}px`);
-            console.log(`    couldn't finish: ${err.message.split('\n')[0]}`);
-          }
-        }
+        for (const theme of opts.themes) await shooter.attempt(theme, () => shooter.run(theme, want));
         if (want.has('challenge')) {
-          await shooter.open('/c/not-a-word', 'challenge-bad-link');
-          await shooter.shot('challenge-bad-link');
+          await shooter.attempt('challenge-bad-link', async () => {
+            await shooter.open('/c/not-a-word', 'challenge-bad-link');
+            await shooter.shot('challenge-bad-link');
+          });
         }
       } finally {
         failed += shooter.failed;
