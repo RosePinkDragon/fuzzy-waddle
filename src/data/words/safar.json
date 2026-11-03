@@ -1,0 +1,386 @@
+[
+  {
+    "id": "safar-001",
+    "answer": "HAWA MAHAL",
+    "difficulty": "easy",
+    "chips": [
+      "Jaipur",
+      "Monument"
+    ],
+    "clue": "Jaipur ki gulabi building, khidkiyan hi khidkiyan. Har tourist ki pehli photo.",
+    "extraClue": "Raniyan yahin ke jharokhon se bazaar dekhti thi.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-002",
+    "answer": "GATEWAY OF INDIA",
+    "difficulty": "easy",
+    "chips": [
+      "Mumbai",
+      "Monument"
+    ],
+    "clue": "Apollo Bunder pe bada sa arch, samundar ke saamne.",
+    "extraClue": "King George V ke aane ki yaad mein bana.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-003",
+    "answer": "TAJ MAHAL",
+    "difficulty": "easy",
+    "chips": [
+      "Agra",
+      "Monument"
+    ],
+    "clue": "Shah Jahan ne Mumtaz ke liye banwaya.",
+    "extraClue": "Safed sangemarmar, Yamuna kinaare.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-004",
+    "answer": "QUTUB MINAR",
+    "difficulty": "easy",
+    "chips": [
+      "Delhi",
+      "Monument"
+    ],
+    "clue": "Delhi ka laal pathar wala unchha tower, Mehrauli mein.",
+    "extraClue": "Paas mein lohe ka khamba jo zang nahi khaata.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-005",
+    "answer": "INDIA GATE",
+    "difficulty": "easy",
+    "chips": [
+      "Delhi",
+      "Monument"
+    ],
+    "clue": "Kartavya Path ka bada arch. Shaheedon ki yaad.",
+    "extraClue": "Raat ko lights, aur bahar ice cream wale.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-006",
+    "answer": "GOA",
+    "difficulty": "easy",
+    "chips": [
+      "Beaches",
+      "State"
+    ],
+    "clue": "Beach, susegad life, aur dosto ka plan jo kabhi nahi banta.",
+    "extraClue": "Baga, Calangute aur purane Portuguese ghar.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-007",
+    "answer": "MANALI",
+    "difficulty": "easy",
+    "chips": [
+      "Himachal",
+      "Hill station"
+    ],
+    "clue": "Himachal ka honeymoon spot, Rohtang ke raaste pe.",
+    "extraClue": "Old town ke cafe, Beas nadi ke kinaare.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-008",
+    "answer": "SHIMLA",
+    "difficulty": "easy",
+    "chips": [
+      "Himachal",
+      "Hill station"
+    ],
+    "clue": "Angrezon ki summer capital. Mall Road pe ghoomo.",
+    "extraClue": "Kalka se toy train mein pahuncho.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-009",
+    "answer": "VARANASI",
+    "difficulty": "easy",
+    "chips": [
+      "Uttar Pradesh",
+      "City"
+    ],
+    "clue": "Ganga aarti, ghat hi ghat, aur patli galiyaan.",
+    "extraClue": "Kashi bhi kehte hain, Banaras bhi.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-010",
+    "answer": "SRINAGAR",
+    "difficulty": "easy",
+    "chips": [
+      "Kashmir",
+      "City"
+    ],
+    "clue": "Dal Lake pe shikara aur houseboat.",
+    "extraClue": "Mughal gardens aur garam kahwa.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-011",
+    "answer": "JAIPUR",
+    "difficulty": "easy",
+    "chips": [
+      "Rajasthan",
+      "City"
+    ],
+    "clue": "Pink City. Amer ka qila aur Jantar Mantar.",
+    "extraClue": "Rajasthan ki rajdhani.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-012",
+    "answer": "MUMBAI",
+    "difficulty": "easy",
+    "chips": [
+      "Maharashtra",
+      "City"
+    ],
+    "clue": "Sapno ka shehar. Local train aur Marine Drive.",
+    "extraClue": "Pehle Bombay kehte the.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-013",
+    "answer": "KOLKATA",
+    "difficulty": "easy",
+    "chips": [
+      "West Bengal",
+      "City"
+    ],
+    "clue": "City of Joy. Howrah Bridge, tram aur rosogolla.",
+    "extraClue": "Pehle Calcutta tha, angrezon ki rajdhani bhi.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-014",
+    "answer": "LADAKH",
+    "difficulty": "easy",
+    "chips": [
+      "Himalaya",
+      "Region"
+    ],
+    "clue": "Pangong ki neeli jheel aur bike trip ka sapna.",
+    "extraClue": "Leh yahin hai, bahut oonchai pe.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-015",
+    "answer": "LAL QILA",
+    "difficulty": "easy",
+    "chips": [
+      "Delhi",
+      "Monument"
+    ],
+    "clue": "Pandrah August ko PM yahin se jhanda fehrate hain.",
+    "extraClue": "Shah Jahan ne banwaya, Purani Dilli mein.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-016",
+    "answer": "CHARMINAR",
+    "difficulty": "medium",
+    "chips": [
+      "Hyderabad",
+      "Monument"
+    ],
+    "clue": "Hyderabad ki pehchaan, Laad Bazaar ke bilkul paas.",
+    "extraClue": "Chaar kone, chaar unchi meenarein.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-017",
+    "answer": "RANN OF KUTCH",
+    "difficulty": "medium",
+    "chips": [
+      "Gujarat",
+      "Desert"
+    ],
+    "clue": "Safed namak ka registan, poornima ki raat.",
+    "extraClue": "Sardiyon mein utsav, Gujarat ka safed desert.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-018",
+    "answer": "DARJEELING",
+    "difficulty": "medium",
+    "chips": [
+      "West Bengal",
+      "Hill station"
+    ],
+    "clue": "Chai ke bagaan, toy train aur Kanchenjunga ka view.",
+    "extraClue": "Tiger Hill pe sunrise dekhne jaate hain.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-019",
+    "answer": "OOTY",
+    "difficulty": "medium",
+    "chips": [
+      "Tamil Nadu",
+      "Hill station"
+    ],
+    "clue": "Nilgiri ki rani, toy train aur homemade chocolate.",
+    "extraClue": "Asli naam Udhagamandalam.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-020",
+    "answer": "MUNNAR",
+    "difficulty": "medium",
+    "chips": [
+      "Kerala",
+      "Hill station"
+    ],
+    "clue": "Kerala ke chai bagaan, aur Neelakurinji ka phool.",
+    "extraClue": "Har baarah saal mein pahaad neele ho jaate hain.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-021",
+    "answer": "HAMPI",
+    "difficulty": "medium",
+    "chips": [
+      "Karnataka",
+      "Ruins"
+    ],
+    "clue": "Vijayanagara ke khandahar, aur pathar ka rath.",
+    "extraClue": "Tungabhadra ke kinaare, backpackers ka adda.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-022",
+    "answer": "KONARK",
+    "difficulty": "medium",
+    "chips": [
+      "Odisha",
+      "Temple"
+    ],
+    "clue": "Pathar ka rath, Surya devta ka mandir.",
+    "extraClue": "Odisha mein, Puri ke paas.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-023",
+    "answer": "RISHIKESH",
+    "difficulty": "medium",
+    "chips": [
+      "Uttarakhand",
+      "City"
+    ],
+    "clue": "Yoga, rafting aur Lakshman Jhula.",
+    "extraClue": "Ganga kinaare, Haridwar ke paas.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-024",
+    "answer": "ALAPPUZHA",
+    "difficulty": "medium",
+    "chips": [
+      "Kerala",
+      "Backwaters"
+    ],
+    "clue": "Backwaters, houseboat aur snake boat race.",
+    "extraClue": "Pehle Alleppey kehte the.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-025",
+    "answer": "SHILLONG",
+    "difficulty": "medium",
+    "chips": [
+      "Meghalaya",
+      "Hill station"
+    ],
+    "clue": "Scotland of the East. Pine ke jungle aur music.",
+    "extraClue": "Meghalaya ki rajdhani.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-026",
+    "answer": "CHANDIGARH",
+    "difficulty": "medium",
+    "chips": [
+      "Punjab",
+      "City"
+    ],
+    "clue": "Plan karke bana shehar, aur Rock Garden.",
+    "extraClue": "Do rajyon ki rajdhani.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-027",
+    "answer": "KHAJURAHO",
+    "difficulty": "hard",
+    "chips": [
+      "Madhya Pradesh",
+      "Temples"
+    ],
+    "clue": "MP ke mandir, nakkashi ke liye mashhoor.",
+    "extraClue": "Chandela rajaon ne banwaye.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-028",
+    "answer": "AJANTA",
+    "difficulty": "hard",
+    "chips": [
+      "Maharashtra",
+      "Caves"
+    ],
+    "clue": "Aurangabad ke paas, Buddh gufaon ki paintings.",
+    "extraClue": "Ellora ki jodi wali gufaayein.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-029",
+    "answer": "TAWANG",
+    "difficulty": "hard",
+    "chips": [
+      "Arunachal",
+      "Monastery"
+    ],
+    "clue": "Arunachal ka bada monastery, barf wali sadak.",
+    "extraClue": "Sela Pass paar karke pahuncho.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-030",
+    "answer": "SPITI",
+    "difficulty": "hard",
+    "chips": [
+      "Himachal",
+      "Valley"
+    ],
+    "clue": "Himachal ki thandi registani valley.",
+    "extraClue": "Key monastery aur Chandratal jheel.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-031",
+    "answer": "DHOLAVIRA",
+    "difficulty": "hard",
+    "chips": [
+      "Gujarat",
+      "Ruins"
+    ],
+    "clue": "Kutch mein Sindhu ghaati ka shehar.",
+    "extraClue": "UNESCO list mein 2021 mein aaya.",
+    "status": "draft"
+  },
+  {
+    "id": "safar-032",
+    "answer": "MAJULI",
+    "difficulty": "hard",
+    "chips": [
+      "Assam",
+      "River island"
+    ],
+    "clue": "Brahmaputra ka bada nadi dweep.",
+    "extraClue": "Satra aur mukhote banane ke liye mashhoor.",
+    "status": "draft"
+  }
+]
