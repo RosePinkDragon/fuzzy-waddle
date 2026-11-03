@@ -1,0 +1,386 @@
+[
+  {
+    "id": "cricket-001",
+    "answer": "SUPER OVER",
+    "difficulty": "easy",
+    "chips": [
+      "Tie-breaker",
+      "T20"
+    ],
+    "clue": "Score barabar? Ab sirf chhe gendon mein faisla.",
+    "extraClue": "Do wicket, chhe gendein, aur poora match.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-002",
+    "answer": "HAT TRICK",
+    "difficulty": "easy",
+    "chips": [
+      "Bowling",
+      "Three in a row"
+    ],
+    "clue": "Teen ball, teen wicket, lagatar.",
+    "extraClue": "Bowler ka sabse bada sapna.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-003",
+    "answer": "BOUNDARY",
+    "difficulty": "easy",
+    "chips": [
+      "Batting",
+      "Four"
+    ],
+    "clue": "Rassi paar gend, chaar run pakke.",
+    "extraClue": "Zameen chhoo ke rope ke bahar.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-004",
+    "answer": "WICKET",
+    "difficulty": "easy",
+    "chips": [
+      "Basics",
+      "Stumps"
+    ],
+    "clue": "Teen danda, do gilli. Gire toh batsman bahar.",
+    "extraClue": "Pitch ko bhi yahi bolte hain.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-005",
+    "answer": "NO BALL",
+    "difficulty": "easy",
+    "chips": [
+      "Umpiring",
+      "Extra"
+    ],
+    "clue": "Bowler ka pair line ke bahar. Agli gend free hit.",
+    "extraClue": "Umpire ka haath seedha bahar.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-006",
+    "answer": "YORKER",
+    "difficulty": "easy",
+    "chips": [
+      "Bowling",
+      "Death overs"
+    ],
+    "clue": "Seedha pair ke paas ghusne wali ball.",
+    "extraClue": "Last overs ka sabse bada hathiyar.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-007",
+    "answer": "DUCK",
+    "difficulty": "easy",
+    "chips": [
+      "Batting",
+      "Zero"
+    ],
+    "clue": "Zero pe out. Bechara batsman.",
+    "extraClue": "Pehli hi ball pe ho toh golden.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-008",
+    "answer": "CENTURY",
+    "difficulty": "easy",
+    "chips": [
+      "Batting",
+      "Milestone"
+    ],
+    "clue": "Sau run, bat upar, helmet utaro.",
+    "extraClue": "Fifty ka double.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-009",
+    "answer": "IPL",
+    "difficulty": "easy",
+    "chips": [
+      "T20",
+      "League"
+    ],
+    "clue": "Har saal April-May, auction aur cheerleaders.",
+    "extraClue": "2008 mein shuru hui T20 league.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-010",
+    "answer": "WORLD CUP",
+    "difficulty": "easy",
+    "chips": [
+      "Tournament",
+      "ICC"
+    ],
+    "clue": "Har chaar saal, poora desh TV ke saamne.",
+    "extraClue": "India ne ODI wala 1983 aur 2011 mein jeeta.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-011",
+    "answer": "EDEN GARDENS",
+    "difficulty": "easy",
+    "chips": [
+      "Kolkata",
+      "Ground"
+    ],
+    "clue": "Kolkata ka sabse bada cricket maidan.",
+    "extraClue": "1864 se yahan cricket ho raha hai.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-012",
+    "answer": "WANKHEDE",
+    "difficulty": "easy",
+    "chips": [
+      "Mumbai",
+      "Ground"
+    ],
+    "clue": "Mumbai ka stadium, 2011 ka final yahin hua.",
+    "extraClue": "Marine Drive ke paas.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-013",
+    "answer": "LBW",
+    "difficulty": "easy",
+    "chips": [
+      "Umpiring",
+      "Out"
+    ],
+    "clue": "Ball pad pe, aur umpire ki ungli upar.",
+    "extraClue": "Leg before ka short form.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-014",
+    "answer": "MAIDEN OVER",
+    "difficulty": "easy",
+    "chips": [
+      "Bowling",
+      "Six dots"
+    ],
+    "clue": "Chhe gendein, ek bhi run nahi.",
+    "extraClue": "Bowler ke liye poore chhe dot.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-015",
+    "answer": "SPINNER",
+    "difficulty": "easy",
+    "chips": [
+      "Bowling",
+      "Slow"
+    ],
+    "clue": "Ungliyon ka jaadu, ball ghoomti hai.",
+    "extraClue": "Fast bowler ka ulta.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-016",
+    "answer": "GOOGLY",
+    "difficulty": "medium",
+    "chips": [
+      "Bowling",
+      "Spin"
+    ],
+    "clue": "Leg spin jaisi dikhti, par ulti ghoomti.",
+    "extraClue": "Batsman confuse, keeper khush.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-017",
+    "answer": "BOUNCER",
+    "difficulty": "medium",
+    "chips": [
+      "Bowling",
+      "Pace"
+    ],
+    "clue": "Short pitch, sar ki taraf aati ball.",
+    "extraClue": "Iske liye helmet zaroori hai.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-018",
+    "answer": "POWERPLAY",
+    "difficulty": "medium",
+    "chips": [
+      "Fielding",
+      "T20"
+    ],
+    "clue": "Pehle chhe over, fielders circle ke andar.",
+    "extraClue": "Sirf do fielder bahar, batsman ka mauka.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-019",
+    "answer": "FOLLOW ON",
+    "difficulty": "medium",
+    "chips": [
+      "Test",
+      "Rule"
+    ],
+    "clue": "Bahut peeche reh gaye, toh turant dobara batting.",
+    "extraClue": "Sirf Test match mein hota hai.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-020",
+    "answer": "RANJI TROPHY",
+    "difficulty": "medium",
+    "chips": [
+      "Domestic",
+      "First-class"
+    ],
+    "clue": "Desh ka bada domestic first-class tournament.",
+    "extraClue": "Mumbai ne sabse zyada baar jeeta.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-021",
+    "answer": "STUMPED",
+    "difficulty": "medium",
+    "chips": [
+      "Wicketkeeping",
+      "Out"
+    ],
+    "clue": "Keeper ne bails udaayi, batsman crease ke bahar.",
+    "extraClue": "Spinner aur keeper ka combo.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-022",
+    "answer": "DOOSRA",
+    "difficulty": "medium",
+    "chips": [
+      "Bowling",
+      "Spin"
+    ],
+    "clue": "Off spin ka action, par ball baahar jaaye.",
+    "extraClue": "Hindi naam, matlab the other one.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-023",
+    "answer": "TEST MATCH",
+    "difficulty": "medium",
+    "chips": [
+      "Format",
+      "Five days"
+    ],
+    "clue": "Paanch din, safed kapde, laal ball.",
+    "extraClue": "Cricket ka sabse purana format.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-024",
+    "answer": "ASHES",
+    "difficulty": "medium",
+    "chips": [
+      "Rivalry",
+      "England vs Australia"
+    ],
+    "clue": "England vs Australia, ek chhoti si trophy ke liye.",
+    "extraClue": "Trophy ek chhota sa urn hai.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-025",
+    "answer": "CHEPAUK",
+    "difficulty": "medium",
+    "chips": [
+      "Chennai",
+      "Ground"
+    ],
+    "clue": "Chennai ka stadium, samundar ki hawa.",
+    "extraClue": "Asli naam M. A. Chidambaram Stadium.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-026",
+    "answer": "DUCKWORTH LEWIS",
+    "difficulty": "hard",
+    "chips": [
+      "Rain rule",
+      "Maths"
+    ],
+    "clue": "Baarish aayi, ab target ka hisaab.",
+    "extraClue": "Ab isme ek teesra naam bhi juda hai: Stern.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-027",
+    "answer": "DEAD BALL",
+    "difficulty": "hard",
+    "chips": [
+      "Umpiring",
+      "Rule"
+    ],
+    "clue": "Umpire bole, is gend ka koi hisaab nahi.",
+    "extraClue": "Na run, na wicket.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-028",
+    "answer": "SILLY POINT",
+    "difficulty": "hard",
+    "chips": [
+      "Fielding",
+      "Close in"
+    ],
+    "clue": "Batsman ke bilkul paas, helmet pehen ke khade raho.",
+    "extraClue": "Naam hi bata raha, yahan khada hona bewakoofi hai.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-029",
+    "answer": "IRANI CUP",
+    "difficulty": "hard",
+    "chips": [
+      "Domestic",
+      "One match"
+    ],
+    "clue": "Ranji champion vs Rest of India.",
+    "extraClue": "Ek hi match ka muqabla, purani tradition.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-030",
+    "answer": "LORD'S",
+    "difficulty": "hard",
+    "chips": [
+      "London",
+      "Ground"
+    ],
+    "clue": "Cricket ka Mecca, London mein.",
+    "extraClue": "1983 mein India ne yahin World Cup uthaya.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-031",
+    "answer": "GULLY",
+    "difficulty": "hard",
+    "chips": [
+      "Fielding",
+      "Slip side"
+    ],
+    "clue": "Slip aur point ke beech ka fielder.",
+    "extraClue": "Mohalle wala cricket bhi isi naam se.",
+    "status": "draft"
+  },
+  {
+    "id": "cricket-032",
+    "answer": "REVERSE SWING",
+    "difficulty": "hard",
+    "chips": [
+      "Bowling",
+      "Old ball"
+    ],
+    "clue": "Purani gend hawa mein ulti taraf ghoome.",
+    "extraClue": "Ek taraf chamak, doosri taraf khurdari.",
+    "status": "draft"
+  }
+]
