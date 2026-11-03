@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Khana run over screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&amp;family=Yatra+One&amp;display=swap">
+<style>
+body{margin:0;background:#2B1606}
+a{color:#F2B705}a:hover{color:#FFD54A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 14px 12px 20px; display: flex; flex-direction: column; gap: 12px; background: #2B1606; color: #FFF4DC; font-family: 'Mukta', system-ui, sans-serif; overflow: hidden">
+
+<div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+<button type="button" aria-label="Back to categories" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #6B3A16; background: #3D200B; color: #FFF4DC; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</button>
+<div style="display: flex; flex-direction: column; align-items: center">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #F2B705">KHANA</span>
+<span style="font-size: 17px; font-weight: 700; line-height: 1.2">Easy · Run over</span>
+</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 17px; background: #F2B705; color: #2B1606; font-weight: 800; font-size: 14px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"></path><path d="M14 7v10" stroke-dasharray="2 2.5"></path></svg>
+<span>50 Cr Club</span>
+</div>
+</div>
+
+<div style="position: relative; flex: 1 1 0; min-height: 140px; max-height: 220px; border-radius: 14px; overflow: hidden; background: #2E1A0C">
+<svg width="100%" height="100%" viewBox="0 0 366 220" preserveAspectRatio="xMidYMax slice" style="display: block" role="img" aria-label="A burnt pot smoking on the stove while the cooker lid flies off">
+<path d="M30 0V176M60 0V176M90 0V176M120 0V176M150 0V176M180 0V176M210 0V176M240 0V176M270 0V176M300 0V176M330 0V176M0 30H366M0 60H366M0 90H366M0 120H366M0 150H366" stroke="#3D2512" stroke-width="2"></path>
+<g fill="#4A4038">
+<circle cx="64" cy="34" r="26"></circle>
+<circle cx="100" cy="24" r="22"></circle>
+<circle cx="136" cy="38" r="24"></circle>
+<circle cx="174" cy="22" r="20"></circle>
+<circle cx="212" cy="34" r="24"></circle>
+</g>
+<rect x="0" y="176" width="366" height="44" fill="#4A2A12"></rect>
+<path d="M0 176 H366" stroke="#6B3A16" stroke-width="4"></path>
+<g fill="none" stroke="#6E6258" stroke-width="5" stroke-linecap="round" opacity="0.8">
+<path d="M100 146 q-10 -14 0 -28 q10 -14 0 -28"></path>
+<path d="M132 146 q-10 -14 0 -28 q10 -14 0 -28"></path>
+</g>
+<rect x="66" y="150" width="100" height="30" rx="8" fill="#1A1A1A"></rect>
+<rect x="58" y="146" width="116" height="8" rx="4" fill="#2A2A2A"></rect>
+<path d="M58 160 h-10 M174 160 h10" stroke="#2A2A2A" stroke-width="5" stroke-linecap="round"></path>
+<rect x="44" y="180" width="144" height="22" rx="5" fill="#222222"></rect>
+<path d="M90 180 l5 -10 l5 10 Z M106 180 l5 -12 l5 12 Z M122 180 l5 -10 l5 10 Z" fill="#F28C28"></path>
+<g transform="rotate(-25 318 56)">
+<ellipse cx="318" cy="56" rx="30" ry="7" fill="#9C9C94"></ellipse>
+<rect x="312" y="44" width="12" height="7" rx="2" fill="#1A1A1A"></rect>
+</g>
+<path d="M280 84 l-14 10 M292 92 l-12 12" stroke="#F6DFA8" stroke-width="3" stroke-linecap="round" opacity="0.6"></path>
+</svg>
+<p style="position: absolute; top: 42%; left: 50%; margin: 0; transform: translate(-50%, -50%) rotate(6deg); white-space: nowrap; font-family: 'Yatra One', serif; font-size: 28px; line-height: 1.1; color: #FF5A64; background: #2B1606; border: 4px double #FF5A64; border-radius: 8px; padding: 4px 14px">Dal Jal Gayi!</p>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: center; gap: 4px">
+<span style="margin-right: 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #F2B705">SEETI</span>
+<sc-for list="{{lives}}" as="l" hint-placeholder-count="9">
+<span style="width: 10px; height: 10px; border-radius: 5px; background: #E2402F"></span>
+</sc-for>
+<span style="margin-left: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em">0 LEFT</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px; text-align: center">
+<h1 style="margin: 0; font-family: 'Yatra One', serif; font-weight: 400; font-size: 26px; line-height: 1.2">Mummy ko mat batana.</h1>
+<p style="margin: 0; font-size: 14px; color: #F6DFA8">The dish was <span style="font-weight: 800; color: #FFF4DC">Pani Puri</span>.</p>
+</div>
+
+<div style="display: flex; gap: 8px">
+<div style="flex: 1 1 0; border-radius: 12px; background: #3D200B; border: 1px solid #6B3A16; padding: 8px 12px; display: flex; flex-direction: column">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #F2B705">THIS RUN</span>
+<span style="font-family: 'Yatra One', serif; font-size: 22px; line-height: 1.25">13 hits</span>
+<span style="font-size: 12px; color: #F6DFA8">50 Crore Club</span>
+</div>
+<div style="flex: 1 1 0; border-radius: 12px; background: #3D200B; border: 1px solid #6B3A16; padding: 8px 12px; display: flex; flex-direction: column">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #F2B705">YOUR BEST · EASY</span>
+<span style="font-family: 'Yatra One', serif; font-size: 22px; line-height: 1.25">22 hits</span>
+<span style="font-size: 12px; color: #F6DFA8">100 Crore Club</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 700">100 Crore Club bas <span style="color: #F2B705">7 hits</span> door tha</span>
+<div style="display: flex; gap: 3px">
+<sc-for list="{{near}}" as="s" hint-placeholder-count="10">
+<sc-if value="{{s.on}}" hint-placeholder-val="{{true}}">
+<span style="flex: 1 1 0; height: 8px; border-radius: 4px; background: #F2B705"></span>
+</sc-if>
+<sc-if value="{{s.off}}" hint-placeholder-val="{{false}}">
+<span style="flex: 1 1 0; height: 8px; box-sizing: border-box; border-radius: 4px; border: 1px solid #6B3A16; background: #3D200B"></span>
+</sc-if>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+<button type="button" style="height: 56px; border-radius: 28px; border: 0; background: #F2B705; color: #2B1606; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; cursor: pointer">
+<span style="font-size: 16px; font-weight: 800">Phir se banao</span>
+<span style="font-size: 12px; font-weight: 700">New random run</span>
+</button>
+<button type="button" style="height: 44px; border-radius: 22px; border: 1.5px solid #F2B705; background: transparent; color: #F2B705; font-family: inherit; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v13"></path></svg>
+Challenge a friend with this one
+</button>
+<button type="button" style="height: 44px; border: 0; background: transparent; color: #FFF4DC; font-family: inherit; font-size: 14px; font-weight: 700; text-decoration: underline; cursor: pointer">Change difficulty</button>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      lives: [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return { i: i }; }),
+      near: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(function (i) { return { on: i < 3, off: i >= 3 }; })
+    };
+  }
+}
+</script>
+</body>
+</html>
