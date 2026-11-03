@@ -90,3 +90,6 @@ export const INCLUDE_DRAFT_WORDS = true;
 
 /** Pause on a solved word before the next one loads (ms). */
 export const SOLVED_PAUSE_MS = 1100;
+
+/** How long the last tile flop plays before the result screen replaces the board. */
+export const FLOP_DELAY_MS = 900;
