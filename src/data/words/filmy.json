@@ -1,0 +1,386 @@
+[
+  {
+    "id": "filmy-001",
+    "answer": "SHOLAY",
+    "difficulty": "easy",
+    "chips": [
+      "1975",
+      "Action"
+    ],
+    "clue": "Gabbar, Jai-Veeru aur Basanti ka tonga.",
+    "extraClue": "Ramgarh ki kahani. Kitne aadmi the?",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-002",
+    "answer": "DILWALE DULHANIA LE JAYENGE",
+    "difficulty": "easy",
+    "chips": [
+      "1995",
+      "Romance"
+    ],
+    "clue": "Raj, Simran aur sarson ke khet. Ja Simran, ja!",
+    "extraClue": "Mumbai ke Maratha Mandir mein saalon tak chali.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-003",
+    "answer": "KUCH KUCH HOTA HAI",
+    "difficulty": "easy",
+    "chips": [
+      "1998",
+      "Romance"
+    ],
+    "clue": "Rahul, Anjali aur Tina. Kyunki pyaar dosti hai.",
+    "extraClue": "Summer camp, chhoti Anjali aur mummy ki chitthiyan.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-004",
+    "answer": "LAGAAN",
+    "difficulty": "easy",
+    "chips": [
+      "2001",
+      "Sports"
+    ],
+    "clue": "Angrezon se cricket match, tax maaf karwane ke liye.",
+    "extraClue": "Bhuvan ki team. Oscar tak nominate hui thi.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-005",
+    "answer": "3 IDIOTS",
+    "difficulty": "easy",
+    "chips": [
+      "2009",
+      "Comedy"
+    ],
+    "clue": "Rancho, Farhan, Raju aur Virus. All is well!",
+    "extraClue": "Engineering college, aur vacuum cleaner se delivery.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-006",
+    "answer": "DANGAL",
+    "difficulty": "easy",
+    "chips": [
+      "2016",
+      "Sports"
+    ],
+    "clue": "Baapu ne betiyon ko pehelwan banaya. Gold laana hai!",
+    "extraClue": "Geeta aur Babita Phogat ki kahani.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-007",
+    "answer": "PK",
+    "difficulty": "easy",
+    "chips": [
+      "2014",
+      "Comedy"
+    ],
+    "clue": "Doosre gole se aaya, aur uska remote kho gaya.",
+    "extraClue": "Sab use peeke samajhte the, isliye yahi naam pad gaya.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-008",
+    "answer": "DON",
+    "difficulty": "easy",
+    "chips": [
+      "1978",
+      "Action"
+    ],
+    "clue": "Gyaarah mulkon ki police iske peeche hai.",
+    "extraClue": "Amitabh double role mein, aur paan wala gaana.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-009",
+    "answer": "ANDAZ APNA APNA",
+    "difficulty": "easy",
+    "chips": [
+      "1994",
+      "Comedy"
+    ],
+    "clue": "Amar aur Prem, dono ek ameer ladki ke peeche.",
+    "extraClue": "Crime Master Gogo aur Teja. Galti se mistake!",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-010",
+    "answer": "QUEEN",
+    "difficulty": "easy",
+    "chips": [
+      "2014",
+      "Drama"
+    ],
+    "clue": "Shaadi toot gayi, toh honeymoon pe akele chali gayi.",
+    "extraClue": "Rani, Delhi se Paris aur Amsterdam.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-011",
+    "answer": "CHAK DE INDIA",
+    "difficulty": "easy",
+    "chips": [
+      "2007",
+      "Sports"
+    ],
+    "clue": "Kabir Khan aur women's hockey team. Sattar minute!",
+    "extraClue": "Coach ne team ko World Cup jitaya.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-012",
+    "answer": "HERA PHERI",
+    "difficulty": "easy",
+    "chips": [
+      "2000",
+      "Comedy"
+    ],
+    "clue": "Raju, Shyam aur Baburao. Ek galat number ne sab badal diya.",
+    "extraClue": "Baburao ka garage. Utha le re baba!",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-013",
+    "answer": "MUNNA BHAI MBBS",
+    "difficulty": "easy",
+    "chips": [
+      "2003",
+      "Comedy"
+    ],
+    "clue": "Ek gunda doctor banne medical college pahunch gaya.",
+    "extraClue": "Jaadu ki jhappi, aur Circuit hamesha saath.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-014",
+    "answer": "OM SHANTI OM",
+    "difficulty": "easy",
+    "chips": [
+      "2007",
+      "Drama"
+    ],
+    "clue": "Junior artist ka punarjanam, aur tees saal baad badla.",
+    "extraClue": "Deepika ki pehli Hindi film.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-015",
+    "answer": "GULLY BOY",
+    "difficulty": "easy",
+    "chips": [
+      "2019",
+      "Drama"
+    ],
+    "clue": "Dharavi ka ladka rapper banna chahta hai.",
+    "extraClue": "Murad aur Safeena. Apna time aayega!",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-016",
+    "answer": "ZINDAGI NA MILEGI DOBARA",
+    "difficulty": "medium",
+    "chips": [
+      "2011",
+      "Road trip"
+    ],
+    "clue": "Teen dost, Spain mein bachelor road trip.",
+    "extraClue": "Tomatina, skydiving aur deep sea diving.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-017",
+    "answer": "TAARE ZAMEEN PAR",
+    "difficulty": "medium",
+    "chips": [
+      "2007",
+      "Drama"
+    ],
+    "clue": "Ishaan ko padhai mushkil lagti, art teacher ne samjha.",
+    "extraClue": "Dyslexia pe bani, Aamir ne direct ki.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-018",
+    "answer": "JAB WE MET",
+    "difficulty": "medium",
+    "chips": [
+      "2007",
+      "Romance"
+    ],
+    "clue": "Train mein mili Geet. Main apni favourite hoon!",
+    "extraClue": "Ratlam station pe dono ki train chhoot gayi.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-019",
+    "answer": "RANG DE BASANTI",
+    "difficulty": "medium",
+    "chips": [
+      "2006",
+      "Drama"
+    ],
+    "clue": "Documentary banate banate dost khud krantikari ban gaye.",
+    "extraClue": "Bhagat Singh aur saathiyon ka role nibhaya.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-020",
+    "answer": "BARFI!",
+    "difficulty": "medium",
+    "chips": [
+      "2012",
+      "Romance"
+    ],
+    "clue": "Sun nahi sakta, bol nahi sakta, par pyaar full.",
+    "extraClue": "Darjeeling aur Kolkata, Shruti aur Jhilmil.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-021",
+    "answer": "GOLMAAL",
+    "difficulty": "medium",
+    "chips": [
+      "1979",
+      "Comedy"
+    ],
+    "clue": "Ramprasad ka naqli judwaa bhai, aur boss ko moonchh se pyaar.",
+    "extraClue": "Hrishikesh Mukherjee ki comedy, Amol Palekar lead mein.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-022",
+    "answer": "DEEWAAR",
+    "difficulty": "medium",
+    "chips": [
+      "1975",
+      "Drama"
+    ],
+    "clue": "Do bhai: ek police mein, ek smuggler. Aur maa?",
+    "extraClue": "Vijay ka 786 wala billa.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-023",
+    "answer": "DIL CHAHTA HAI",
+    "difficulty": "medium",
+    "chips": [
+      "2001",
+      "Comedy"
+    ],
+    "clue": "Teen dost, Goa trip, aur Akash ki goatee.",
+    "extraClue": "Farhan Akhtar ki pehli film as director.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-024",
+    "answer": "BADHAAI HO",
+    "difficulty": "medium",
+    "chips": [
+      "2018",
+      "Comedy"
+    ],
+    "clue": "Beta shaadi layak, aur mummy pregnant. Ab kya?",
+    "extraClue": "Delhi ki family, Ayushmann Khurrana lead mein.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-025",
+    "answer": "KAHAANI",
+    "difficulty": "hard",
+    "chips": [
+      "2012",
+      "Thriller"
+    ],
+    "clue": "Pregnant biwi Kolkata mein apna pati dhoondh rahi hai.",
+    "extraClue": "Climax Durga Puja ke beech.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-026",
+    "answer": "ANDHADHUN",
+    "difficulty": "hard",
+    "chips": [
+      "2018",
+      "Thriller"
+    ],
+    "clue": "Piano bajane wala andha hai... ya nahi?",
+    "extraClue": "Ek khargosh se shuru, aur twist pe twist.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-027",
+    "answer": "SWADES",
+    "difficulty": "hard",
+    "chips": [
+      "2004",
+      "Drama"
+    ],
+    "clue": "NASA ka scientist gaon laut aaya, bijli laane.",
+    "extraClue": "Charanpur gaon aur Kaveri Amma.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-028",
+    "answer": "MOTHER INDIA",
+    "difficulty": "hard",
+    "chips": [
+      "1957",
+      "Drama"
+    ],
+    "clue": "Radha ka sangharsh aur Birju ka gussa.",
+    "extraClue": "Oscar ke liye nominate hone wali pehli Indian film.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-029",
+    "answer": "PYAASA",
+    "difficulty": "hard",
+    "chips": [
+      "1957",
+      "Drama"
+    ],
+    "clue": "Shayar Vijay ko koi nahi poochta. Marne ki khabar ke baad sab poochte.",
+    "extraClue": "Guru Dutt ki black and white classic.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-030",
+    "answer": "SATYA",
+    "difficulty": "hard",
+    "chips": [
+      "1998",
+      "Crime"
+    ],
+    "clue": "Mumbai underworld, aur Bhiku Mhatre.",
+    "extraClue": "Ram Gopal Varma ki gangster film.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-031",
+    "answer": "TUMBBAD",
+    "difficulty": "hard",
+    "chips": [
+      "2018",
+      "Horror"
+    ],
+    "clue": "Khazana, ek shraapit devta, aur baarish hi baarish.",
+    "extraClue": "Hastar ki kahani, Maharashtra ke ek gaon mein.",
+    "status": "draft"
+  },
+  {
+    "id": "filmy-032",
+    "answer": "ANAND",
+    "difficulty": "hard",
+    "chips": [
+      "1971",
+      "Drama"
+    ],
+    "clue": "Babumoshai! Khud bimaar hai, par sabko hansata hai.",
+    "extraClue": "Rajesh Khanna aur Amitabh, Hrishikesh Mukherjee ki film.",
+    "status": "draft"
+  }
+]
