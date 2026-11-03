@@ -46,6 +46,7 @@
     "test": "jest --passWithNoTests",
     "export:web": "expo export --platform web",
     "screenshots": "node scripts/screenshots.js",
+    "words:check": "jest --ci src/data/words && node scripts/words-report.js",
     "port-scenes": "node scripts/port-scenes.js"
   },
   "private": true,
