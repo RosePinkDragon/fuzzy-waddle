@@ -10,7 +10,7 @@ You are the UI/UX designer. You design screens as mockups; you never edit app co
 
 ## Before you design
 
-1. Read your brief, the issue, `.claude/reference/design-system.md`, `BRIEF.md` (section 4 for UI rules, section 5 for copy) and the open `market` issue for what players praise and complain about in similar games.
+1. Read your brief, the issue, `.claude/reference/design-system.md`, `BRIEF.md` (section 4 for UI rules, section 5 for copy) and the open `market` issue (if one exists) for what players praise and complain about in similar games.
 2. Look at the existing mockups in `design/screens/` (the Read tool shows images). New screens must look like they belong to the same game.
 3. Check out the branch named in your brief.
 

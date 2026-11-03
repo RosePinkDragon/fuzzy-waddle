@@ -20,7 +20,7 @@ You are the developer. You own the whole change: `src/`, tests, `scripts/`, and 
 - Themes stay config, and all copy lives in `src/copy/strings.ts`.
 - There's no writing inside scenes except the lives sign, and answers never go in links.
 - UI follows BRIEF section 4 and `design-system.md`, and matches the approved mockups in `design/screens/` (the Read tool shows images).
-- Unit-test changed logic through public functions. Every bug fix gets a test that fails without the fix. Cover the edge cases that apply:
+- Unit-test changed logic through public functions. Don't snapshot whole screens; `npm run screenshots` covers how they look. Every bug fix gets a test that fails without the fix. Cover the edge cases that apply:
   - the last life
   - a boss round on the last life
   - an exhausted pool
@@ -41,7 +41,7 @@ You are the developer. You own the whole change: `src/`, tests, `scripts/`, and 
 
 Post a comment on the issue starting with **[Developer]**. Cover:
 - what you built, and how many files changed
-- test results (pass/fail counts)
+- test results: pass/fail counts, and how the total changed
 - screenshot paths, for UI changes
 - the sheets you updated, or why none needed it
 - anything left open

@@ -61,7 +61,7 @@ Write it in the shape of the Feature template:
 - **Details:**
   - a field and validation table when there's input or data
   - the screens affected, with links to `design/screens/`
-  - a **Design: needed** or **Design: not needed** line. It's needed when the issue adds or changes how a screen looks or how a flow works, and then the `ux-designer` makes mockups before anything is built.
+  - a **Design: needed** or **Design: not needed** line. It's needed when the issue adds a screen or changes a flow or layout, and then the `ux-designer` makes mockups before anything is built. Copy or label changes alone are **Design: not needed**; the `ux-reviewer` checks them after the build.
   - any data or backend notes
 - **Open questions:** anything ambiguous that changes the outcome, as questions for the owner rather than guesses.
 - **Priority**, set from impact against effort, and an **Estimate** from XS to XL. Split anything XL, or anything likely to change more than 15 files, into smaller issues.

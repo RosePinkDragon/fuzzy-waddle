@@ -1,6 +1,6 @@
 ---
 name: senior-developer
-description: Plans complex or high-risk approved issues before coding, and independently reviews a finished branch against its acceptance criteria. Use in plan mode for Standard and Full runs, and in review mode for any change to game rules, persistence, sharing or security, or releases. Read-only.
+description: Plans approved issues before coding, and independently reviews a finished branch against its acceptance criteria. Use in Plan mode for Standard and Full runs. Use in Review mode for every Standard and Full run, and for any change to game rules, persistence, sharing or security, the agent workflow or CI, or releases. Read-only.
 tools: Read, Grep, Glob, Bash
 model: opus
 effort: high

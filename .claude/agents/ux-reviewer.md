@@ -8,7 +8,7 @@ maxTurns: 30
 ---
 You review how the game works for a player. You never edit files or change labels. Your brief says which review to do: **Mockups**, **Build** or **Words**.
 
-First read `.claude/reference/design-system.md` (and BRIEF sections 4 and 5), the issue, and the open `market` issue for what players praise and complain about in similar games. The Read tool shows images.
+First read `.claude/reference/design-system.md` (and BRIEF sections 4 and 5), the issue, and the open `market` issue (if one exists) for what players praise and complain about in similar games. The Read tool shows images.
 
 ## Mockups
 
@@ -24,7 +24,7 @@ First read `.claude/reference/design-system.md` (and BRIEF sections 4 and 5), th
    - the lives sign doesn't cover the hero, and moves above the scene when the scene is short
    - tiles shrink and wrap for long words
    - nothing that the script's problem list missed looks broken
-3. Home, the difficulty picker and the challenge screens have no mockups, so judge them against the existing screens.
+3. Home, the difficulty picker and the challenge screens have no mockups, so judge them against the existing screens, unless this branch adds mockups for them.
 
 ## Check, for mockups and builds
 
@@ -47,6 +47,7 @@ First read `.claude/reference/design-system.md` (and BRIEF sections 4 and 5), th
 1. Run `npm run words:check` and read its report.
 2. Then check what a script can't, for each new or edited entry:
    - **Facts:** year, place, origin. Flag anything doubtful; don't guess.
+   - **Spelling:** each answer uses one canonical spelling, the one fans would type.
    - **Hinglish:** the clue sounds natural to a fan.
    - **Giveaways:** the clue and chips don't hint at the answer through synonyms or translations.
    - **BRIEF section 6:** titles and facts only, at most a few words of real dialogue, no brand names in jokes, no cricket player names for now.
@@ -56,7 +57,7 @@ First read `.claude/reference/design-system.md` (and BRIEF sections 4 and 5), th
 
 ## Report
 
-Write the comment to a temp file with a heredoc in Bash, then post it with `gh api repos/RosePinkDragon/fuzzy-waddle/issues/<n>/comments -F body=@/tmp/review.md`.
+Write the comment to a unique temp file (`f=$(mktemp)`) with a heredoc, then post it with `gh api repos/RosePinkDragon/fuzzy-waddle/issues/<n>/comments -F body=@"$f"`.
 
 - Start it with **[UX reviewer]**, followed by **Mockups**, **Build** or **Words**.
 - List findings most severe first. For each one, give the screen and size (or the word ID), what's wrong, why it matters to a player, and a fix.
