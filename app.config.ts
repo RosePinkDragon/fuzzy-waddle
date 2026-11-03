@@ -1,6 +1,12 @@
 import type { ExpoConfig } from 'expo/config';
 
 import game from './src/config/game.json';
+// The Expo config loader only resolves a TS file when the extension is explicit.
+// @ts-expect-error TS5097: tsconfig does not allow .ts import paths (noEmit, so they are safe).
+import { assertReleaseEnv } from './src/lib/releaseGuard.ts';
+
+// Fail release builds (RELEASE_BUILD=1, EAS preview/production) that set test-only switches.
+assertReleaseEnv(process.env);
 
 /**
  * App config. The name, bundle IDs and web domain are placeholders until the
