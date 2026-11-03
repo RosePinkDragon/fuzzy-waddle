@@ -6,7 +6,7 @@ Every change goes through the same five steps. The **PR rules** check enforces t
 2. **Branch from main** as `type/<issue>-short-name`, for example `feat/12-difficulty-picker` or `fix/15-long-word-tiles`.
 3. **Keep PRs small:** at most 15 changed files per PR, not counting `package-lock.json`, files in `design/` and deleted files. Commit in logical steps, with messages in Conventional Commits format: `type(scope): lowercase subject`, for example `feat(game): add boss rounds`.
 4. **Open a PR** from the template. The title follows the same format, and the description starts with `Closes #<issue>`.
-5. **Review and merge:** checks must pass, then the owner reviews the commits and squash-merges.
+5. **Review and merge:** checks must pass, then the owner reviews the commits and merges with a merge commit. That keeps every commit as it is, so commit messages matter.
 
 ## Types
 
