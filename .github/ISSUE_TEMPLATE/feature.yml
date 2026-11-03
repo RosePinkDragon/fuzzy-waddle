@@ -1,0 +1,50 @@
+name: Feature
+description: A user story for something new or changed
+title: "feat: "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      description: As a <who>, I want <what>, so that <why>.
+      placeholder: As a player, I want ..., so that ...
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria
+      description: One Given / When / Then per scenario.
+      placeholder: |
+        - **Given** ..., **when** ..., **then** ...
+        - **Given** ..., **when** ..., **then** ...
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Fields and validations, screens affected, links to designs in design/screens, anything else that helps.
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P1 - must have
+        - P2 - should have
+        - P3 - nice to have
+    validations:
+      required: true
+  - type: dropdown
+    id: estimate
+    attributes:
+      label: Estimate
+      options:
+        - XS (under an hour)
+        - S (half a day)
+        - M (a day)
+        - L (2-3 days)
+        - XL (split it into smaller issues)
+    validations:
+      required: true

@@ -1,0 +1,42 @@
+name: Bug
+description: Something is broken or looks wrong
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Khana on Easy
+        2. Guess ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and screen size
+      placeholder: e.g. Android phone, or web at 390x700
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Paste or drag images here.
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P1 - blocks play
+        - P2 - annoying
+        - P3 - cosmetic
+    validations:
+      required: true

@@ -1,0 +1,31 @@
+name: Words
+description: Add, fix or remove words in the word bank
+title: "feat(words): "
+labels: ["words"]
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Filmy
+        - Khana
+        - Safar
+        - Cricket
+        - Tyohar
+    validations:
+      required: true
+  - type: textarea
+    id: words
+    attributes:
+      label: Words
+      description: "One per line: ANSWER | difficulty (easy, medium or hard) | chips | clue"
+      placeholder: |
+        DAL MAKHANI | easy | Punjab, Main course | Ghar ki party ho ya dhaba, yeh menu pe zaroor hogi.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Words to remove or fix, or facts to double-check.
