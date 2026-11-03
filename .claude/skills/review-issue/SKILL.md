@@ -41,7 +41,8 @@ Mark each signal that applies, with a one-line reason taken from the issue.
 | **Technical risk** | Persistence, challenge links or sharing, security, Expo config or platform APIs, CI or releases, likely more than 15 files | Nobody yet. Record the risk and the size; `senior-developer` reviews after the build. | `codebase-map`, plus `expo-tooling` only for Expo config, platform APIs, CI or releases |
 
 - **Skip rule:** bugs, CI or tooling, and logic-only changes skip the BA and UX unless the issue raises a concrete product or visual question. Give every skipped specialist a reason.
-- **Fallback:** if you can't tell whether the game designer, the BA or a design step is needed, don't guess. Post the routing comment (step 4) with that question as an owner decision, and stop.
+- **Fallback:** if you can't tell whether the game designer, the BA or a design step is needed, don't guess. Run the specialists you're sure of, then post the doubt in the routing comment as an owner decision.
+- **Owner choices:** an "if the owner…" choice in the issue body is an owner decision, not a reason to call the BA.
 
 ## 3. Brief and run the specialists
 
@@ -71,8 +72,8 @@ Post one comment starting with **[Review] Routing**:
 - **Sheets used.**
 - **Design:** needed or not needed, with why. `run-issue` reads this line to choose its mode.
 - **Size:** the estimate, and whether it fits in 15 files or needs splitting.
-- **Recommendation:** approve as written, revise before approval, or defer. Take the most cautious one from the specialists, unless you say why not.
-- **Owner decisions:** numbered, from every review plus any unanswered **Open questions** in the issue body.
+- **Recommendation:** approve as written, revise before approval, or defer. Take the most cautious one from the specialists, unless you say why not. If no specialist ran, say so and leave the call to the owner.
+- **Owner decisions:** numbered. Take them from every review, any unanswered **Open questions** in the issue body, and any "if the owner…" choice in its criteria.
 - **Proposed criteria changes:** quoted, for the owner to accept. Never edit the issue body unless the owner asks.
 
 End it with: "To approve, swap `needs-approval` for `ready`."

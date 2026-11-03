@@ -27,7 +27,14 @@ Read the issue and its comments, then check the label:
 
 Then check two more things:
 - **Criteria:** if the issue has no Given/When/Then criteria, stop and suggest running `review-issue` first.
-- **Open owner decisions:** gather the issue body's **Open questions**, plus the **Owner decisions** in the latest **[Review] Routing** comment. Drop any the owner has answered, in a later comment or in the body. If any are left, stop and list them in chat, unless the owner has said to go ahead with defaults.
+- **Open owner decisions:** gather them from:
+  - the issue body's **Open questions**, and any "if the owner…" choice in its criteria
+  - the **Owner decisions** in the latest **[Review] Routing** comment
+  - the **Questions** in the latest **[Senior developer] Plan**
+  - owner items in the latest **[UX designer] Mockups** comment
+
+  An answer counts only if it's a comment with no **[Role]** prefix, the issue body, or the owner's word in this chat. If any are left, stop and list them in chat only (post nothing), unless the owner has said to go ahead with defaults.
+- **No review yet:** if there's no **[Review] Routing** comment, say so in chat and in **[Run] Routing**. For a gameplay change, suggest running `review-issue` first.
 
 Only the owner sets `ready`. The one label you set is `needs-design-approval` (step 4).
 
@@ -37,7 +44,7 @@ Only the owner sets `ready`. The one label you set is `needs-design-approval` (s
 
 | Mode | When | Steps |
 |---|---|---|
-| **Fast** | Bugs, CI, tooling, agent workflow, logic-only work, word bank changes, and copy or label fixes marked **Design: not needed** | developer → checks → reviews below → PR |
+| **Fast** | Bugs, CI, tooling, agent workflow, logic-only work, word bank changes, copy or label fixes marked **Design: not needed**, and sharing, security or release work with no layout change | developer → checks → reviews below → PR |
 | **Standard** | New or changed game rules, persistence, or a layout tweak to an existing screen marked **Design: not needed** | senior plan → developer → checks → reviews below → PR |
 | **Full** | Anything marked **Design: needed** (a new screen, a changed flow or layout) | design gate → senior plan → developer → checks (full sweep) → reviews below → PR |
 
@@ -98,7 +105,9 @@ If so, go to step 5.
 
 ## 5. Plan (Standard and Full)
 
-Run `senior-developer` in Plan mode. If the plan needs more than 15 counted files, stop and ask the owner to split the issue.
+Run `senior-developer` in Plan mode.
+- If the plan needs more than 15 counted files, stop and ask the owner to split the issue.
+- If the plan lists **Questions**, stop and list them in chat. The owner answers on the issue, then says "run issue #N" again.
 
 ## 6. Build
 
@@ -122,7 +131,7 @@ Confirm the results in the developer's hand-off, and run anything missing yourse
 - **Always:** `npm run verify`.
 - **UI changes:** `npm run screenshots -- --screens … --themes …`. Run the full sweep in Full mode.
 - **Word changes:** `npm run words:check`.
-- **Releases:** `npm run words:check` and a full `npm run screenshots` sweep.
+- **Cutting a release:** `npm run words:check` and a full `npm run screenshots` sweep. This is for a release itself, not for changes to release config.
 
 Every check you skip gets a reason in the report.
 
@@ -164,8 +173,7 @@ The run stats are for comparing workflows over time. Don't claim savings from th
 
 ## Stop and hand back to the owner when
 
-- the gate fails (chat only; post nothing)
-- an owner decision is open
+- the gate fails, or an owner decision is open at the gate (chat only; post nothing)
 - an agent hits its turn limit (`maxTurns`) or fails twice
 - a third fix or review round would start
 - the change won't fit in 15 files
@@ -174,7 +182,7 @@ After the gate, post what's done and what's blocking on the issue before you sto
 
 ## Dry run (`--dry-run`)
 
-Do steps 1 and 2 as reads only. Don't create branches, run agents, post comments or change labels. Print in chat:
+Do steps 1 and 2 as reads only. If the gate fails, say so, then still work out step 2 and mark it hypothetical. Don't create branches, run agents, post comments or change labels. Print in chat:
 - the gate result
 - open owner decisions
 - the mode and why
