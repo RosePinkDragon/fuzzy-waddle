@@ -1,0 +1,386 @@
+[
+  {
+    "id": "tyohar-001",
+    "answer": "RAKSHA BANDHAN",
+    "difficulty": "easy",
+    "chips": [
+      "August",
+      "Siblings"
+    ],
+    "clue": "Behen ka dhaaga, bhai ka gift, aur mummy ki mithai.",
+    "extraClue": "Shravan Purnima ko manaate hain.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-002",
+    "answer": "DIWALI",
+    "difficulty": "easy",
+    "chips": [
+      "Oct–Nov",
+      "Lights"
+    ],
+    "clue": "Diye, rangoli, patake, aur safai ka marathon.",
+    "extraClue": "Ram ji Ayodhya laute the.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-003",
+    "answer": "HOLI",
+    "difficulty": "easy",
+    "chips": [
+      "Feb–March",
+      "Colours"
+    ],
+    "clue": "Rang, gujiya, thandai aur bura na mano.",
+    "extraClue": "Ek raat pehle Holika dahan.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-004",
+    "answer": "GANESH CHATURTHI",
+    "difficulty": "easy",
+    "chips": [
+      "August–September",
+      "Modak"
+    ],
+    "clue": "Bappa ghar aate hain, das din baad visarjan.",
+    "extraClue": "Modak aur dhol-tasha, Mumbai ki galiyon mein.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-005",
+    "answer": "EID UL FITR",
+    "difficulty": "easy",
+    "chips": [
+      "After Ramzan",
+      "Sevaiyan"
+    ],
+    "clue": "Roze khatam, chaand dikha, ab sevaiyan.",
+    "extraClue": "Gale milo, aur bado se paise milte hain.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-006",
+    "answer": "NAVRATRI",
+    "difficulty": "easy",
+    "chips": [
+      "Sept–Oct",
+      "Garba"
+    ],
+    "clue": "Nau raatein, garba aur dandiya.",
+    "extraClue": "Durga maa ke nau roop.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-007",
+    "answer": "DUSSEHRA",
+    "difficulty": "easy",
+    "chips": [
+      "Sept–Oct",
+      "Ravan"
+    ],
+    "clue": "Raavan ka putla jalta, buraai pe achhai ki jeet.",
+    "extraClue": "Vijayadashami bhi kehte hain.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-008",
+    "answer": "CHRISTMAS",
+    "difficulty": "easy",
+    "chips": [
+      "December",
+      "Plum cake"
+    ],
+    "clue": "Pachchis December, plum cake aur Santa.",
+    "extraClue": "Goa aur Kerala mein midnight mass.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-009",
+    "answer": "LOHRI",
+    "difficulty": "easy",
+    "chips": [
+      "January",
+      "Bonfire"
+    ],
+    "clue": "Punjab ki sardiyon wali aag, rewri aur moongphali.",
+    "extraClue": "Makar Sankranti se ek din pehle.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-010",
+    "answer": "PONGAL",
+    "difficulty": "easy",
+    "chips": [
+      "January",
+      "Harvest"
+    ],
+    "clue": "Tamil Nadu ka harvest festival. Doodh ubal ke gire toh shubh.",
+    "extraClue": "Chaar din, ek din gaay-bail ke liye bhi.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-011",
+    "answer": "ONAM",
+    "difficulty": "easy",
+    "chips": [
+      "Aug–Sept",
+      "Kerala"
+    ],
+    "clue": "Kerala ka festival, pookalam aur sadya.",
+    "extraClue": "Raja Mahabali ke aane ki khushi.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-012",
+    "answer": "KARVA CHAUTH",
+    "difficulty": "easy",
+    "chips": [
+      "Oct–Nov",
+      "Fast"
+    ],
+    "clue": "Chhalni se chaand dekh ke vrat todna.",
+    "extraClue": "Pati ki lambi umar ke liye vrat.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-013",
+    "answer": "JANMASHTAMI",
+    "difficulty": "easy",
+    "chips": [
+      "Aug–Sept",
+      "Dahi handi"
+    ],
+    "clue": "Kanha ka janmdin, aadhi raat ki pooja.",
+    "extraClue": "Matki phodo, Govinda aala re!",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-014",
+    "answer": "BHAI DOOJ",
+    "difficulty": "easy",
+    "chips": [
+      "Oct–Nov",
+      "Siblings"
+    ],
+    "clue": "Diwali ke baad, behen apne bhaiya ko tilak lagati hai.",
+    "extraClue": "Yamuna aur Yamraj ki kahani se juda.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-015",
+    "answer": "MAKAR SANKRANTI",
+    "difficulty": "easy",
+    "chips": [
+      "January",
+      "Kites"
+    ],
+    "clue": "Patang udao, til-gud khao, meetha meetha bolo.",
+    "extraClue": "Gujarat mein ise Uttarayan kehte hain.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-016",
+    "answer": "DURGA PUJA",
+    "difficulty": "medium",
+    "chips": [
+      "Sept–Oct",
+      "Pandals"
+    ],
+    "clue": "Kolkata ke pandal, dhunuchi naach aur sindoor khela.",
+    "extraClue": "Bengal ka sabse bada festival.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-017",
+    "answer": "BAISAKHI",
+    "difficulty": "medium",
+    "chips": [
+      "April",
+      "Harvest"
+    ],
+    "clue": "Punjab ka harvest festival, bhangra aur khet.",
+    "extraClue": "Khalsa Panth ki sthapana bhi isi din hui.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-018",
+    "answer": "BIHU",
+    "difficulty": "medium",
+    "chips": [
+      "Assam",
+      "Harvest"
+    ],
+    "clue": "Assam ka festival, saal mein teen baar.",
+    "extraClue": "Rongali wala sabse mashhoor, naach aur dhol.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-019",
+    "answer": "GURPURAB",
+    "difficulty": "medium",
+    "chips": [
+      "Oct–Nov",
+      "Langar"
+    ],
+    "clue": "Guru Nanak Dev ji ka prakash utsav, langar aur kirtan.",
+    "extraClue": "Kartik Purnima ko aata hai.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-020",
+    "answer": "CHHATH PUJA",
+    "difficulty": "medium",
+    "chips": [
+      "Oct–Nov",
+      "Sun"
+    ],
+    "clue": "Bihar ka festival, doobte aur ugte suraj ko arghya.",
+    "extraClue": "Ghat pe khade hoke, thekua ka prasad.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-021",
+    "answer": "GUDI PADWA",
+    "difficulty": "medium",
+    "chips": [
+      "March–April",
+      "New year"
+    ],
+    "clue": "Maharashtra ka naya saal, ghar ke bahar bamboo pe kalash aur kapda.",
+    "extraClue": "Chaitra ke pehle din.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-022",
+    "answer": "UGADI",
+    "difficulty": "medium",
+    "chips": [
+      "March–April",
+      "New year"
+    ],
+    "clue": "Karnataka aur Andhra ka naya saal, pachadi khao.",
+    "extraClue": "Chhe swaad wali chutney: meetha, khatta, kadwa...",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-023",
+    "answer": "RAM NAVAMI",
+    "difficulty": "medium",
+    "chips": [
+      "March–April",
+      "Ayodhya"
+    ],
+    "clue": "Ram ji ka janmdin, Chaitra mahine mein.",
+    "extraClue": "Chaitra Navratri ka aakhri din.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-024",
+    "answer": "HOLA MOHALLA",
+    "difficulty": "medium",
+    "chips": [
+      "After Holi",
+      "Punjab"
+    ],
+    "clue": "Holi ke agle din Anandpur Sahib mein Nihang ka josh.",
+    "extraClue": "Guru Gobind Singh ji ne shuru kiya.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-025",
+    "answer": "GOVARDHAN PUJA",
+    "difficulty": "medium",
+    "chips": [
+      "Oct–Nov",
+      "Annakoot"
+    ],
+    "clue": "Diwali ke agle din, annakoot ka bhog.",
+    "extraClue": "Krishna ne ungli pe parvat uthaya tha.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-026",
+    "answer": "HORNBILL",
+    "difficulty": "hard",
+    "chips": [
+      "December",
+      "Nagaland"
+    ],
+    "clue": "Nagaland ka December festival, saari tribes ek saath.",
+    "extraClue": "Ek chidiya ke naam pe.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-027",
+    "answer": "LOSAR",
+    "difficulty": "hard",
+    "chips": [
+      "New year",
+      "Himalaya"
+    ],
+    "clue": "Ladakh aur Sikkim ka naya saal.",
+    "extraClue": "Tibbati calendar wala new year.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-028",
+    "answer": "THRISSUR POORAM",
+    "difficulty": "hard",
+    "chips": [
+      "April–May",
+      "Kerala"
+    ],
+    "clue": "Kerala mein saje hue haathi aur chhatriyon ki takkar.",
+    "extraClue": "Vadakkunnathan mandir ke saamne.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-029",
+    "answer": "NAG PANCHAMI",
+    "difficulty": "hard",
+    "chips": [
+      "July–Aug",
+      "Snakes"
+    ],
+    "clue": "Is din saanpon ki pooja, doodh chadhaate hain.",
+    "extraClue": "Shravan mahine mein, Shiv ji ke gale wale ki pooja.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-030",
+    "answer": "KUMBH MELA",
+    "difficulty": "hard",
+    "chips": [
+      "Prayagraj",
+      "Snaan"
+    ],
+    "clue": "Karodon log, ek nadi mein dubki.",
+    "extraClue": "Chaar jagah lagta: Prayagraj, Haridwar, Ujjain, Nashik.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-031",
+    "answer": "TEEJ",
+    "difficulty": "hard",
+    "chips": [
+      "July–Aug",
+      "Monsoon"
+    ],
+    "clue": "Saawan ke jhoole, hari chudiyan, mehendi.",
+    "extraClue": "Rajasthan aur UP mein, Parvati ki pooja.",
+    "status": "draft"
+  },
+  {
+    "id": "tyohar-032",
+    "answer": "WANGALA",
+    "difficulty": "hard",
+    "chips": [
+      "Meghalaya",
+      "Harvest"
+    ],
+    "clue": "Meghalaya ke Garo log, sau dhol ka festival.",
+    "extraClue": "Fasal ke baad Surya devta ko dhanyavaad.",
+    "status": "draft"
+  }
+]
