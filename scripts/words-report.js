@@ -36,20 +36,36 @@ for (const { category, words } of banks) {
 }
 
 const byAnswer = new Map();
-for (const { words } of banks) for (const w of words) byAnswer.set(w.answer, [...(byAnswer.get(w.answer) || []), w.id]);
-const repeats = [...byAnswer].filter(([, ids]) => new Set(ids.map((id) => id.split('-')[0])).size > 1);
+for (const { category, words } of banks) {
+  for (const w of words) byAnswer.set(w.answer, [...(byAnswer.get(w.answer) || []), { category, id: w.id }]);
+}
+const repeats = [...byAnswer].filter(([, uses]) => new Set(uses.map((u) => u.category)).size > 1);
 problems += repeats.length;
 console.log('\nAnswers in more than one category');
 if (!repeats.length) console.log('  none');
-for (const [answer, ids] of repeats) console.log(`  REPEAT ${answer}: ${ids.join(', ')}`);
+for (const [answer, uses] of repeats) console.log(`  REPEAT ${answer}: ${uses.map((u) => u.id).join(', ')}`);
+
+/** "filmy-001, filmy-002, filmy-003, filmy-007" -> "filmy-001 to 003, filmy-007" */
+function ranges(ids) {
+  const out = [];
+  for (const id of ids) {
+    const m = id.match(/^(.*-)(\d+)$/);
+    const last = out[out.length - 1];
+    if (m && last && last.prefix === m[1] && Number(m[2]) === last.end + 1) {
+      last.end += 1;
+      last.endText = m[2];
+    } else if (m) out.push({ prefix: m[1], start: m[2], end: Number(m[2]), endText: m[2] });
+    else out.push({ text: id });
+  }
+  return out.map((r) => r.text || (r.start === r.endText ? r.prefix + r.start : `${r.prefix}${r.start} to ${r.endText}`)).join(', ');
+}
 
 console.log('\nWaiting for approval (status: draft)');
 let drafts = 0;
 for (const { category, words } of banks) {
   const ids = words.filter((w) => w.status === 'draft').map((w) => w.id);
   drafts += ids.length;
-  if (ids.length === words.length) console.log(`  ${category}: all ${ids.length}`);
-  else if (ids.length) console.log(`  ${category} (${ids.length}): ${ids.join(', ')}`);
+  if (ids.length) console.log(`  ${category} (${ids.length}${ids.length === words.length ? ', all' : ''}): ${ranges(ids)}`);
 }
 if (!drafts) console.log('  none');
 
