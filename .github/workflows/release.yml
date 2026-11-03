@@ -1,0 +1,77 @@
+# Release pipeline (BRIEF.md section 8). SWITCHED OFF until the accounts exist:
+# it only runs when started by hand, and every job is also gated on
+# vars.RELEASES_ENABLED == 'true'.
+#
+# Needs before it can work:
+#   - GitHub secret EXPO_TOKEN (an Expo access token for the project owner)
+#   - An Expo project: run `eas init` once and commit the projectId it adds
+#   - Google Play service-account key and App Store Connect API key stored in EAS
+#     (`eas credentials`), plus real bundle IDs in src/config/game.json
+#   - The App Store Connect app ID in eas.json (submit.*.ios.ascAppId)
+#   - A web host for the export (the deploy step below is a placeholder)
+#   - A GitHub environment named "production" with required reviewers
+#
+# When ready, change `on:` to:
+#   push: { branches: [main] }        -> deploy web + preview builds
+#   push: { tags: ['v*'] }            -> production submit (after approval)
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'preview (Play internal testing + TestFlight) or production (store submit)'
+        required: true
+        default: preview
+        type: choice
+        options: [preview, production]
+
+jobs:
+  web:
+    if: vars.RELEASES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx expo export --platform web
+      # Placeholder: deploy dist/ to the chosen host. It must serve index.html
+      # for every path so /c/<wordId> links work (single-page app rewrite).
+      - run: echo "Deploy dist/ to the web host here"
+
+  preview-builds:
+    if: vars.RELEASES_ENABLED == 'true' && inputs.target == 'preview'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      # Builds both platforms on EAS and submits to Play internal testing and TestFlight.
+      - run: eas build --platform all --profile preview --non-interactive --no-wait --auto-submit-with-profile preview
+
+  production-submit:
+    if: vars.RELEASES_ENABLED == 'true' && inputs.target == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - run: eas build --platform all --profile production --non-interactive --no-wait --auto-submit-with-profile production
