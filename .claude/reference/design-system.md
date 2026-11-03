@@ -10,7 +10,7 @@ How screens look and fit, and how mockups are made and checked. Read this before
 
 This sheet points at values rather than copying them. List conflicts under Disagreements below.
 
-*Last checked against `e2da193` (main, 2026-11-03).*
+*Last checked against `c636a30` (main, 2026-11-04).*
 
 ## Themes are config
 
@@ -76,5 +76,5 @@ This sheet points at values rather than copying them. List conflicts under Disag
 
 ## Disagreements
 
-- **Keyboard key width vs the 44px touch-target rule.** At 390px wide, a 10-key QWERTY row makes keys about 33px wide (`keyWidth` in `Keyboard.tsx`), though they meet 44px in height. The brief sets only the 46px height. The 44px rule comes from the review agents, not the brief. **Owner decision needed:** are keyboard keys exempt from the 44px width?
+- **Keyboard key width vs the 44px touch-target rule.** At 390px wide, a 10-key QWERTY row makes keys about 33px wide (`keyWidth` in `Keyboard.tsx`). Since #44, each key's touch area is its full cell (key plus half of each gap, about 37px), so there are no dead gaps, but it's still under 44px wide. Height meets 44px. The brief sets only the 46px height; the 44px rule comes from the review agents. **Owner decision needed:** are keyboard keys exempt from the 44px width?
 - **Mockups for home, difficulty and challenge.** BRIEF section 2 lists them as not designed, and #40 is reconciling mockups with the built screens. Until then, the built screens are the reference for these three.

@@ -4,7 +4,7 @@ Where things live and where a change goes. Read this before planning or building
 
 **Source of truth:** the code itself, and the folder tour in [README "How the code is laid out"](../../README.md#how-the-code-is-laid-out). This sheet adds where-to-change guidance. It doesn't repeat that tour.
 
-*Last checked against `e2da193` (main, 2026-11-03).*
+*Last checked against `c636a30` (main, 2026-11-04).*
 
 ## Boundaries
 
@@ -13,8 +13,8 @@ Where things live and where a change goes. Read this before planning or building
 | `src/game/` | Pure TypeScript game logic | No React imports. Every change has unit tests in `src/game/__tests__/`. |
 | `src/game/config.ts` | Every tuning number | Change numbers here, never inline in logic or screens. |
 | `src/data/words/` | One JSON bank per category, the loader `index.ts`, and the validation test | New entries stay `draft`. See [README "Adding or editing words"](../../README.md#adding-or-editing-words). |
-| `src/lib/` | Platform helpers: `storage.ts` (AsyncStorage, `localStorage` on web) and `share.ts` | Failures are swallowed so a game never breaks. |
-| `src/hooks/` | `useRun.ts` joins game logic to screens (bag, bests, haptics, test hooks). `useChallengeShare.tsx` handles the name prompt and share. | Keep game rules out of hooks. Call `src/game`. |
+| `src/lib/` | Platform helpers: `storage.ts` (AsyncStorage, `localStorage` on web), `share.ts`, and `releaseGuard.ts` (stops release builds that set test switches) | Storage failures are swallowed, so a game never breaks. |
+| `src/hooks/` | `useRun.ts` joins game logic to screens (bag, bests, haptics, test hooks). `useChallengeShare.tsx` handles the name prompt and share. `useFlopDelay.ts` holds the board before the result screen. | Keep game rules out of hooks. Call `src/game`. |
 | `src/app/` | Expo Router routes only | Non-route code goes elsewhere (see `AGENTS.md`). |
 | `src/screens/` | `GameView`, `MilestoneView` (the win screen) and `FlopView` | Shared by run and challenge routes. |
 | `src/components/` | Shared UI: `Screen`, `Header`, `SceneBox`, `Tiles`, `Keyboard`, `PowerUpBar`, `CluePanel`, `LivesSign`, `Stamp`, `ShareCard`, `NamePrompt` and others | Theme comes from `ThemeContext` or props, never hard-coded per theme. |
@@ -54,6 +54,7 @@ The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), 
 - Jest with the `jest-expo` preset. Tests sit in `__tests__/` folders next to the code (`testMatch` in `package.json`).
 - `src/game/__tests__/helpers.ts` builds runs and words for tests.
 - `src/data/words/__tests__/wordBank.test.ts` validates every word: format, IDs, duplicates, giveaways and phone fit.
+- `src/lib/__tests__/` covers challenge links (`share`), the storage wrapper, and the release guard and its wiring into `app.config.ts`.
 - There are no component or snapshot tests. Screens are checked with `npm run screenshots`.
 
 ## Sizing a change

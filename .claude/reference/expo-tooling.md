@@ -7,7 +7,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 - Exact versions: [`package.json`](../../package.json). Config: [`app.config.ts`](../../app.config.ts) and [`eas.json`](../../eas.json).
 - Pipelines: [`.github/workflows/`](../../.github/workflows/). Release plan: [BRIEF.md section 8](../../BRIEF.md#8-release-pipeline-needs-accounts-first).
 
-*Last checked against `e2da193` (main, 2026-11-03).*
+*Last checked against `c636a30` (main, 2026-11-04).*
 
 ## Versions
 
@@ -42,14 +42,17 @@ Planned, not built yet:
 - Game logic gets unit tests through public functions. Every bug fix adds a regression test.
 - Screens have no snapshot tests. Use `npm run screenshots`.
 
-## Test switches (build time; never in a release)
+## Test switches (build time only)
 
 - `EXPO_PUBLIC_TEST_LADDER=1`: short club ladder (`TEST_CLUB_LADDER` in `src/game/config.ts`).
 - `EXPO_PUBLIC_TEST_HOOKS=1`: puts the current answer and run status on `globalThis.__HANGMAN__` (`src/hooks/useRun.ts`).
 
+Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, which fails a build when `RELEASE_BUILD=1` or the EAS profile is `preview` or `production` and either switch is set. `release.yml` sets `RELEASE_BUILD`.
+
 ## CI and PR rules
 
-- **`ci.yml`** runs on every PR and push to main: `npm ci`, lint, typecheck, tests and the web export. The Node version is set there.
+- **`ci.yml`** runs on every PR and push to main: `npm ci`, lint, typecheck, tests and the web export. The Node version is set there, and its token is read-only.
+- **Lint:** `npm run lint` covers `src`, `scripts` and `app.config.ts`. `eslint.config.js` gives `scripts/` the Node globals.
 - **`pr-rules.yml`** checks four things:
   - the branch is `type/<issue>-short-name`
   - the description says `Closes #<issue>` for that issue
@@ -69,7 +72,6 @@ Planned, not built yet:
 - **GitHub API:** GraphQL is blocked in Claude's cloud sessions, so `gh issue view` and `gh pr view` fail. Use REST: `gh api repos/RosePinkDragon/fuzzy-waddle/issues/<n>`.
 - **Playwright** isn't a project dependency, because the cloud sessions bring their own. On your own machine, run `npm i --no-save playwright && npx playwright install chromium`.
 - **`dist-test/`** is git-ignored, so screenshot builds never get committed by accident.
-- **Linting `scripts/`:** `npm run lint` (`expo lint`) passes, but running ESLint directly on `scripts/` reports `__dirname` as undefined, because the config treats them as browser files. Every script has this, including the older ones. Use `npm run lint`.
 - **Sharing on web:** it uses the Web Share API where the browser has it, and otherwise opens WhatsApp's share link (`src/lib/share.ts`).
 
 ## Disagreements

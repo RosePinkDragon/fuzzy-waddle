@@ -8,11 +8,11 @@ How a run works, and the rules that must keep holding. Read this before reviewin
 
 This sheet names the numbers' homes instead of copying them. If code and the brief disagree, list it under Disagreements below rather than picking one.
 
-*Last checked against `e2da193` (main, 2026-11-03).*
+*Last checked against `c636a30` (main, 2026-11-04).*
 
 ## The run loop
 
-`src/game/run.ts` is a pure state machine: `ready → playing → solved → ready …`, with `milestone` after a boss round and `over` when lives run out. `src/hooks/useRun.ts` drives it: it draws words, waits `SOLVED_PAUSE_MS` after a solve, and saves bests and bags.
+`src/game/run.ts` is a pure state machine: `ready → playing → solved → ready …`, with `milestone` after a boss round and `over` when lives run out. `src/hooks/useRun.ts` drives it: it draws words, waits `SOLVED_PAUSE_MS` after a solve, and saves bests and bags. `useFlopDelay` holds the board for `FLOP_DELAY_MS` before the flop or challenge result screen.
 
 | System | Rule (where the numbers live) | Code | Tests |
 |---|---|---|---|
@@ -27,8 +27,8 @@ This sheet names the numbers' homes instead of copying them. If code and the bri
 | **Power-ups** | Four slots, the same in every theme (only names and icons change). Starting counts are in `START_POWER_UPS`. A slot is usable only when it would do something (`canApply`). | `powerUps.ts` | `powerUps.test.ts` |
 | **Answers** | Uppercase, canonical spelling. Only A–Z can be guessed. Spaces split words, and digits and punctuation are revealed automatically. | `answer.ts` | `answer.test.ts` |
 | **Tiles** | Wrap at word breaks and shrink between the max and min size until the answer fits. | `tileLayout.ts` | `tileLayout.test.ts` |
-| **Bests** | One per theme and difficulty: hits and club, saved when a run ends or reaches a club. | `useRun.ts`, `storage.ts` `keys.best` | none (hook) |
-| **Challenges** | A link carries the word ID, never the answer. It plays one word with that word tier's rules, and lives don't matter beyond that word. | `src/app/c/[wordId].tsx`, `lib/share.ts` | none (route) |
+| **Bests** | One per theme and difficulty: hits and club, saved when a run ends or reaches a club. | `useRun.ts`, `storage.ts` `keys.best` | `storage.test.ts` (the wrapper only) |
+| **Challenges** | A link carries the word ID, never the answer. It plays one word with that word tier's rules, and lives don't matter beyond that word. | `src/app/c/[wordId].tsx`, `lib/share.ts` | `share.test.ts` (links) |
 
 ## Slot numbering
 
@@ -64,7 +64,7 @@ When reviewing these, check them against the invariants above, and against each 
 
 - `EXPO_PUBLIC_TEST_LADDER=1` gives a short ladder (`TEST_CLUB_LADDER`), so a milestone comes within a couple of words.
 - `EXPO_PUBLIC_TEST_HOOKS=1` exposes the current answer and status on `globalThis.__HANGMAN__`.
-- `npm run screenshots` uses both. Never set either for a release.
+- `npm run screenshots` uses both. Release builds refuse them (`src/lib/releaseGuard.ts`, called from `app.config.ts`).
 
 ## Disagreements
 
