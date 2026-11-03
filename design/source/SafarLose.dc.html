@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Safar run over screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&amp;family=Yatra+One&amp;display=swap">
+<style>
+body{margin:0;background:#0F1E3D}
+a{color:#F5A524}a:hover{color:#FFC45E}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 14px 12px 20px; display: flex; flex-direction: column; gap: 12px; background: #0F1E3D; color: #F4F1E8; font-family: 'Mukta', system-ui, sans-serif; overflow: hidden">
+
+<div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+<button type="button" aria-label="Back to categories" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2F4A80; background: #1A2C55; color: #F4F1E8; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</button>
+<div style="display: flex; flex-direction: column; align-items: center">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #F5A524">SAFAR</span>
+<span style="font-size: 17px; font-weight: 700; line-height: 1.2">Medium · Run over</span>
+</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 17px; background: #F5A524; color: #0F1E3D; font-weight: 800; font-size: 14px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"></path><path d="M14 7v10" stroke-dasharray="2 2.5"></path></svg>
+<span>100 Cr Club</span>
+</div>
+</div>
+
+<div style="position: relative; flex: 1 1 0; min-height: 140px; max-height: 220px; border-radius: 14px; overflow: hidden; background: #18305E">
+<svg width="100%" height="100%" viewBox="0 0 366 220" preserveAspectRatio="xMidYMax slice" style="display: block" role="img" aria-label="A passenger sits on his suitcase on an empty platform as the train leaves without him">
+<circle cx="56" cy="40" r="14" fill="#F4F1E8" opacity="0.9"></circle>
+<g fill="#F4F1E8" opacity="0.7">
+<circle cx="120" cy="24" r="1.5"></circle>
+<circle cx="180" cy="44" r="1.5"></circle>
+<circle cx="240" cy="18" r="1.5"></circle>
+<circle cx="330" cy="40" r="1.5"></circle>
+</g>
+<rect x="0" y="150" width="366" height="6" fill="#5C6B80"></rect>
+<g fill="#9AA8BF" opacity="0.4">
+<circle cx="286" cy="144" r="9"></circle>
+<circle cx="270" cy="148" r="7"></circle>
+<circle cx="256" cy="150" r="5"></circle>
+</g>
+<rect x="300" y="108" width="80" height="44" rx="6" fill="#2E5AAC"></rect>
+<rect x="300" y="108" width="80" height="7" rx="3" fill="#9AA8BF"></rect>
+<rect x="312" y="120" width="12" height="10" rx="2" fill="#CFE0FF"></rect>
+<circle cx="308" cy="140" r="5" fill="#E2402F"></circle>
+<rect x="0" y="168" width="366" height="52" fill="#5C6B80"></rect>
+<path d="M0 170 H366" stroke="#F5A524" stroke-width="4" stroke-dasharray="16 8"></path>
+<rect x="44" y="192" width="40" height="22" rx="3" fill="#E2402F"></rect>
+<path d="M56 192 v-4 h16 v4" fill="none" stroke="#111111" stroke-width="2"></path>
+<g fill="none" stroke="#F4F1E8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M64 188 L62 162"></path>
+<path d="M62 170 L76 182 L80 188"></path>
+<path d="M64 188 L84 190 L86 214"></path>
+</g>
+<circle cx="64" cy="153" r="9" fill="#F4F1E8"></circle>
+<path d="M55 150 q9 -10 18 0 z" fill="#E2402F"></path>
+<path d="M78 142 q3 5 0 7 q-3 -2 0 -7 Z" fill="#8FD3FF"></path>
+</svg>
+<p style="position: absolute; top: 42%; left: 50%; margin: 0; transform: translate(-50%, -50%) rotate(6deg); white-space: nowrap; font-family: 'Yatra One', serif; font-size: 28px; line-height: 1.1; color: #FF5A64; background: #0F1E3D; border: 4px double #FF5A64; border-radius: 8px; padding: 4px 14px">Train Chhoot Gayi!</p>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: center; gap: 3px">
+<span style="margin-right: 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #F5A524">COACHES</span>
+<sc-for list="{{locked}}" as="l" hint-placeholder-count="2">
+<span style="width: 12px; height: 8px; border-radius: 2px; background: #2F4A80"></span>
+</sc-for>
+<sc-for list="{{used}}" as="l" hint-placeholder-count="7">
+<span style="width: 12px; height: 8px; box-sizing: border-box; border-radius: 2px; border: 1.5px dashed #8FA3C7"></span>
+</sc-for>
+<span style="margin-left: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em">0 LEFT</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px; text-align: center">
+<h1 style="margin: 0; font-family: 'Yatra One', serif; font-weight: 400; font-size: 26px; line-height: 1.2">Agli wali pakad lena.</h1>
+<p style="margin: 0; font-size: 14px; color: #CFE0FF">The place was <span style="font-weight: 800; color: #F4F1E8">Hawa Mahal</span>.</p>
+</div>
+
+<div style="display: flex; gap: 8px">
+<div style="flex: 1 1 0; border-radius: 12px; background: #1A2C55; border: 1px solid #2F4A80; padding: 8px 12px; display: flex; flex-direction: column">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #F5A524">THIS RUN</span>
+<span style="font-family: 'Yatra One', serif; font-size: 22px; line-height: 1.25">24 hits</span>
+<span style="font-size: 12px; color: #CFE0FF">100 Crore Club</span>
+</div>
+<div style="flex: 1 1 0; border-radius: 12px; background: #1A2C55; border: 1px solid #2F4A80; padding: 8px 12px; display: flex; flex-direction: column">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #F5A524">YOUR BEST · MEDIUM</span>
+<span style="font-family: 'Yatra One', serif; font-size: 22px; line-height: 1.25">41 hits</span>
+<span style="font-size: 12px; color: #CFE0FF">200 Crore Club</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 700">200 Crore Club bas <span style="color: #F5A524">11 hits</span> door tha</span>
+<div style="display: flex; gap: 3px">
+<sc-for list="{{near}}" as="s" hint-placeholder-count="15">
+<sc-if value="{{s.on}}" hint-placeholder-val="{{true}}">
+<span style="flex: 1 1 0; height: 8px; border-radius: 4px; background: #F5A524"></span>
+</sc-if>
+<sc-if value="{{s.off}}" hint-placeholder-val="{{false}}">
+<span style="flex: 1 1 0; height: 8px; box-sizing: border-box; border-radius: 4px; border: 1px solid #2F4A80; background: #1A2C55"></span>
+</sc-if>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+<button type="button" style="height: 56px; border-radius: 28px; border: 0; background: #F5A524; color: #0F1E3D; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; cursor: pointer">
+<span style="font-size: 16px; font-weight: 800">Agli train pakdo</span>
+<span style="font-size: 12px; font-weight: 700">New random run</span>
+</button>
+<button type="button" style="height: 44px; border-radius: 22px; border: 1.5px solid #F5A524; background: transparent; color: #F5A524; font-family: inherit; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v13"></path></svg>
+Challenge a friend with this one
+</button>
+<button type="button" style="height: 44px; border: 0; background: transparent; color: #F4F1E8; font-family: inherit; font-size: 14px; font-weight: 700; text-decoration: underline; cursor: pointer">Change difficulty</button>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      locked: [0, 1].map(function (i) { return { i: i }; }),
+      used: [0, 1, 2, 3, 4, 5, 6].map(function (i) { return { i: i }; }),
+      near: Array.from({ length: 15 }, function (_, i) { return { on: i < 4, off: i >= 4 }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Safar theme game screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&amp;family=Yatra+One&amp;display=swap">
+<style>
+body{margin:0;background:#0F1E3D}
+a{color:#F5A524}a:hover{color:#FFC45E}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 14px 12px 20px; display: flex; flex-direction: column; gap: 12px; background: #0F1E3D; color: #F4F1E8; font-family: 'Mukta', system-ui, sans-serif; overflow: hidden">
+
+<div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+<button type="button" aria-label="Back to categories" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2F4A80; background: #1A2C55; color: #F4F1E8; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</button>
+<div style="display: flex; flex-direction: column; align-items: center">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #F5A524">SAFAR</span>
+<h1 style="margin: 0; font-size: 17px; font-weight: 700; line-height: 1.2">Medium · 24 hits</h1>
+</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 17px; background: #F5A524; color: #0F1E3D; font-weight: 800; font-size: 14px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"></path><path d="M14 7v10" stroke-dasharray="2 2.5"></path></svg>
+<span>100 Cr Club</span>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 10px; height: 20px">
+<div style="flex: 1 1 0; display: flex; gap: 3px">
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="15">
+<sc-if value="{{s.on}}" hint-placeholder-val="{{true}}">
+<span style="flex: 1 1 0; height: 8px; border-radius: 4px; background: #F5A524"></span>
+</sc-if>
+<sc-if value="{{s.off}}" hint-placeholder-val="{{false}}">
+<span style="flex: 1 1 0; height: 8px; box-sizing: border-box; border-radius: 4px; border: 1px solid #2F4A80; background: #1A2C55"></span>
+</sc-if>
+</sc-for>
+</div>
+<span style="font-size: 12px; font-weight: 700; white-space: nowrap">11 more to <span style="color: #F5A524">200 Cr Club</span></span>
+</div>
+
+<div style="flex: 1 1 0; min-height: 120px; max-height: 200px; display: flex; flex-direction: column; gap: 6px">
+<div style="position: relative; flex: 1 1 0; min-height: 120px; border-radius: 14px; overflow: hidden; background: #18305E">
+<svg width="100%" height="100%" viewBox="0 0 366 200" preserveAspectRatio="xMidYMax slice" style="display: block" role="img" aria-label="A passenger runs with his suitcase as the train pulls out of the station">
+<circle cx="240" cy="70" r="16" fill="#F5A524" opacity="0.9"></circle>
+<path d="M52 66 V150" stroke="#9AA8BF" stroke-width="4"></path>
+<circle cx="52" cy="50" r="16" fill="#F4F1E8" stroke="#1A1A1A" stroke-width="3"></circle>
+<path d="M52 50 V40 M52 50 L60 54" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M140 60 V150" stroke="#9AA8BF" stroke-width="3"></path>
+<rect x="132" y="48" width="16" height="30" rx="4" fill="#111111"></rect>
+<circle cx="140" cy="57" r="4" fill="#4A1A1A"></circle>
+<circle cx="140" cy="69" r="4" fill="#3DDC84"></circle>
+<rect x="170" y="96" width="90" height="48" rx="6" fill="#2E5AAC"></rect>
+<rect x="266" y="96" width="110" height="48" rx="6" fill="#2E5AAC"></rect>
+<rect x="170" y="96" width="90" height="8" rx="4" fill="#9AA8BF"></rect>
+<rect x="266" y="96" width="110" height="8" rx="4" fill="#9AA8BF"></rect>
+<path d="M260 124 H266" stroke="#111111" stroke-width="4"></path>
+<g fill="#F4F1E8">
+<rect x="180" y="110" width="12" height="10" rx="2"></rect>
+<rect x="200" y="110" width="12" height="10" rx="2"></rect>
+<rect x="220" y="110" width="12" height="10" rx="2"></rect>
+<rect x="240" y="110" width="12" height="10" rx="2"></rect>
+<rect x="276" y="110" width="12" height="10" rx="2"></rect>
+<rect x="296" y="110" width="12" height="10" rx="2"></rect>
+<rect x="316" y="110" width="12" height="10" rx="2"></rect>
+<rect x="336" y="110" width="12" height="10" rx="2"></rect>
+</g>
+<path d="M170 132 H376" stroke="#F5D33A" stroke-width="3"></path>
+<g stroke="#CFE0FF" stroke-width="3" stroke-linecap="round" opacity="0.5">
+<path d="M150 108 h12"></path>
+<path d="M146 122 h18"></path>
+<path d="M152 136 h10"></path>
+</g>
+<rect x="0" y="148" width="366" height="52" fill="#5C6B80"></rect>
+<path d="M0 150 H366" stroke="#F5A524" stroke-width="4" stroke-dasharray="16 8"></path>
+<g fill="none" stroke="#F4F1E8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M82 110 L74 134"></path>
+<path d="M80 115 L96 124"></path>
+<path d="M80 115 L64 108"></path>
+<path d="M74 134 L86 146 L94 148"></path>
+<path d="M74 134 L60 146"></path>
+</g>
+<circle cx="85" cy="100" r="9" fill="#F4F1E8"></circle>
+<path d="M76 97 q9 -10 18 0 z" fill="#E2402F"></path>
+<rect x="94" y="122" width="24" height="17" rx="3" fill="#E2402F"></rect>
+<path d="M101 122 v-3 h10 v3" fill="none" stroke="#111111" stroke-width="2"></path>
+<path d="M98 92 q3 5 0 7 q-3 -2 0 -7 Z" fill="#8FD3FF"></path>
+</svg>
+<div style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 3px; padding: 5px 10px; border-radius: 8px; background: #0F1E3D; border: 1.5px solid #F5A524; white-space: nowrap">
+<span style="margin-right: 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #F5A524">COACHES</span>
+<sc-for list="{{lives}}" as="l" hint-placeholder-count="9">
+<sc-if value="{{l.locked}}" hint-placeholder-val="{{false}}">
+<span style="width: 12px; height: 8px; border-radius: 2px; background: #2F4A80"></span>
+</sc-if>
+<sc-if value="{{l.used}}" hint-placeholder-val="{{false}}">
+<span style="width: 12px; height: 8px; box-sizing: border-box; border-radius: 2px; border: 1.5px dashed #8FA3C7"></span>
+</sc-if>
+<sc-if value="{{l.left}}" hint-placeholder-val="{{true}}">
+<span style="width: 12px; height: 8px; border-radius: 2px; background: #3FA7D6"></span>
+</sc-if>
+</sc-for>
+<span style="margin-left: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em">4 LEFT</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<sc-for list="{{lines}}" as="line" hint-placeholder-count="2">
+<div style="display: flex; gap: 20px">
+<sc-for list="{{line.words}}" as="w" hint-placeholder-count="1">
+<div style="display: flex; gap: 6px">
+<sc-for list="{{w.tiles}}" as="t" hint-placeholder-count="5">
+<sc-if value="{{t.shown}}" hint-placeholder-val="{{false}}">
+<span style="width: 38px; height: 48px; border-radius: 8px; background: #F4F1E8; color: #0F1E3D; display: flex; align-items: center; justify-content: center; font-family: 'Yatra One', serif; font-size: 26px">{{t.ch}}</span>
+</sc-if>
+<sc-if value="{{t.hidden}}" hint-placeholder-val="{{true}}">
+<span style="width: 38px; height: 48px; box-sizing: border-box; border-radius: 8px; background: #1A2C55; border-bottom: 3px solid #F5A524"></span>
+</sc-if>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+
+<div style="background: #1A2C55; border: 1px solid #2F4A80; color: #F4F1E8; border-radius: 14px; padding: 10px 14px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: #F5A524; margin-right: auto">CLUES</span>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.35">Jaipur ki gulabi building, khidkiyan hi khidkiyan. Har tourist ki pehli photo.</p>
+</div>
+
+<div style="margin-top: auto; display: flex; gap: 8px">
+<button type="button" aria-label="Window Seat: reveal one letter, 2 left" style="position: relative; flex: 1 1 0; height: 54px; border-radius: 12px; border: 1px solid #2F4A80; background: #1A2C55; color: #F4F1E8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0; font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5A524" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"></rect><circle cx="15" cy="9" r="2"></circle><path d="M4 16l5-4 4 3 3-2 4 3"></path></svg>
+<span>Window Seat</span>
+<span style="position: absolute; top: -6px; right: -4px; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 5px; border-radius: 10px; background: #F5A524; color: #0F1E3D; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">2</span>
+</button>
+<button type="button" aria-label="Rasta Pucho: get an extra clue, 1 left" style="position: relative; flex: 1 1 0; height: 54px; border-radius: 12px; border: 1px solid #2F4A80; background: #1A2C55; color: #F4F1E8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0; font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5A524" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"></path><path d="M5 6h11l3 3-3 3H5z"></path></svg>
+<span>Rasta Pucho</span>
+<span style="position: absolute; top: -6px; right: -4px; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 5px; border-radius: 10px; background: #F5A524; color: #0F1E3D; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">1</span>
+</button>
+<button type="button" aria-label="Chain Kheecho: undo a wrong guess, 1 left" style="position: relative; flex: 1 1 0; height: 54px; border-radius: 12px; border: 1px solid #2F4A80; background: #1A2C55; color: #F4F1E8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0; font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5A524" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 1 0-5.66l2-2a4 4 0 0 1 5.66 5.66l-1 1"></path><path d="M14 10a4 4 0 0 1 0 5.66l-2 2a4 4 0 0 1-5.66-5.66l1-1"></path></svg>
+<span>Chain Kheecho</span>
+<span style="position: absolute; top: -6px; right: -4px; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 5px; border-radius: 10px; background: #F5A524; color: #0F1E3D; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">1</span>
+</button>
+<button type="button" aria-label="TC Check: remove 3 letters not in the answer, 1 left" style="position: relative; flex: 1 1 0; height: 54px; border-radius: 12px; border: 1px solid #2F4A80; background: #1A2C55; color: #F4F1E8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0; font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5A524" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v8a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2z"></path><path d="M9 12l2 2 4-4"></path></svg>
+<span>TC Check</span>
+<span style="position: absolute; top: -6px; right: -4px; min-width: 20px; height: 20px; box-sizing: border-box; padding: 0 5px; border-radius: 10px; background: #F5A524; color: #0F1E3D; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">1</span>
+</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{rows}}" as="row" hint-placeholder-count="3">
+<div style="display: flex; justify-content: center; gap: 4px">
+<sc-for list="{{row.keys}}" as="k" hint-placeholder-count="9">
+<sc-if value="{{k.open}}" hint-placeholder-val="{{true}}">
+<button type="button" style="width: 32px; height: 46px; border: 0; border-radius: 7px; background: #F4F1E8; color: #0F1E3D; font-family: inherit; font-size: 18px; font-weight: 800; padding: 0; cursor: pointer">{{k.l}}</button>
+</sc-if>
+<sc-if value="{{k.right}}" hint-placeholder-val="{{false}}">
+<button type="button" disabled="{{yes}}" aria-label="{{k.l}}, in the answer" style="width: 32px; height: 46px; border: 0; border-radius: 7px; background: #F5A524; color: #0F1E3D; font-family: inherit; font-size: 18px; font-weight: 800; padding: 0; cursor: pointer">{{k.l}}</button>
+</sc-if>
+<sc-if value="{{k.wrong}}" hint-placeholder-val="{{false}}">
+<button type="button" disabled="{{yes}}" aria-label="{{k.l}}, not in the answer" style="width: 32px; height: 46px; border: 0; border-radius: 7px; background: #16264A; color: #8FA3C7; font-family: inherit; font-size: 18px; font-weight: 800; padding: 0; text-decoration: line-through; text-decoration-thickness: 2px">{{k.l}}</button>
+</sc-if>
+</sc-for>
+</div>
+</sc-for>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var guessed = ['A', 'H'];
+    var wrong = ['E', 'I', 'O'];
+    var lives = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) {
+      var locked = 2;
+      return { locked: i < locked, used: i >= locked && i < locked + wrong.length, left: i >= locked + wrong.length };
+    });
+    var toWord = function (s) {
+      return { tiles: s.split('').map(function (ch) {
+        var shown = guessed.indexOf(ch) > -1;
+        return { ch: ch, shown: shown, hidden: !shown };
+      }) };
+    };
+    var rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'].map(function (r) {
+      return { keys: r.split('').map(function (l) {
+        var right = guessed.indexOf(l) > -1;
+        var bad = wrong.indexOf(l) > -1;
+        return { l: l, right: right, wrong: bad, open: !right && !bad };
+      }) };
+    });
+    var segs = [];
+    for (var n = 0; n < 15; n++) { segs.push({ on: n < 4, off: n >= 4 }); }
+    return { lives: lives, segs: segs, lines: [{ words: [toWord('HAWA')] }, { words: [toWord('MAHAL')] }], rows: rows, yes: true };
+  }
+}
+</script>
+</body>
+</html>
