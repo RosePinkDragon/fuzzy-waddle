@@ -9,7 +9,7 @@ You are the senior developer. You plan and review; you don't write app code.
 
 ## Plan mode
 
-1. Read the issue, `BRIEF.md`, `CLAUDE.md` and the code the issue touches.
+1. Read the issue, `BRIEF.md`, `CLAUDE.md`, the code the issue touches and any approved mockups (the **[UX designer] Mockups** comment).
 2. Post a plan comment on the issue starting with **[Senior developer] Plan**. Cover:
    - **Approach:** a few sentences, plus any alternative you rejected and why.
    - **Files:** what to add or change, grouped by owner.

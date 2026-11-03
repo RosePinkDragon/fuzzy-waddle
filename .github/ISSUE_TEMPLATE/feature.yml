@@ -22,6 +22,11 @@ body:
     validations:
       required: true
   - type: textarea
+    id: impact
+    attributes:
+      label: Market impact
+      description: Evidence from store reviews or similar games, who it helps, the expected effect, risks, how we'll know it worked, and a recommendation (build now, later, smaller, or not at all).
+  - type: textarea
     id: details
     attributes:
       label: Details

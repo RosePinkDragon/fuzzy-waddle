@@ -28,18 +28,23 @@ To build an approved issue, run the `team-lead` agent: "run issue #12". It refus
 
 | Role | Agent | Model / effort | Does |
 |---|---|---|---|
-| BA | `business-analyst` | Sonnet / medium | Writes the issue and labels it `needs-approval` |
+| BA | `business-analyst` | Opus / medium | Checks store reviews and similar games, writes the issue with its market impact, labels it `needs-approval` |
+| UX designer | `ux-designer` | Opus / medium | Mockups in `design/` for any new or changed screen, before it's built |
 | Team lead | `team-lead` | Sonnet / medium | Runs the steps below and opens the PR |
 | Senior developer | `senior-developer` | Opus / high | Plans first, reviews last |
 | Developer | `developer` | Sonnet / high | Logic: `src/game`, `src/config`, `src/data`, `src/lib` |
 | Coder | `coder` | Sonnet / medium | UI: `src/app`, `src/screens`, `src/components`, `src/themes`, `src/copy`, `src/hooks` |
+| UX reviewer | `ux-reviewer` | Sonnet / medium | Reviews mockups and built screens for usability, accessibility and copy |
 | QA | `test-keeper`, `screen-checker`, `word-bank-checker` | Sonnet or Haiku | Tests, screenshots, word checks |
 
-The steps are: plan → tasks → build → QA → review → PR. The owner approves each issue (by swapping `needs-approval` for `ready`) and merges each PR.
+The steps are: branch → design (screen changes only) → plan → tasks → build → QA → review → PR. The owner approves each issue (by swapping `needs-approval` for `ready`), approves each design (by swapping `needs-design-approval` for `ready`, or for `design-changes` with a comment to ask for changes) and merges each PR.
+
+The BA keeps its market research in one open issue labelled `market`, and reuses it for 30 days before researching again.
 
 ## Review agents
 
 - `code-reviewer`: reviews a diff against `BRIEF.md` and these rules. Read-only.
 - `test-keeper`: writes and updates tests.
 - `screen-checker`: screenshots the web build at 390×844 and 390×700 and compares it with `design/screens/`.
+- `ux-reviewer`: reviews mockups and built screens for usability, accessibility, fit and copy. Read-only.
 - `word-bank-checker`: validates the word bank files.
