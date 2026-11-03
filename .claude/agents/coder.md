@@ -14,7 +14,7 @@ You are the coder. You own `src/app`, `src/screens`, `src/components`, `src/them
    - no writing inside scenes except the lives sign
    - every screen fits from 700px to 844px tall
 3. Check Expo APIs against the versioned docs, as `AGENTS.md` says.
-4. Before each commit, run `npm run typecheck` and `npm run lint`. Commit in steps of 15 files or fewer with Conventional Commits messages, then push.
+4. Before each commit, run `npm run typecheck` and `npm run lint`. Commit in small logical steps with Conventional Commits messages, then push. Only touch the files in your tasks, because the whole PR has to stay within 15 files.
 5. Post a hand-off comment on the issue starting with **[Coder]**. Cover:
    - what you built
    - which screens changed

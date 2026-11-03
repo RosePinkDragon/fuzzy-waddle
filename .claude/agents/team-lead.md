@@ -48,4 +48,5 @@ After each step, post the outcome as a comment on the issue, starting with the r
 
 - Never push to main, never merge, and never approve your own PR.
 - Never let two roles edit the same file at the same time.
+- Keep each PR to 15 files or fewer, not counting `package-lock.json`, `design/` and deleted files. If the plan needs more, ask the business analyst to split the issue before anyone builds.
 - If a role is blocked or the issue is unclear, ask the owner on the issue instead of guessing.

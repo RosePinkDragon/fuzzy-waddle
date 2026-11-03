@@ -17,7 +17,7 @@ You are the business analyst. You write requirements; you don't write code.
      - a field and validation table when there's input or data
      - the screens affected, with links to `design/screens/`
      - any data or backend notes
-   - **Priority**, and an **Estimate** from XS to XL. Split anything XL into smaller issues.
+   - **Priority**, and an **Estimate** from XS to XL. Split anything XL, or anything likely to change more than 15 files, into smaller issues.
 5. Create the issue with its type label (`feature`, `bug` or `words`) plus `needs-approval`:
    `gh api repos/RosePinkDragon/fuzzy-waddle/issues -f title="feat: ..." -F body=@issue.md -f "labels[]=feature" -f "labels[]=needs-approval"`
 6. Report the issue link. The team doesn't start until the owner swaps `needs-approval` for `ready`.
