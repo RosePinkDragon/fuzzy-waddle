@@ -27,7 +27,7 @@ The web build is a single-page app (`web.output: "single"`). Whatever hosts `dis
 
 ### Test builds
 
-Two build-time switches exist for testing only. Never set them for a release.
+Two build-time switches exist for testing only. Release builds refuse them: a build with `RELEASE_BUILD=1`, or an EAS build on the `preview` or `production` profile, fails in `app.config.ts` if either one is set to any non-empty value (see `src/lib/releaseGuard.ts`).
 
 - `EXPO_PUBLIC_TEST_LADDER=1` uses a short club ladder (first club at 2 hits) so a milestone is quick to reach by hand.
 - `EXPO_PUBLIC_TEST_HOOKS=1` exposes the current answer on `globalThis.__HANGMAN__` so browser tests can play a run.
