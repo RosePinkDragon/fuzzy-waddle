@@ -10,7 +10,7 @@ Expo-specific rules: @AGENTS.md
    `gh api repos/RosePinkDragon/fuzzy-waddle/issues -f title="feat: ..." -F body=@issue.md -f "labels[]=feature"`
 2. **Branch from main** as `type/<issue>-short-name`. Types: feat, fix, chore, docs, test, refactor, ci, style, perf, build. Example: `feat/12-difficulty-picker`.
 3. **Small PRs.** At most 15 changed files per PR, not counting `package-lock.json`, files in `design/` and deleted files. If the work needs more, split the issue first. Commit in logical steps, with messages in Conventional Commits format: `type(scope): lowercase subject`. End each message with the attribution lines your session asks for.
-4. **Before opening a PR,** run lint, typecheck and tests, then run the `code-reviewer` agent on your diff and fix what it finds. For UI changes, also run `screen-checker`.
+4. **Before opening a PR,** run `npm run verify`. For UI changes, also run `npm run screenshots` (with `--screens` and `--themes` for the screens you touched). For word changes, also run `npm run words:check`. Changes to game rules, persistence, sharing or security, or releases need an independent `senior-developer` review before the PR.
 5. **Open a PR** from `.github/pull_request_template.md`. The title is in Conventional Commits format, and the description starts with `Closes #<issue>`. With REST:
    `gh api repos/RosePinkDragon/fuzzy-waddle/pulls -f title="feat: ..." -f head=<branch> -f base=main -F body=@pr.md`
 6. **Never push to main and never merge.** The owner reviews and merges.
@@ -22,29 +22,69 @@ Expo-specific rules: @AGENTS.md
 - Follow the UI rules in `BRIEF.md` section 4.
 - Word bank entries stay `draft` until the owner approves them.
 
-## The agent team (`.claude/agents/`)
+## The agent team
 
-To build an approved issue, run the `team-lead` agent: "run issue #12". It refuses issues that aren't labelled `ready`. The roles hand off through comments on the issue.
+Two skills run the team from the owner's chat. Agents are called only when a change needs them.
 
-| Role | Agent | Model / effort | Does |
+- **`review-issue`** (`.claude/skills/review-issue/`): "review issue #31".
+  - Runs before approval on a `needs-approval` issue or a rough idea.
+  - Calls only the specialists the issue needs, then posts their reviews and a **[Review] Routing** summary with owner decisions.
+  - Never labels an issue `ready` and never writes code.
+- **`run-issue`** (`.claude/skills/run-issue/`): "run issue #12".
+  - Runs after the owner approves, on `ready` issues only.
+  - Picks Fast, Standard or Full mode by risk, runs the needed agents and checks, opens the PR and posts a **[Run] Report**.
+
+| Agent | Model / effort / turns | Does | Called when |
 |---|---|---|---|
-| BA | `business-analyst` | Opus / medium | Checks store reviews and similar games, writes the issue with its market impact, labels it `needs-approval` |
-| UX designer | `ux-designer` | Opus / medium | Mockups in `design/` for any new or changed screen, before it's built |
-| Team lead | `team-lead` | Sonnet / medium | Runs the steps below and opens the PR |
-| Senior developer | `senior-developer` | Opus / high | Plans first, reviews last |
-| Developer | `developer` | Sonnet / high | Logic: `src/game`, `src/config`, `src/data`, `src/lib` |
-| Coder | `coder` | Sonnet / medium | UI: `src/app`, `src/screens`, `src/components`, `src/themes`, `src/copy`, `src/hooks` |
-| UX reviewer | `ux-reviewer` | Sonnet / medium | Reviews mockups and built screens for usability, accessibility and copy |
-| QA | `test-keeper`, `screen-checker`, `word-bank-checker` | Sonnet or Haiku | Tests, screenshots, word checks |
+| `game-designer` | Opus / medium / 30 | Reviews the loop, difficulty, lives, rewards, fairness and exploits before approval | An issue changes mechanics or the game economy |
+| `business-analyst` | Opus / medium / 30 | Market evidence, player needs and build-or-defer calls. Writes issues from rough ideas. | Value or priority is unclear. Skipped for bugs, tooling and logic-only work. |
+| `ux-designer` | Opus / medium / 30 | Mockups in `design/` before anything is built | A new or materially changed screen or flow (Full mode) |
+| `ux-reviewer` | Sonnet / medium / 30 | Independent review of mockups, built screens and word content | Player-facing UI or copy, new mockups, or word changes |
+| `senior-developer` | Opus / high / 40 | Plans Standard and Full runs, and reviews code it didn't write | Standard and Full runs, plus any change to game rules, persistence, sharing or security, or releases |
+| `developer` | Sonnet / high / 80 | Builds the whole change: logic, UI, copy, words, tests and tooling | Every approved issue |
 
-The steps are: branch → design (screen changes only) → plan → tasks → build → QA → review → PR. The owner approves each issue (by swapping `needs-approval` for `ready`), approves each design (by swapping `needs-design-approval` for `ready`, or for `design-changes` with a comment to ask for changes) and merges each PR.
+**Modes** (`run-issue` picks one and logs why):
+
+| Mode | For | Steps |
+|---|---|---|
+| Fast | Bugs, CI, tooling, logic-only work | developer → checks → PR |
+| Standard | Game rules, existing screens, persistence or sharing | plan → developer → checks → reviews → PR |
+| Full | New or changed screens and flows | design gate → plan → developer → checks → reviews → PR |
+
+**Approvals:**
+- The owner approves each issue by swapping `needs-approval` for `ready`.
+- The owner approves each design by swapping `needs-design-approval` for `ready`, or for `design-changes` with a comment asking for changes.
+- The owner merges each PR.
+
+**Limits:**
+- Review and fix loops stop after two rounds and go back to the owner.
+- Each agent has a turn limit (`maxTurns`).
 
 The BA keeps its market research in one open issue labelled `market`, and reuses it for 30 days before researching again.
 
-## Review agents
+## Reference sheets (`.claude/reference/`)
 
-- `code-reviewer`: reviews a diff against `BRIEF.md` and these rules. Read-only.
-- `test-keeper`: writes and updates tests.
-- `screen-checker`: screenshots the web build at 390×844 and 390×700 and compares it with `design/screens/`.
-- `ux-reviewer`: reviews mockups and built screens for usability, accessibility, fit and copy. Read-only.
-- `word-bank-checker`: validates the word bank files.
+Short shared docs that agents load only when a task needs them. They are not skills or agents.
+
+| Sheet | Covers | Read by |
+|---|---|---|
+| [`codebase-map.md`](.claude/reference/codebase-map.md) | Where code lives and where a change goes | developer, senior-developer |
+| [`game-systems.md`](.claude/reference/game-systems.md) | Lives, pools, bosses, milestones, power-ups, saving, invariants | game-designer, developer, senior-developer |
+| [`design-system.md`](.claude/reference/design-system.md) | Themes, layout, accessibility, copy, mockup and screenshot steps | ux-designer, ux-reviewer, developer on UI work |
+| [`expo-tooling.md`](.claude/reference/expo-tooling.md) | Expo versions, helper commands, tests, CI and releases | developer, senior-developer |
+
+**Which source wins:**
+- `BRIEF.md` for product requirements
+- code and config for built behaviour (`src/game/config.ts`)
+- `src/themes/themes.ts` and `design/source/` for design values
+- `AGENTS.md` and the versioned Expo docs for the platform
+
+A sheet links to these rather than copying them, and lists any conflict under Disagreements. **When a change makes a sheet wrong, update the sheet in the same PR.**
+
+## Helper commands
+
+- `npm run verify` (or `verify:quick`, which skips the web export)
+- `npm run screenshots`
+- `npm run words:check`
+
+[`expo-tooling.md`](.claude/reference/expo-tooling.md) says what each does and when to use it.
