@@ -1,0 +1,374 @@
+[
+  {
+    "id": "khana-001",
+    "answer": "PANI PURI",
+    "difficulty": "easy",
+    "chips": [
+      "Street food",
+      "All India"
+    ],
+    "clue": "Mumbai mein ek naam, Kolkata mein doosra. Bhaiya, ek aur dena!",
+    "extraClue": "Imli ka paani, aloo, aur ek hi bite mein.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-002",
+    "answer": "VADA PAV",
+    "difficulty": "easy",
+    "chips": [
+      "Mumbai",
+      "Street food"
+    ],
+    "clue": "Mumbai ka burger. Local pakadne se pehle ek.",
+    "extraClue": "Besan mein lipta aloo, bun ke beech, saath mein tali mirchi.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-003",
+    "answer": "BIRYANI",
+    "difficulty": "easy",
+    "chips": [
+      "Rice",
+      "Main course"
+    ],
+    "clue": "Hyderabad, Lucknow, Kolkata, sabki apni wali. Aloo daalein ya nahi?",
+    "extraClue": "Dum pe pakti hai, chawal aur masala layer mein.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-004",
+    "answer": "SAMOSA",
+    "difficulty": "easy",
+    "chips": [
+      "Snack",
+      "All India"
+    ],
+    "clue": "Teekona, andar aloo, chai ke saath best.",
+    "extraClue": "College canteen ka hero, chutney ke saath.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-005",
+    "answer": "JALEBI",
+    "difficulty": "easy",
+    "chips": [
+      "Sweet",
+      "All India"
+    ],
+    "clue": "Seedhi baat nahi karti, gol gol ghoomti hai. Chashni wali.",
+    "extraClue": "Gujarat mein fafda ke saath, Sunday subah.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-006",
+    "answer": "GULAB JAMUN",
+    "difficulty": "easy",
+    "chips": [
+      "Sweet",
+      "All India"
+    ],
+    "clue": "Gol, bhoori, chashni mein doobi. Shaadi ki plate ka king.",
+    "extraClue": "Khoye se banti hai. Ice cream ke saath bhi chalti.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-007",
+    "answer": "DOSA",
+    "difficulty": "easy",
+    "chips": [
+      "South India",
+      "Breakfast"
+    ],
+    "clue": "Lamba, crispy, sambhar aur chutney ke saath.",
+    "extraClue": "Masala wala ho toh andar aloo.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-008",
+    "answer": "CHOLE BHATURE",
+    "difficulty": "easy",
+    "chips": [
+      "Punjab",
+      "Breakfast"
+    ],
+    "clue": "Phoola hua, tala hua, saath mein masaledaar chane.",
+    "extraClue": "Delhi ka Sunday breakfast. Diet kal se.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-009",
+    "answer": "PAV BHAJI",
+    "difficulty": "easy",
+    "chips": [
+      "Mumbai",
+      "Street food"
+    ],
+    "clue": "Makkhan mein doobi sabzi, makkhan wale bun ke saath.",
+    "extraClue": "Juhu beach ka tawa, upar se nimbu aur kaanda.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-010",
+    "answer": "BUTTER CHICKEN",
+    "difficulty": "easy",
+    "chips": [
+      "Delhi",
+      "Main course"
+    ],
+    "clue": "Tandoori murgh, makhani gravy, naan ke saath.",
+    "extraClue": "Gravy mein makkhan aur cream, dhabe ka legend.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-011",
+    "answer": "IDLI",
+    "difficulty": "easy",
+    "chips": [
+      "South India",
+      "Breakfast"
+    ],
+    "clue": "Bhaap mein bani gol safed tikiya, sambhar mein dubki.",
+    "extraClue": "Chawal aur urad ka ghol, raat bhar khameer uthta.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-012",
+    "answer": "RASGULLA",
+    "difficulty": "easy",
+    "chips": [
+      "Sweet",
+      "Bengal"
+    ],
+    "clue": "Spongy, safed, chashni se bhara. Bengal aur Odisha ka jhagda.",
+    "extraClue": "Daba ke khao toh ras nikalta hai.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-013",
+    "answer": "KHICHDI",
+    "difficulty": "easy",
+    "chips": [
+      "Comfort food",
+      "All India"
+    ],
+    "clue": "Bimaar ho toh mummy yahi banati. Dal-chawal ek saath.",
+    "extraClue": "Ghee aur papad ke saath, sabse simple khaana.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-014",
+    "answer": "DHOKLA",
+    "difficulty": "easy",
+    "chips": [
+      "Gujarat",
+      "Snack"
+    ],
+    "clue": "Peela, spongy, Gujarat se. Upar se rai ka tadka.",
+    "extraClue": "Besan ka bana, bhaap mein pakta.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-015",
+    "answer": "DAL MAKHANI",
+    "difficulty": "medium",
+    "chips": [
+      "Punjab",
+      "Main course"
+    ],
+    "clue": "Kaali urad, raat bhar dheemi aanch, upar se makkhan.",
+    "extraClue": "Restaurant wali shaahi dal, cream ke saath.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-016",
+    "answer": "MISAL PAV",
+    "difficulty": "medium",
+    "chips": [
+      "Maharashtra",
+      "Breakfast"
+    ],
+    "clue": "Teekha tarri, upar farsan. Pune vs Kolhapur.",
+    "extraClue": "Matki ki usal, pav ke saath.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-017",
+    "answer": "RAJMA CHAWAL",
+    "difficulty": "medium",
+    "chips": [
+      "Punjab",
+      "Main course"
+    ],
+    "clue": "Har Punjabi ghar ka Sunday lunch. Laal beans, gaadhi gravy.",
+    "extraClue": "Jammu ke chhote laal wale sabse best maane jaate.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-018",
+    "answer": "MYSORE PAK",
+    "difficulty": "medium",
+    "chips": [
+      "Karnataka",
+      "Sweet"
+    ],
+    "clue": "Besan, ghee aur cheeni. Karnataka ki shaan.",
+    "extraClue": "Raja ki rasoi mein bani, shehar ka naam saath laayi.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-019",
+    "answer": "LITTI CHOKHA",
+    "difficulty": "medium",
+    "chips": [
+      "Bihar",
+      "Main course"
+    ],
+    "clue": "Sattu bhari goli, aag pe seki, baingan bharte ke saath.",
+    "extraClue": "Bihar ka pride. Ghee mein dubo ke khao.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-020",
+    "answer": "MODAK",
+    "difficulty": "medium",
+    "chips": [
+      "Maharashtra",
+      "Sweet"
+    ],
+    "clue": "Ganpati Bappa ka favourite. Andar gud aur nariyal.",
+    "extraClue": "Ukadiche wala bhaap mein banta hai.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-021",
+    "answer": "KACHORI",
+    "difficulty": "medium",
+    "chips": [
+      "Rajasthan",
+      "Snack"
+    ],
+    "clue": "Phooli hui, andar daal ya pyaaz. Jodhpur ki famous.",
+    "extraClue": "Aloo ki sabzi ke saath nashta.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-022",
+    "answer": "PANEER TIKKA",
+    "difficulty": "medium",
+    "chips": [
+      "Punjab",
+      "Starter"
+    ],
+    "clue": "Tandoor mein seka cottage cheese, shimla mirch ke saath.",
+    "extraClue": "Shaadi ka veg starter, seekh pe.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-023",
+    "answer": "POHA",
+    "difficulty": "medium",
+    "chips": [
+      "Indore",
+      "Breakfast"
+    ],
+    "clue": "Indore ka nashta, upar sev aur jeeravan.",
+    "extraClue": "Chapte chawal, haldi aur moongphali.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-024",
+    "answer": "KULFI",
+    "difficulty": "medium",
+    "chips": [
+      "Dessert",
+      "All India"
+    ],
+    "clue": "Matke mein jamti, falooda ke saath. Ice cream ki desi behen.",
+    "extraClue": "Doodh ko ghanton ubaalo, phir jamao.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-025",
+    "answer": "NIHARI",
+    "difficulty": "hard",
+    "chips": [
+      "Old Delhi",
+      "Main course"
+    ],
+    "clue": "Raat bhar pakta mutton stew, subah ka nashta.",
+    "extraClue": "Purani Dilli ki galiyon mein fajr ke baad milta.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-026",
+    "answer": "UNDHIYU",
+    "difficulty": "hard",
+    "chips": [
+      "Gujarat",
+      "Main course"
+    ],
+    "clue": "Gujarati winter special, matke mein ulta pakta.",
+    "extraClue": "Uttarayan pe zaroor banta, saari sardi ki sabziyan.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-027",
+    "answer": "GALOUTI KEBAB",
+    "difficulty": "hard",
+    "chips": [
+      "Lucknow",
+      "Starter"
+    ],
+    "clue": "Itna naram ki muh mein ghul jaaye. Nawabon ka shauk.",
+    "extraClue": "Kehte hain ek nawab ke daant nahi the.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-028",
+    "answer": "THUKPA",
+    "difficulty": "hard",
+    "chips": [
+      "Himalaya",
+      "Soup"
+    ],
+    "clue": "Pahadon ka garam noodle soup.",
+    "extraClue": "Sikkim, Ladakh aur Tibet mein milega.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-029",
+    "answer": "BEBINCA",
+    "difficulty": "hard",
+    "chips": [
+      "Goa",
+      "Sweet"
+    ],
+    "clue": "Goa ki layer wali mithai, Christmas pe zaroor.",
+    "extraClue": "Nariyal ka doodh, ande, aur kai saari layers.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-030",
+    "answer": "MALPUA",
+    "difficulty": "hard",
+    "chips": [
+      "Sweet",
+      "All India"
+    ],
+    "clue": "Chashni mein doobi meethi pancake, rabdi ke saath.",
+    "extraClue": "Holi aur Ramzan dono mein banti hai.",
+    "status": "draft"
+  },
+  {
+    "id": "khana-031",
+    "answer": "APPAM",
+    "difficulty": "hard",
+    "chips": [
+      "Kerala",
+      "Breakfast"
+    ],
+    "clue": "Beech mein naram, kinaare crispy. Kerala ke stew ka partner.",
+    "extraClue": "Chawal aur nariyal ka ghol, ek khaas kadhai mein.",
+    "status": "draft"
+  }
+]
