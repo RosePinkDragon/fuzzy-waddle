@@ -45,6 +45,8 @@ export function canApply(run: RunState, slot: PowerUpSlot): boolean {
       return run.livesLost > 0 && undoableGuess(play) !== undefined;
     case REMOVE:
       return removableLetters(play).length > 0;
+    default:
+      return false;
   }
 }
 
@@ -101,5 +103,7 @@ export function applyPowerUp(
         effect: { slot: 3, letters },
       };
     }
+    default:
+      return { run, effect: null };
   }
 }
