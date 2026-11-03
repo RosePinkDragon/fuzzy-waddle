@@ -11,8 +11,8 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 
 ## Versions
 
-- **Expo SDK 58** (`expo ~58.x`), with Expo Router, React Native 0.88, React 19.3, Reanimated 4 and TypeScript 6. Check `package.json` for the exact versions.
-- **Docs:** `https://docs.expo.dev/versions/v58.0.0/`. The index of corrections to common mistakes is `https://docs.expo.dev/llms.txt`.
+- **SDK:** read the major version of `expo` in `package.json` (the SDK was 58 at the last check). React Native, React, Reanimated and TypeScript versions are there too.
+- **Docs:** `https://docs.expo.dev/versions/v<major>.0.0/`. The index of corrections to common mistakes is `https://docs.expo.dev/llms.txt`.
 - **Adding a dependency:** use `npx expo install <package>`, never `npm install`, so you get the SDK-compatible version. Prefer Expo modules over third-party ones.
 - **Native folders:** `ios/` and `android/` are generated (Continuous Native Generation). Configure native behaviour in `app.config.ts`, never by hand.
 - **Web:** a single-page app (`web.output: 'single'`). WhatsApp challenge links open it.
@@ -49,7 +49,7 @@ Planned, not built yet:
 
 ## CI and PR rules
 
-- **`ci.yml`** runs on every PR and push to main: `npm ci`, lint, typecheck, tests and the web export, on Node 22.
+- **`ci.yml`** runs on every PR and push to main: `npm ci`, lint, typecheck, tests and the web export. The Node version is set there.
 - **`pr-rules.yml`** checks four things:
   - the branch is `type/<issue>-short-name`
   - the description says `Closes #<issue>` for that issue

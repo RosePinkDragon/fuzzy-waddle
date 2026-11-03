@@ -31,12 +31,12 @@ This sheet points at values rather than copying them. List conflicts under Disag
 
 ## Layout and fit
 
-- **Fit:** everything fits from 390×700 to 390×844 with no scrolling. Content is at most 430px wide (`MAX_WIDTH` in `src/components/Screen.tsx`).
-- **Short screens:** below about 780px of usable height, gaps tighten from 12px to 8px.
-- **Scenes:** art is drawn at 366×200 (game and win) or 366×220 (flop). It's capped at that height and crops from the top on short phones (`SceneBox`). There's no writing inside scenes except the lives sign.
-- **Lives sign:** top-centre in the scene, always worded "X LEFT". It moves above the scene when the scene is under `SIGN_INSIDE_MIN` (170px, in `GameView.tsx`).
-- **Tiles:** 38px max and 26px min (`tileLayout.ts`). They wrap only at word breaks, in at most 3 lines. The win screen uses 34px tiles.
-- **Keyboard:** QWERTY with 46px-tall keys (`KEY_HEIGHT` in `Keyboard.tsx`).
+- **Fit:** everything fits from 390×700 to 390×844 with no scrolling. Content width is capped by `MAX_WIDTH` in `src/components/Screen.tsx`.
+- **Short screens:** below `COMPACT_HEIGHT` (`Screen.tsx`), each screen tightens its gaps. See the `compact` gap in `GameView`, `MilestoneView` and `FlopView`.
+- **Scenes:** art is drawn at the sizes in BRIEF section 4 (`artHeight` in `SceneBox`). It's capped at that height and crops from the top on short phones. There's no writing inside scenes except the lives sign.
+- **Lives sign:** top-centre in the scene, always worded "X LEFT". It moves above the scene when the scene is shorter than `SIGN_INSIDE_MIN` in `GameView.tsx`.
+- **Tiles:** sized between the `maxSize` and `minSize` defaults in `tileLayout.ts`. They wrap only at word breaks. `MilestoneView` passes its own `maxSize`.
+- **Keyboard:** QWERTY, with `KEY_HEIGHT` in `Keyboard.tsx`.
   - Correct keys take the accent and lock.
   - Wrong keys dim, strike through and lock.
   - Removed keys dim with no strike.
@@ -45,7 +45,7 @@ This sheet points at values rather than copying them. List conflicts under Disag
 
 ## Accessibility
 
-- **Touch targets:** at least 44px. Buttons and header controls are 44px tall (`Buttons.tsx`, `Header.tsx`).
+- **Touch targets:** at least 44px. See the button and header styles in `Buttons.tsx` and `Header.tsx`.
 - **Contrast:** at least 4.5:1 for text, and 3:1 for large text and icons. Work it out from the hex values with a quick `node -e` script; don't guess.
 - **Colour:** never the only signal. Wrong keys are struck through as well as dimmed.
 - **Labels:** icon-only buttons, keys, power-ups, scenes and the lives sign all have accessibility labels.
@@ -76,5 +76,5 @@ This sheet points at values rather than copying them. List conflicts under Disag
 
 ## Disagreements
 
-- **Keyboard key width vs the 44px touch-target rule.** At 390px wide, a 10-key QWERTY row makes keys about 33px wide (`keyWidth` in `Keyboard.tsx`), though they are 46px tall. The brief sets only the 46px height. The 44px rule comes from the review agents, not the brief. **Owner decision needed:** are keyboard keys exempt from the 44px width?
+- **Keyboard key width vs the 44px touch-target rule.** At 390px wide, a 10-key QWERTY row makes keys about 33px wide (`keyWidth` in `Keyboard.tsx`), though they meet 44px in height. The brief sets only the 46px height. The 44px rule comes from the review agents, not the brief. **Owner decision needed:** are keyboard keys exempt from the 44px width?
 - **Mockups for home, difficulty and challenge.** BRIEF section 2 lists them as not designed, and #40 is reconciling mockups with the built screens. Until then, the built screens are the reference for these three.
