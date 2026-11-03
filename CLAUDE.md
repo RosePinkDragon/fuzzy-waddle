@@ -37,7 +37,7 @@ To build an approved issue, run the `team-lead` agent: "run issue #12". It refus
 | UX reviewer | `ux-reviewer` | Sonnet / medium | Reviews mockups and built screens for usability, accessibility and copy |
 | QA | `test-keeper`, `screen-checker`, `word-bank-checker` | Sonnet or Haiku | Tests, screenshots, word checks |
 
-The steps are: branch → design (screen changes only) → plan → tasks → build → QA → review → PR. The owner approves each issue (by swapping `needs-approval` for `ready`), approves each design (by swapping `needs-design-approval` back to `ready`) and merges each PR.
+The steps are: branch → design (screen changes only) → plan → tasks → build → QA → review → PR. The owner approves each issue (by swapping `needs-approval` for `ready`), approves each design (by swapping `needs-design-approval` for `ready`, or for `design-changes` with a comment to ask for changes) and merges each PR.
 
 The BA keeps its market research in one open issue labelled `market`, and reuses it for 30 days before researching again.
 

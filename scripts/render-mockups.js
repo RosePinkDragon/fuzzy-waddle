@@ -8,26 +8,45 @@
  *   node scripts/render-mockups.js design/source/Home.dc.html
  *   node scripts/render-mockups.js --height 700 --out /tmp/mockups-700 design/source/Home.dc.html
  *
- * Needs Playwright with Chromium. Claude's cloud sessions have it already; on
- * your own machine run `npm i -g playwright && npx playwright install chromium`.
- * Exits with 1 when any mockup has a layout problem.
+ * Needs Playwright with Chromium. Claude's cloud sessions have it already. On
+ * your own machine, run `npm i --no-save playwright && npx playwright install chromium`
+ * (it isn't a project dependency, because the cloud sessions bring their own).
+ * Exits with 1 when any mockup has a layout problem, and 2 on bad input.
  */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '..');
 const WIDTH = 390;
 
+function fail(message) {
+  console.error(`render-mockups: ${message}`);
+  process.exit(2);
+}
+
 function parseArgs(argv) {
   const opts = { height: 844, out: path.join(ROOT, 'design/screens'), files: [] };
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--height') opts.height = Number(argv[++i]);
-    else if (argv[i] === '--out') opts.out = path.resolve(argv[++i]);
-    else opts.files.push(path.resolve(argv[i]));
+    const arg = argv[i];
+    if (arg === '--height') {
+      opts.height = Number(argv[++i]);
+      if (!Number.isInteger(opts.height) || opts.height < 300) fail('--height needs a whole number of pixels, like 700');
+    } else if (arg === '--out') {
+      if (!argv[i + 1]) fail('--out needs a folder');
+      opts.out = path.resolve(argv[++i]);
+    } else if (arg.startsWith('--')) {
+      fail(`unknown option ${arg}`);
+    } else {
+      const file = path.resolve(arg);
+      if (!fs.existsSync(file)) fail(`no such file: ${arg}`);
+      opts.files.push(file);
+    }
   }
   if (!opts.files.length) {
     const dir = path.join(ROOT, 'design/source');
+    if (!fs.existsSync(dir)) fail('design/source/ not found; pass the mockup files to render');
     opts.files = fs
       .readdirSync(dir)
       .filter((f) => f.endsWith('.dc.html'))
@@ -37,11 +56,19 @@ function parseArgs(argv) {
   return opts;
 }
 
+function loadPlaywright() {
+  try {
+    return require('playwright');
+  } catch {
+    return fail('Playwright not found. Run `npm i --no-save playwright && npx playwright install chromium`.');
+  }
+}
+
 // The app's own font files, so renders match the app and need no network.
 function fontCss() {
   const fonts = path.join(ROOT, 'node_modules/@expo-google-fonts');
   const face = (family, weight, file) =>
-    `@font-face{font-family:'${family}';font-weight:${weight};src:url('file://${file}') format('truetype');}`;
+    `@font-face{font-family:'${family}';font-weight:${weight};src:url('${pathToFileURL(file).href}') format('truetype');}`;
   const mukta = {
     400: '400Regular/Mukta_400Regular.ttf',
     600: '600SemiBold/Mukta_600SemiBold.ttf',
@@ -115,12 +142,16 @@ function renderMockup({ src, height }) {
 
   const doc = new DOMParser().parseFromString(src, 'text/html');
   const xdc = doc.querySelector('x-dc');
-  const helmet = xdc.querySelector('helmet');
+  const helmet = xdc && xdc.querySelector('helmet');
   if (helmet) {
     for (const st of helmet.querySelectorAll('style')) document.head.appendChild(document.importNode(st, true));
     helmet.remove();
   }
   const script = doc.querySelector('script[data-dc-script]');
+  if (!xdc) throw new Error('no <x-dc> element; start from an existing mockup');
+  if (script && !/class\s+Component\b/.test(script.textContent)) {
+    throw new Error('the data-dc-script block must define `class Component extends DCLogic`');
+  }
   class DCLogic {
     constructor() {
       this.props = {};
@@ -163,32 +194,45 @@ function findProblems() {
   return problems;
 }
 
-(async () => {
+async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  const { chromium } = loadPlaywright();
   fs.mkdirSync(opts.out, { recursive: true });
-  const { chromium } = require('playwright');
-  const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: WIDTH, height: opts.height }, deviceScaleFactor: 1 });
-  const shell = path.join(os.tmpdir(), 'render-mockups-shell.html');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'render-mockups-'));
+  const shell = path.join(tmp, 'shell.html');
   fs.writeFileSync(
     shell,
     `<!doctype html><html><head><meta charset="utf-8"><style>${fontCss()}</style></head><body style="margin:0"></body></html>`,
   );
 
+  const browser = await chromium.launch();
   let failed = 0;
-  for (const file of opts.files) {
-    const name = path.basename(file, '.dc.html');
-    await page.goto('file://' + shell);
-    await page.evaluate(renderMockup, { src: fs.readFileSync(file, 'utf8'), height: opts.height });
-    await page.evaluate(() => document.fonts.ready);
-    const problems = await page.evaluate(findProblems);
-    const png = path.join(opts.out, name + '.png');
-    await page.screenshot({ path: png, clip: { x: 0, y: 0, width: WIDTH, height: opts.height } });
-    if (problems.length) failed++;
-    const shown = png.startsWith(ROOT + path.sep) ? path.relative(ROOT, png) : png;
-    console.log(`${problems.length ? 'PROBLEMS' : 'ok'}  ${shown}`);
-    for (const p of problems) console.log(`    ${p}`);
+  try {
+    const page = await browser.newPage({ viewport: { width: WIDTH, height: opts.height }, deviceScaleFactor: 1 });
+    for (const file of opts.files) {
+      const name = path.basename(file, '.dc.html');
+      const png = path.join(opts.out, name + '.png');
+      const shown = png.startsWith(ROOT + path.sep) ? path.relative(ROOT, png) : png;
+      let problems;
+      try {
+        await page.goto(pathToFileURL(shell).href);
+        await page.evaluate(renderMockup, { src: fs.readFileSync(file, 'utf8'), height: opts.height });
+        // Load every font before measuring, so text is measured in Mukta, not a fallback.
+        await page.evaluate(() => Promise.all([...document.fonts].map((f) => f.load())));
+        problems = await page.evaluate(findProblems);
+        await page.screenshot({ path: png, clip: { x: 0, y: 0, width: WIDTH, height: opts.height } });
+      } catch (err) {
+        problems = [`couldn't render: ${err.message.split('\n')[0]}`];
+      }
+      if (problems.length) failed++;
+      console.log(`${problems.length ? 'PROBLEMS' : 'ok'}  ${shown}`);
+      for (const p of problems) console.log(`    ${p}`);
+    }
+  } finally {
+    await browser.close();
+    fs.rmSync(tmp, { recursive: true, force: true });
   }
-  await browser.close();
   process.exit(failed ? 1 : 0);
-})();
+}
+
+main();

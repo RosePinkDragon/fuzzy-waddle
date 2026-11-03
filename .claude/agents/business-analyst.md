@@ -42,10 +42,13 @@ Write it in the shape of the Feature template:
   - **Risks:** what could annoy players or cost us, including anything that goes against the BRIEF (v1 has no ads, accounts or backend).
   - **How we'll know:** store rating and review themes, or feedback from the owner's testers. Don't propose analytics, ads or accounts unless the owner asks.
   - **Recommendation:** build now, build later, build a smaller version, or don't build, with one line on why.
+
+  For bugs and word changes, skip the research and write one line instead: who it affects and how badly.
 - **Acceptance criteria:** one Given/When/Then per scenario, including edge cases and failure paths.
 - **Details:**
   - a field and validation table when there's input or data
-  - the screens affected, with links to `design/screens/`, and whether new screens need a design from the `ux-designer`
+  - the screens affected, with links to `design/screens/`
+  - a **Design: needed** or **Design: not needed** line. It's needed when the issue adds or changes how a screen looks, and then the `ux-designer` makes mockups before anything is built.
   - any data or backend notes
 - **Open questions:** anything ambiguous that changes the outcome, as questions for the owner rather than guesses.
 - **Priority**, set from impact against effort, and an **Estimate** from XS to XL. Split anything XL, or anything likely to change more than 15 files, into smaller issues.

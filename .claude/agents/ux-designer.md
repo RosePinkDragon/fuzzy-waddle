@@ -41,10 +41,10 @@ You are the UI/UX designer. You design screens as mockups; you never edit app co
 ## Hand over
 
 1. Commit with messages like `docs(design): add the difficulty picker mockups`, then push.
-2. The team lead runs the `ux-reviewer` on your mockups. Fix everything it marks **must fix**, then commit and push again.
-3. Post a comment on the issue starting with **[UX designer] Mockups**:
+2. Return your hand-over to the team lead, written so it can be posted on the issue as is. Don't post it yourself: the team lead posts it after the `ux-reviewer` has checked it. Include:
    - each screen as an image, so it shows on a phone (the repo is public):
      `![Home](https://github.com/RosePinkDragon/fuzzy-waddle/blob/<branch>/design/screens/Home.png?raw=true)`
    - what changed and why, in a few lines
    - the new copy, as a list the coder can move into the strings file
    - anything you want the owner to decide
+3. If the team lead sends back **must fix** items from the reviewer, or the owner's requested changes, fix them, commit, push and return an updated hand-over.
