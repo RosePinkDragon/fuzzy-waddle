@@ -13,10 +13,10 @@
  * Screens: home, difficulty, game, win, flop, challenge. "win" is the milestone
  * screen, which shows the theme's win scene (design/screens/*Win.png). "challenge"
  * covers its landing, game, solved and failed states, plus the bad-link screen.
- * It builds the web export into dist-test/ with EXPO_PUBLIC_TEST_LADDER=1, so the
- * first milestone comes after two words (progress copy shows that test ladder).
- * It reaches game states through the app itself: it finds the answer by looking
- * up the clue on screen in the word bank, then taps the keyboard.
+ * It builds the web export into dist-test/ with the two test switches from the
+ * README: EXPO_PUBLIC_TEST_LADDER=1, so the first milestone comes after two words
+ * (progress copy shows that test ladder), and EXPO_PUBLIC_TEST_HOOKS=1, so it can
+ * read the current answer and tap the keyboard to win or lose. App code is untouched.
  *
  * Needs Playwright with Chromium, like scripts/render-mockups.js.
  * Exits with 1 when any screen has a problem, and 2 on bad input.
@@ -48,14 +48,13 @@ function themeIds() {
   return m[1].split(',').map((s) => s.trim().replace(/'/g, '')).filter(Boolean);
 }
 
-/** Every word in the bank, keyed by its clue. */
-function wordsByClue() {
+/** Every word in the bank. */
+function allWords() {
   const dir = path.join(ROOT, 'src/data/words');
-  const byClue = new Map();
-  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.json'))) {
-    for (const w of JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'))) byClue.set(w.clue, w);
-  }
-  return byClue;
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .flatMap((file) => JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')));
 }
 
 function parseList(value, allowed, flag) {
@@ -81,11 +80,11 @@ function parseArgs(argv, themes) {
 }
 
 function build() {
-  console.log('Building the web export into dist-test/ (test ladder on)...');
+  console.log('Building the web export into dist-test/ (test ladder and hooks on)...');
   const r = spawnSync('npx', ['expo', 'export', '--platform', 'web', '--output-dir', 'dist-test'], {
     cwd: ROOT,
     stdio: ['ignore', 'ignore', 'inherit'],
-    env: { ...process.env, EXPO_PUBLIC_TEST_LADDER: '1', CI: '1' },
+    env: { ...process.env, EXPO_PUBLIC_TEST_LADDER: '1', EXPO_PUBLIC_TEST_HOOKS: '1', CI: '1' },
   });
   if (r.status !== 0) fail('the web export failed');
 }
@@ -139,8 +138,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const byTestId = (id) => `[data-testid="${id}"]`;
 
 class Shooter {
-  constructor(page, height, opts, origin, byClue) {
-    Object.assign(this, { page, height, opts, origin, byClue });
+  constructor(page, height, opts, origin, words) {
+    Object.assign(this, { page, height, opts, origin, words });
     this.failed = 0;
   }
 
@@ -168,21 +167,22 @@ class Shooter {
     for (const p of [...new Set(problems)]) console.log(`    ${p}`);
   }
 
-  /** Waits until the keyboard takes guesses (Masala Mix spins its reel first), then returns the word. */
-  async currentWord(previousId) {
+  /**
+   * Waits for a word to be in play with the keyboard taking guesses (Masala Mix
+   * spins its reel first), then returns its answer from the test hook.
+   */
+  async currentAnswer(previous) {
     for (let tries = 0; tries < 60; tries++) {
+      const hook = await this.page.evaluate(() => globalThis.__HANGMAN__ || null);
       const ready = await this.page
         .locator(byTestId('key-A'))
         .getAttribute('aria-disabled')
         .catch(() => 'true');
-      if (ready !== 'true') {
-        const text = await this.page.locator('#root').innerText();
-        const matches = [...this.byClue.values()].filter((w) => text.includes(w.clue) && w.id !== previousId);
-        if (matches.length === 1) return matches[0];
-      }
+      if (!hook && tries > 10) throw new Error('no test hook: build with EXPO_PUBLIC_TEST_HOOKS=1');
+      if (hook && hook.status === 'playing' && hook.answer !== previous && ready !== 'true') return hook.answer;
       await sleep(200);
     }
-    throw new Error('no playable word found on screen');
+    throw new Error('no word came into play');
   }
 
   async press(letters) {
@@ -193,13 +193,13 @@ class Shooter {
     }
   }
 
-  async solve(word) {
-    await this.press([...new Set(word.answer.replace(/[^A-Z]/g, ''))]);
+  async solve(answer) {
+    await this.press([...new Set(answer.replace(/[^A-Z]/g, ''))]);
   }
 
   /** Guesses wrong letters until the given screen shows. */
-  async lose(word, doneTestId) {
-    const wrong = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].filter((l) => !word.answer.includes(l));
+  async lose(answer, doneTestId) {
+    const wrong = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].filter((l) => !answer.includes(l));
     for (const l of wrong) {
       if ((await this.page.locator(byTestId(doneTestId)).count()) > 0) break;
       const key = this.page.locator(byTestId(`key-${l}`));
@@ -218,13 +218,13 @@ class Shooter {
     }
     if (want.has('game') || want.has('win')) {
       await this.open(`/play/${theme}/easy`, 'game-screen');
-      const first = await this.currentWord();
+      const first = await this.currentAnswer();
       await this.settle();
       if (want.has('game')) await this.shot(`${theme}-game`);
       if (want.has('win')) {
         // The win screen is the milestone screen; the test ladder puts it after two words.
         await this.solve(first);
-        await this.solve(await this.currentWord(first.id));
+        await this.solve(await this.currentAnswer(first));
         await this.page.waitForSelector(byTestId('milestone-screen'));
         await this.settle();
         await this.shot(`${theme}-win`);
@@ -232,33 +232,32 @@ class Shooter {
     }
     if (want.has('flop')) {
       await this.open(`/play/${theme}/easy`, 'game-screen');
-      await this.lose(await this.currentWord(), 'flop-screen');
+      await this.lose(await this.currentAnswer(), 'flop-screen');
       await this.shot(`${theme}-flop`);
     }
     if (want.has('challenge')) await this.challenge(theme);
   }
 
   async challenge(theme) {
-    // An easy word, so the clue the script looks up isn't locked.
-    const word = [...this.byClue.values()].find((w) => w.id.startsWith(`${theme}-`) && w.difficulty === 'easy');
+    const word = this.words.find((w) => w.id.startsWith(`${theme}-`) && w.difficulty === 'easy');
     if (!word) return; // Masala Mix has no words of its own, so no challenges.
     const accept = async () => {
       await this.open(`/c/${word.id}`, 'challenge-landing');
       await this.page.click(byTestId('accept-challenge'));
       await this.page.waitForSelector(byTestId('game-screen'));
-      await this.currentWord();
+      await this.currentAnswer();
       await this.settle();
     };
     await this.open(`/c/${word.id}`, 'challenge-landing');
     await this.shot(`${theme}-challenge-landing`);
     await accept();
     await this.shot(`${theme}-challenge-game`);
-    await this.solve(word);
+    await this.solve(word.answer);
     await this.page.waitForSelector(byTestId('challenge-result'));
     await this.settle();
     await this.shot(`${theme}-challenge-solved`);
     await accept();
-    await this.lose(word, 'challenge-result');
+    await this.lose(word.answer, 'challenge-result');
     await this.shot(`${theme}-challenge-failed`);
   }
 }
@@ -271,7 +270,7 @@ async function main() {
   fs.mkdirSync(opts.out, { recursive: true });
 
   const { chromium } = loadPlaywright();
-  const byClue = wordsByClue();
+  const words = allWords();
   const want = new Set(opts.screens);
   const server = await serve();
   const origin = `http://127.0.0.1:${server.address().port}`;
@@ -282,7 +281,7 @@ async function main() {
       // A fresh context per height, so saved bests and names don't leak between runs.
       const context = await browser.newContext({ viewport: { width: WIDTH, height }, deviceScaleFactor: 1 });
       const page = await context.newPage();
-      const shooter = new Shooter(page, height, opts, origin, byClue);
+      const shooter = new Shooter(page, height, opts, origin, words);
       try {
         if (want.has('home')) {
           await shooter.open('/', 'home-screen');
