@@ -1,98 +1,126 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+/**
+ * Home: category picker. Not designed in the mockups; built in the same visual
+ * language and flagged for design review (see README).
+ */
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MAX_WIDTH } from '@/components/Screen';
+import { Txt } from '@/components/Txt';
+import { GAME_NAME, home } from '@/copy/strings';
+import { DIFFICULTY_ORDER } from '@/game/config';
+import { clubShort, ladder } from '@/game/milestones';
+import type { ThemeId } from '@/game/types';
+import { keys, load, type Best } from '@/lib/storage';
+import { GlyphImage } from '@/themes/glyphs';
+import { THEME_ORDER, THEMES } from '@/themes/themes';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+const SHELL = THEMES.filmy.colors;
+
+/** Best across difficulties for a theme, for the card's small print. */
+async function bestFor(theme: ThemeId): Promise<Best | null> {
+  const all = await Promise.all(DIFFICULTY_ORDER.map((d) => load<Best | null>(keys.best(theme, d), null)));
+  return all.reduce<Best | null>((a, b) => (b && (!a || b.hits > a.hits) ? b : a), null);
 }
 
-export default function HomeScreen() {
+export default function Home() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [bests, setBests] = useState<Partial<Record<ThemeId, Best | null>>>({});
+
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      Promise.all(THEME_ORDER.map(async (t) => [t, await bestFor(t)] as const)).then((rows) => {
+        if (alive) setBests(Object.fromEntries(rows));
+      });
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+    <View style={[styles.outer, { backgroundColor: SHELL.bg }]} testID="home-screen">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 20 }]}
+      >
+        <View style={styles.title}>
+          <Txt display size={34} lh={1.15} color={SHELL.accent} align="center" accessibilityRole="header">
+            {GAME_NAME}
+          </Txt>
+          <Txt size={14} lh={1.35} color={SHELL.muted} align="center">
+            {home.tagline}
+          </Txt>
+        </View>
+        <Txt size={11} weight={800} em={0.14} lh={1.3} color={SHELL.accent}>
+          {home.pick}
+        </Txt>
+        <View style={styles.grid}>
+          {THEME_ORDER.map((id) => {
+            const t = THEMES[id];
+            const best = bests[id];
+            const club = best ? ladder.reached(best.hits) : null;
+            return (
+              <Pressable
+                key={id}
+                testID={`category-${id}`}
+                accessibilityRole="button"
+                accessibilityLabel={`${t.copy.name}: ${t.copy.blurb}`}
+                onPress={() => router.push(`/play/${id}`)}
+                style={({ pressed }) => [
+                  styles.card,
+                  { backgroundColor: t.colors.panel, borderColor: t.colors.border, opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <View style={[styles.glyph, { backgroundColor: t.colors.bg, borderColor: t.colors.accent }]}>
+                  <GlyphImage id={id} size={40} />
+                </View>
+                <Txt size={17} weight={800} lh={1.2} color={t.colors.text}>
+                  {t.copy.name}
+                </Txt>
+                <Txt size={12} lh={1.3} color={t.colors.muted} numberOfLines={2}>
+                  {t.copy.blurb}
+                </Txt>
+                <Txt size={11} weight={700} lh={1.3} color={t.colors.accent} style={styles.best}>
+                  {best ? home.best(best.hits, club ? clubShort(club) : null) : home.noBest}
+                </Txt>
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  outer: { flex: 1, alignItems: 'center' },
+  scroll: { width: '100%', maxWidth: MAX_WIDTH },
+  content: { paddingHorizontal: 12, gap: 14 },
+  title: { gap: 4, paddingBottom: 6 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  card: {
+    width: '48.5%',
+    flexGrow: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    gap: 2,
+    minHeight: 148,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+  glyph: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1.5,
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    marginBottom: 6,
   },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  best: { marginTop: 'auto', paddingTop: 4 },
 });
