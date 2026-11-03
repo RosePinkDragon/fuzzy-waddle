@@ -62,13 +62,13 @@ describe('word bank', () => {
 
   it('has no answer in more than one category', () => {
     const seen = new Map<string, string>();
+    const conflicts: string[] = [];
     for (const w of ALL_WORDS) {
       const other = seen.get(w.answer);
-      if (other !== undefined && other !== w.category) {
-        throw new Error(`${w.answer} is in both ${other} and ${w.category} (${w.id})`);
-      }
+      if (other !== undefined && other !== w.category) conflicts.push(`${w.answer}: ${other} and ${w.category} (${w.id})`);
       seen.set(w.answer, w.category);
     }
+    expect(conflicts).toEqual([]);
   });
 
   it('gives every theme and difficulty a decent pool', () => {
