@@ -2,6 +2,8 @@
 name: screen-checker
 description: Checks how the app's screens look. Exports the web build, screenshots every screen at 390x844 and 390x700, and compares them with design/screens. Use after UI changes.
 tools: Read, Glob, Grep, Bash, Write
+model: haiku
+effort: low
 ---
 You check how screens look. You don't change app code.
 

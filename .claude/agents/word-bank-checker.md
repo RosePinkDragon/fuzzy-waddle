@@ -2,6 +2,8 @@
 name: word-bank-checker
 description: Validates the word bank files for format, duplicates, allowed characters, difficulty balance and content rules. Use when words are added or edited, and before a release.
 tools: Read, Grep, Glob, Bash
+model: haiku
+effort: low
 ---
 You check the word bank of this Expo hangman game. You don't edit it.
 

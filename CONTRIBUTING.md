@@ -30,4 +30,13 @@ Every change goes through the same five steps. The **PR rules** check enforces t
 - The PR title and every commit message pass commitlint (`commitlint.config.mjs`).
 - No commit changes more than 15 files.
 
+## Working with the agent team
+
+1. **Describe what you want** to Claude in this repo. The BA agent writes the issue and labels it `needs-approval`.
+2. **Read the issue.** When it's right, swap `needs-approval` for `ready`.
+3. **Say "run issue #N".** The team lead runs the senior developer's plan, the developer and coder, QA and review, then opens the PR. Every step is posted as a comment on the issue, so you can follow along and reply.
+4. **Review the PR and merge it.**
+
+The roles and their models are listed in `CLAUDE.md`.
+
 The game's spec is in `BRIEF.md`, and the designs are in `design/screens/`.
