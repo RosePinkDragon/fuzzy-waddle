@@ -1,17 +1,14 @@
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
 
 import { DIFFICULTY_ORDER } from '@/game/config';
 import type { Difficulty, ThemeId } from '@/game/types';
 import { useChallengeShare } from '@/hooks/useChallengeShare';
+import { useFlopDelay } from '@/hooks/useFlopDelay';
 import { useRun } from '@/hooks/useRun';
 import { FlopView } from '@/screens/FlopView';
 import { GameView } from '@/screens/GameView';
 import { MilestoneView } from '@/screens/MilestoneView';
 import { isThemeId, themeFor } from '@/themes/themes';
-
-/** Pause on the last wrong guess before the flop screen. */
-const FLOP_DELAY_MS = 900;
 
 export default function RunRoute() {
   const params = useLocalSearchParams<{ theme: string; difficulty: string }>();
@@ -29,15 +26,7 @@ function Run({ themeId, difficulty }: { themeId: ThemeId; difficulty: Difficulty
   const { run } = game;
 
   // Hold the game screen briefly when the last life goes, then show the flop.
-  const [showFlop, setShowFlop] = useState(false);
-  useEffect(() => {
-    if (run.status !== 'over') return;
-    const t = setTimeout(() => setShowFlop(true), FLOP_DELAY_MS);
-    return () => {
-      clearTimeout(t);
-      setShowFlop(false);
-    };
-  }, [run.status]);
+  const showFlop = useFlopDelay(run.status === 'over');
 
   const home = () => router.replace('/');
 

@@ -22,6 +22,7 @@ import { lifeMarks } from '@/game/difficulty';
 import { pick } from '@/game/rng';
 import type { Word } from '@/game/types';
 import { useChallengeShare } from '@/hooks/useChallengeShare';
+import { useFlopDelay } from '@/hooks/useFlopDelay';
 import { useRun } from '@/hooks/useRun';
 import { challengeUrl } from '@/lib/share';
 import { FLOP_STAMP } from '@/screens/FlopView';
@@ -46,6 +47,8 @@ function Challenge({ word, from }: { word: Word; from: string }) {
   const game = useRun(word.category, word.difficulty, { challengeWord: word });
   const { share, prompt } = useChallengeShare();
   const { contentWidth } = useScreenSize();
+  // A loss holds the game screen briefly; a win shows its result straight away.
+  const flopReady = useFlopDelay(game.run.status === 'over');
   const home = () => router.replace('/');
   const Scene = theme.scenes.Game;
 
@@ -87,7 +90,7 @@ function Challenge({ word, from }: { word: Word; from: string }) {
 
   const { run } = game;
   if (!run.current) return null;
-  const done = run.status === 'solved' || run.status === 'over';
+  const done = run.status === 'solved' || (run.status === 'over' && flopReady);
 
   if (!done) {
     return (

@@ -26,10 +26,16 @@ on:
         type: choice
         options: [preview, production]
 
+permissions:
+  contents: read
+
 jobs:
   web:
     if: vars.RELEASES_ENABLED == 'true'
     runs-on: ubuntu-latest
+    env:
+      # Makes app.config.ts refuse test-only switches (src/lib/releaseGuard.ts).
+      RELEASE_BUILD: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
