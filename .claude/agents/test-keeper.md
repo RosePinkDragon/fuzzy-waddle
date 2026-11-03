@@ -18,4 +18,4 @@ You keep the test suite of this Expo hangman game healthy.
 - Test behaviour through public functions rather than internals. Don't snapshot whole screens.
 - Only edit test files and test helpers. If a test exposes a real bug, leave the app code alone and report the bug with the failing test.
 - Run the full suite before you finish, and report pass/fail counts and any coverage change.
-- Follow `CLAUDE.md` for issues, branches and commits (at most 15 files per commit).
+- Follow `CLAUDE.md` for issues, branches and PRs (at most 15 files per PR).

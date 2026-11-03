@@ -13,7 +13,7 @@ Closes #
 <!-- Before and after at both sizes for any UI change. Write "No UI changes" otherwise. -->
 
 ## Checklist
-- [ ] Every commit changes 15 files or fewer (package-lock.json not counted)
+- [ ] This PR changes 15 files or fewer (not counting package-lock.json, design/ and deleted files)
 - [ ] Tests added or updated for changed logic; bug fixes have a regression test
 - [ ] All copy is in the strings file
 - [ ] Follows BRIEF.md (themes as config, no writing inside scenes, answers never in links)

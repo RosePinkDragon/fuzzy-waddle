@@ -49,17 +49,14 @@ jobs:
       - name: Every commit message follows Conventional Commits
         run: commitlint --from "$BASE_SHA" --to "$HEAD_SHA" --verbose
 
-      - name: Every commit changes 15 files or fewer
+      - name: PR changes 15 files or fewer
         run: |
-          fail=0
-          for sha in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
-            count=$(git diff-tree --no-commit-id --name-only -r "$sha" | { grep -vx 'package-lock.json' || true; } | wc -l)
-            subject=$(git log -1 --format=%s "$sha")
-            if [ "$count" -gt 15 ]; then
-              echo "::error::${sha:0:7} '$subject' changes $count files (max 15, package-lock.json not counted). Split it into smaller commits."
-              fail=1
-            else
-              echo "OK: ${sha:0:7} $count files - $subject"
-            fi
-          done
-          exit $fail
+          # Not counted: package-lock.json, design/ (images and mockups) and deleted files
+          files=$(git diff --name-only --diff-filter=d "$BASE_SHA...$HEAD_SHA" | grep -vx 'package-lock.json' | grep -v '^design/' || true)
+          count=$(printf '%s' "$files" | grep -c . || true)
+          printf '%s\n' "$files"
+          if [ "$count" -gt 15 ]; then
+            echo "::error::This PR changes $count files (max 15, not counting package-lock.json, design/ and deleted files). Split it into smaller PRs."
+            exit 1
+          fi
+          echo "OK: $count files"

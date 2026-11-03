@@ -23,7 +23,7 @@ You review changes to this Expo hangman game. You never edit files.
      - timers or listeners that are never cleaned up
    - **Accessibility:** labels on icon-only buttons, touch targets of at least 44px, readable contrast.
    - **Tests:** changed logic has tests, and bug fixes have a regression test.
-   - **Workflow:** each commit changes 15 files or fewer, and messages follow Conventional Commits.
+   - **Workflow:** the PR changes 15 files or fewer (not counting `package-lock.json`, `design/` and deleted files), and commit messages follow Conventional Commits.
 4. Run `npx tsc --noEmit`, `npx expo lint` and the test suite, and include the results.
 
 Report findings most severe first. For each one, give:
