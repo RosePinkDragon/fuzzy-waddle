@@ -38,18 +38,22 @@ Two skills run the team from the owner's chat. Agents are called only when a cha
 |---|---|---|---|
 | `game-designer` | Opus / medium / 30 | Reviews the loop, difficulty, lives, rewards, fairness and exploits before approval | An issue changes mechanics or the game economy |
 | `business-analyst` | Opus / medium / 30 | Market evidence, player needs and build-or-defer calls. Writes issues from rough ideas. | Value or priority is unclear. Skipped for bugs, tooling and logic-only work. |
-| `ux-designer` | Opus / medium / 30 | Mockups in `design/` before anything is built | A new or materially changed screen or flow (Full mode) |
+| `ux-designer` | Opus / medium / 30 | Mockups in `design/` before anything is built | An issue marked **Design: needed** (Full mode) |
 | `ux-reviewer` | Sonnet / medium / 30 | Independent review of mockups, built screens and word content | Player-facing UI or copy, new mockups, or word changes |
-| `senior-developer` | Opus / high / 40 | Plans Standard and Full runs, and reviews code it didn't write | Standard and Full runs, plus any change to game rules, persistence, sharing or security, or releases |
+| `senior-developer` | Opus / high / 40 | Plans Standard and Full runs, and reviews code it didn't write | Every Standard and Full run, plus any change to game rules, persistence, sharing or security, the agent workflow or CI, or releases |
 | `developer` | Sonnet / high / 80 | Builds the whole change: logic, UI, copy, words, tests and tooling | Every approved issue |
 
 **Modes** (`run-issue` picks one and logs why):
 
 | Mode | For | Steps |
 |---|---|---|
-| Fast | Bugs, CI, tooling, logic-only work | developer → checks → PR |
-| Standard | Game rules, existing screens, persistence or sharing | plan → developer → checks → reviews → PR |
-| Full | New or changed screens and flows | design gate → plan → developer → checks → reviews → PR |
+| Fast | Bugs, CI, tooling, workflow, logic-only work, word changes, copy fixes | developer → checks → reviews → PR |
+| Standard | Game rules, persistence, a layout tweak marked **Design: not needed** | plan → developer → checks → reviews → PR |
+| Full | Anything marked **Design: needed** | design gate → plan → developer → checks → reviews → PR |
+
+Some reviews happen in every mode:
+- **Senior review:** whenever game rules, persistence, sharing or security, the workflow or CI, or releases change.
+- **UX review:** whenever player-facing UI, copy or words change.
 
 **Approvals:**
 - The owner approves each issue by swapping `needs-approval` for `ready`.

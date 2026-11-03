@@ -38,13 +38,14 @@ Every change goes through the same five steps. The **PR rules** check enforces t
    - It posts their reviews on the issue with a recommendation and your decisions, and never approves anything.
 2. **Read the issue and the reviews.** When it's right, swap `needs-approval` for `ready`.
 3. **Say "run issue #N".** The `run-issue` skill picks a mode and says why on the issue:
-   - **Fast** for bugs and tooling: the developer builds, the checks run, and the PR opens.
-   - **Standard** for game rules and changes to existing screens: a plan first, then independent reviews.
-   - **Full** for new or changed screens: the UX designer's mockups come first and the label becomes `needs-design-approval`. Look at them, then:
+   - **Fast** for bugs, tooling, words and copy fixes: the developer builds, the checks run, and the PR opens.
+   - **Standard** for game rules, saving and small layout tweaks: a plan first.
+   - **Full** for anything marked **Design: needed**: the UX designer's mockups come first and the label becomes `needs-design-approval`. Look at them, then:
      - to approve, swap the label to `ready`
      - to ask for changes, comment with them and swap the label to `design-changes`
 
      Then say "run issue #N" again.
+   Changes to game rules, saving, sharing, the workflow or releases always get an independent senior review. UI, copy and word changes always get a UX review.
 4. **Follow along on the issue.** Every step posts a comment, and the run ends with a **[Run] Report**: what was built, the checks, the reviews, anything skipped (with why) and the PR link.
    - Loops stop after two review rounds and come back to you.
 5. **Review the PR and merge it.**
