@@ -45,6 +45,10 @@
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "export:web": "expo export --platform web",
+    "verify": "npm run verify:quick && npm run export:web",
+    "verify:quick": "npm run lint && npm run typecheck && npm test -- --ci",
+    "screenshots": "node scripts/screenshots.js",
+    "words:check": "jest --ci src/data/words && node scripts/words-report.js",
     "port-scenes": "node scripts/port-scenes.js"
   },
   "private": true,

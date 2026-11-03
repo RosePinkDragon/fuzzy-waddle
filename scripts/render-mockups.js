@@ -170,9 +170,10 @@ function renderMockup({ src, height }) {
   document.body.appendChild(root);
 }
 
-// Runs in the page: returns layout problems for the rendered mockup.
-function findProblems() {
-  const root = document.body.firstElementChild;
+// Runs in the page: returns layout problems for the rendered mockup, or for the
+// element matching `rootSelector` (scripts/screenshots.js passes the app's root).
+function findProblems(rootSelector) {
+  const root = rootSelector ? document.querySelector(rootSelector) : document.body.firstElementChild;
   const box = root.getBoundingClientRect();
   const problems = [];
   if (root.scrollHeight > root.clientHeight + 1) {
@@ -235,4 +236,6 @@ async function main() {
   process.exit(failed ? 1 : 0);
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { findProblems };
