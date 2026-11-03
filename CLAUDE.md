@@ -10,7 +10,7 @@ Expo-specific rules: @AGENTS.md
    `gh api repos/RosePinkDragon/fuzzy-waddle/issues -f title="feat: ..." -F body=@issue.md -f "labels[]=feature"`
 2. **Branch from main** as `type/<issue>-short-name`. Types: feat, fix, chore, docs, test, refactor, ci, style, perf, build. Example: `feat/12-difficulty-picker`.
 3. **Small PRs.** At most 15 changed files per PR, not counting `package-lock.json`, files in `design/` and deleted files. If the work needs more, split the issue first. Commit in logical steps, with messages in Conventional Commits format: `type(scope): lowercase subject`. End each message with the attribution lines your session asks for.
-4. **Before opening a PR,** run `npm run verify`. For UI changes, also run `npm run screenshots` (with `--screens` and `--themes` for the screens you touched). For word changes, also run `npm run words:check`. Changes to game rules, persistence, sharing or security, or releases need an independent `senior-developer` review before the PR.
+4. **Before opening a PR,** run `npm run verify`. For UI changes, also run `npm run screenshots` (with `--screens` and `--themes` for the screens you touched). For word changes, also run `npm run words:check`. Changes to game rules, persistence, sharing or security, the agent workflow or CI, or releases need an independent `senior-developer` review before the PR.
 5. **Open a PR** from `.github/pull_request_template.md`. The title is in Conventional Commits format, and the description starts with `Closes #<issue>`. With REST:
    `gh api repos/RosePinkDragon/fuzzy-waddle/pulls -f title="feat: ..." -f head=<branch> -f base=main -F body=@pr.md`
 6. **Never push to main and never merge.** The owner reviews and merges.
