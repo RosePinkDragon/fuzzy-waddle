@@ -60,6 +60,17 @@ describe('word bank', () => {
     }
   });
 
+  it('has no answer in more than one category', () => {
+    const seen = new Map<string, string>();
+    for (const w of ALL_WORDS) {
+      const other = seen.get(w.answer);
+      if (other !== undefined && other !== w.category) {
+        throw new Error(`${w.answer} is in both ${other} and ${w.category} (${w.id})`);
+      }
+      seen.set(w.answer, w.category);
+    }
+  });
+
   it('gives every theme and difficulty a decent pool', () => {
     const themes: ThemeId[] = [...CATEGORY_IDS, 'masala'];
     for (const t of themes) {
