@@ -22,7 +22,22 @@ Expo-specific rules: @AGENTS.md
 - Follow the UI rules in `BRIEF.md` section 4.
 - Word bank entries stay `draft` until the owner approves them.
 
-## Review agents (`.claude/agents/`)
+## The agent team (`.claude/agents/`)
+
+To build an approved issue, run the `team-lead` agent: "run issue #12". It refuses issues that aren't labelled `ready`. The roles hand off through comments on the issue.
+
+| Role | Agent | Model / effort | Does |
+|---|---|---|---|
+| BA | `business-analyst` | Sonnet / medium | Writes the issue and labels it `needs-approval` |
+| Team lead | `team-lead` | Sonnet / medium | Runs the steps below and opens the PR |
+| Senior developer | `senior-developer` | Opus / high | Plans first, reviews last |
+| Developer | `developer` | Sonnet / high | Logic: `src/game`, `src/config`, `src/data`, `src/lib` |
+| Coder | `coder` | Sonnet / medium | UI: `src/app`, `src/screens`, `src/components`, `src/themes`, `src/copy`, `src/hooks` |
+| QA | `test-keeper`, `screen-checker`, `word-bank-checker` | Sonnet or Haiku | Tests, screenshots, word checks |
+
+The steps are: plan → tasks → build → QA → review → PR. The owner approves each issue (by swapping `needs-approval` for `ready`) and merges each PR.
+
+## Review agents
 
 - `code-reviewer`: reviews a diff against `BRIEF.md` and these rules. Read-only.
 - `test-keeper`: writes and updates tests.
