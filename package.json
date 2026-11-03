@@ -49,7 +49,8 @@
     "verify:quick": "npm run lint && npm run typecheck && npm test -- --ci",
     "screenshots": "node scripts/screenshots.js",
     "words:check": "jest --ci src/data/words && node scripts/words-report.js",
-    "port-scenes": "node scripts/port-scenes.js"
+    "port-scenes": "node scripts/port-scenes.js",
+    "issue:brief": "node scripts/issue-brief.js"
   },
   "private": true,
   "jest": {
