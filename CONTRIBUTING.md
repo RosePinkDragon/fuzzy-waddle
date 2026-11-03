@@ -32,18 +32,26 @@ Every change goes through the same five steps. The **PR rules** check enforces t
 
 ## Working with the agent team
 
-1. **Describe what you want** to Claude in this repo. The BA agent checks store reviews and similar games, writes the issue with its market impact and a recommendation, and labels it `needs-approval`.
-2. **Read the issue.** When it's right, swap `needs-approval` for `ready`.
-3. **Say "run issue #N".** If the issue changes screens, the UX designer's mockups are posted on the issue first and the label becomes `needs-design-approval`. Look at them (and show them to anyone who reviews designs), then:
-   - to approve, swap the label to `ready`
-   - to ask for changes, comment with them and swap the label to `design-changes`
+1. **Describe what you want,** or point at an issue, and say "review issue #N".
+   - The `review-issue` skill brings in only the specialists the issue needs: the game designer for mechanics, the BA for product value.
+   - It skips them for bugs and tooling.
+   - It posts their reviews on the issue with a recommendation and your decisions, and never approves anything.
+2. **Read the issue and the reviews.** When it's right, swap `needs-approval` for `ready`.
+3. **Say "run issue #N".** The `run-issue` skill picks a mode and says why on the issue:
+   - **Fast** for bugs, tooling, words and copy fixes: the developer builds, the checks run, and the PR opens.
+   - **Standard** for game rules, saving and small layout tweaks: a plan first.
+   - **Full** for anything marked **Design: needed**: the UX designer's mockups come first and the label becomes `needs-design-approval`. Look at them, then:
+     - to approve, swap the label to `ready`
+     - to ask for changes, comment with them and swap the label to `design-changes`
 
-   Then say "run issue #N" again.
-4. The team lead then runs the senior developer's plan, the developer and coder, QA (including the UX reviewer) and review, then opens the PR. Every step is posted as a comment on the issue, so you can follow along and reply.
+     Then say "run issue #N" again.
+   Changes to game rules, saving, sharing or security, the workflow or CI, or releases always get an independent senior review. UI, copy and word changes always get a UX review.
+4. **Follow along on the issue.** Every step posts a comment, and the run ends with a **[Run] Report**: what was built, the checks, the reviews, anything skipped (with why) and the PR link.
+   - Loops stop after two review rounds and come back to you.
 5. **Review the PR and merge it.**
 
 The BA's research is kept in the issue labelled `market`, so you can read it on your phone.
 
-The roles and their models are listed in `CLAUDE.md`.
+The agents, their models and when each one is used are listed in `CLAUDE.md`.
 
 The game's spec is in `BRIEF.md`, and the designs are in `design/screens/`.
