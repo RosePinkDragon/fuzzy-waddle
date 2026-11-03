@@ -5,9 +5,9 @@ Closes #
 ## What and why
 
 ## How I tested
-- [ ] Tests pass
-- [ ] Lint and typecheck pass
-- [ ] Checked on web at 390×844 and 390×700 (UI changes)
+- [ ] `npm run verify` passes (lint, typecheck, tests, web export)
+- [ ] `npm run screenshots` is clean at 390×844 and 390×700 (UI changes)
+- [ ] `npm run words:check` passes (word changes)
 
 ## Screenshots
 <!-- Before and after at both sizes for any UI change. Write "No UI changes" otherwise. -->
@@ -17,3 +17,4 @@ Closes #
 - [ ] Tests added or updated for changed logic; bug fixes have a regression test
 - [ ] All copy is in the strings file
 - [ ] Follows BRIEF.md (themes as config, no writing inside scenes, answers never in links)
+- [ ] Reference sheets in `.claude/reference/` updated, or not needed because…
