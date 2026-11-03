@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Masala Mix milestone win screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&amp;family=Yatra+One&amp;display=swap">
+<style>
+body{margin:0;background:#1E1A17}
+a{color:#F2B705}a:hover{color:#FFD54A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 14px 12px 20px; display: flex; flex-direction: column; gap: 8px; background: #1E1A17; color: #FFF4DC; font-family: 'Mukta', system-ui, sans-serif; overflow: hidden">
+
+<div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+<button type="button" aria-label="Back to categories" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #4A3F35; background: #2C2621; color: #FFF4DC; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</button>
+<div style="display: flex; flex-direction: column; align-items: center">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #F2B705">MASALA MIX</span>
+<span style="font-size: 17px; font-weight: 700; line-height: 1.2">Hard · 35 hits</span>
+</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 17px; background: #F2B705; color: #1E1A17; font-weight: 800; font-size: 14px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z"></path><path d="M14 7v10" stroke-dasharray="2 2.5"></path></svg>
+<span>200 Cr Club</span>
+</div>
+</div>
+
+<div style="position: relative; flex: 1 1 0; min-height: 80px; max-height: 200px; border-radius: 14px; overflow: hidden; background: #2C2621; border: 1px solid #4A3F35">
+<svg width="100%" height="100%" viewBox="0 0 366 200" preserveAspectRatio="xMidYMax slice" style="display: block" role="img" aria-label="An open masala dabba with spices bursting out like confetti">
+<g stroke="#EAD9C0" stroke-width="2" stroke-linecap="round" opacity="0.5">
+<path d="M128 52 l-12 -12 M238 52 l12 -12 M112 100 h-16 M254 100 h16"></path>
+</g>
+<circle cx="183" cy="100" r="62" fill="#B8B8B0" stroke="#DADAD3" stroke-width="4"></circle>
+<g fill="#9C9C94">
+<circle cx="183" cy="100" r="16"></circle>
+<circle cx="217" cy="100" r="16"></circle>
+<circle cx="200" cy="129" r="16"></circle>
+<circle cx="166" cy="129" r="16"></circle>
+<circle cx="149" cy="100" r="16"></circle>
+<circle cx="166" cy="71" r="16"></circle>
+<circle cx="200" cy="71" r="16"></circle>
+</g>
+<circle cx="183" cy="100" r="13" fill="#F4F1E8"></circle>
+<circle cx="217" cy="100" r="13" fill="#F2B705"></circle>
+<circle cx="200" cy="129" r="13" fill="#E2402F"></circle>
+<circle cx="166" cy="129" r="13" fill="#8A5A2B"></circle>
+<circle cx="149" cy="100" r="13" fill="#3A2A1E"></circle>
+<circle cx="166" cy="71" r="13" fill="#7FBF5E"></circle>
+<circle cx="200" cy="71" r="13" fill="#6B3A1E"></circle>
+<circle cx="96" cy="40" r="5" fill="#F2B705"></circle>
+<circle cx="70" cy="80" r="4" fill="#E2402F"></circle>
+<circle cx="110" cy="16" r="3" fill="#7FBF5E"></circle>
+<circle cx="270" cy="34" r="5" fill="#E2402F"></circle>
+<circle cx="296" cy="72" r="4" fill="#F2B705"></circle>
+<circle cx="252" cy="12" r="3" fill="#C98A3E"></circle>
+<circle cx="306" cy="112" r="4" fill="#7FBF5E"></circle>
+<circle cx="56" cy="124" r="4" fill="#F2B705"></circle>
+<circle cx="183" cy="22" r="3" fill="#F4F1E8"></circle>
+<circle cx="140" cy="26" r="4" fill="#E2402F"></circle>
+<circle cx="226" cy="24" r="4" fill="#F2B705"></circle>
+<circle cx="330" cy="44" r="3" fill="#F4F1E8"></circle>
+<circle cx="36" cy="56" r="3" fill="#C98A3E"></circle>
+</svg>
+<h1 style="position: absolute; bottom: 8px; left: 50%; margin: 0; transform: translateX(-50%) rotate(-6deg); white-space: nowrap; font-family: 'Yatra One', serif; font-weight: 400; font-size: 28px; line-height: 1.1; color: #F2B705; background: #1E1A17; border: 4px double #F2B705; border-radius: 8px; padding: 2px 14px">Paisa Vasool!</h1>
+</div>
+
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+<sc-for list="{{lines}}" as="line" hint-placeholder-count="1">
+<div style="display: flex; gap: 18px">
+<sc-for list="{{line.words}}" as="w" hint-placeholder-count="2">
+<div style="display: flex; gap: 5px">
+<sc-for list="{{w.tiles}}" as="t" hint-placeholder-count="4">
+<span style="width: 34px; height: 42px; border-radius: 8px; background: #FFF4DC; color: #1E1A17; display: flex; align-items: center; justify-content: center; font-family: 'Yatra One', serif; font-size: 22px">{{t.ch}}</span>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</sc-for>
+<span style="font-size: 13px; color: #EAD9C0">Khana · Mumbai</span>
+</div>
+
+<div style="border-radius: 14px; background: #2C2621; border: 1px solid #4A3F35; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.12em; color: #F2B705">BOSS ROUND CLEARED</span>
+<p style="margin: 0; font-family: 'Yatra One', serif; font-size: 22px; line-height: 1.2">200 Crore Club mein entry!</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span style="font-size: 12px; font-weight: 700; background: #F3E3C4; color: #5A3A10; border-radius: 10px; padding: 2px 10px">Lives refilled: 5 of 5</span>
+<span style="font-size: 12px; font-weight: 700; background: #F3E3C4; color: #5A3A10; border-radius: 10px; padding: 2px 10px">+1 Jugaad</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700">
+<span>Next: <span style="color: #F2B705">500 Crore Club</span></span>
+<span>20 hits to go</span>
+</div>
+<div style="display: flex; gap: 3px">
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="20">
+<span style="flex: 1 1 0; height: 8px; box-sizing: border-box; border-radius: 4px; border: 1px solid #4A3F35; background: #2C2621"></span>
+</sc-for>
+</div>
+</div>
+
+<div style="position: relative; border-radius: 12px; background: #FFF4DC; color: #1E1A17; padding: 10px 20px; display: flex; flex-direction: column; gap: 4px">
+<span style="position: absolute; left: -9px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 9px; background: #1E1A17"></span>
+<span style="position: absolute; right: -9px; top: 50%; margin-top: -9px; width: 18px; height: 18px; border-radius: 9px; background: #1E1A17"></span>
+<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.14em; color: #8A3A10">MIX PLATE · SHARE CARD</span>
+<p style="margin: 0; font-family: 'Yatra One', serif; font-size: 18px; line-height: 1.25">Sab mix tha, phir bhi jeet gaya. Tu?</p>
+<div style="border-top: 2px dashed #D9C4A0; padding-top: 5px; font-size: 12px; font-weight: 600; color: #5A4A3A">[Game name] · Masala Mix · Hard</div>
+</div>
+
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+<button type="button" style="height: 52px; border-radius: 26px; border: 0; background: #F2B705; color: #1E1A17; font-family: inherit; font-size: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="M16 6l-4-4-4 4"></path><path d="M12 2v13"></path></svg>
+Challenge on WhatsApp
+</button>
+<button type="button" style="height: 44px; border-radius: 22px; border: 1.5px solid #F2B705; background: transparent; color: #F2B705; font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer">Keep playing</button>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var toWord = function (s) {
+      return { tiles: s.split('').map(function (ch) { return { ch: ch }; }) };
+    };
+    var segs = [];
+    for (var n = 0; n < 20; n++) { segs.push({ n: n }); }
+    return { segs: segs, lines: [{ words: [toWord('VADA'), toWord('PAV')] }] };
+  }
+}
+</script>
+</body>
+</html>
