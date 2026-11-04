@@ -17,7 +17,9 @@ import {
   DIFFICULTY_ORDER,
   DIFFICULTY_RULES,
   LADDER_EXTENSION,
+  LIVES_MARKS,
   MILESTONE_REWARD,
+  POWER_UP_SLOTS,
   REMOVE_WRONG_COUNT,
   START_POWER_UPS,
 } from './config';
@@ -114,4 +116,136 @@ export function mergeGameConfig(base: GameConfig, override: GameConfigOverride =
     removeWrongCount: override.removeWrongCount ?? base.removeWrongCount,
     bossCandidates: override.bossCandidates ?? base.bossCandidates,
   };
+}
+
+export type GameConfigResult = { ok: true; config: GameConfig } | { ok: false; errors: string[] };
+
+function show(value: unknown): string {
+  if (typeof value === 'number') return String(value);
+  if (value === undefined) return 'undefined';
+  if (typeof value === 'function' || typeof value === 'symbol' || typeof value === 'bigint') return typeof value;
+  const text = JSON.stringify(value);
+  return text.length > 40 ? `${text.slice(0, 37)}...` : text;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+const has = (obj: Record<string, unknown>, key: string) => Object.prototype.hasOwnProperty.call(obj, key);
+
+/**
+ * Checks untrusted input (for example parsed JSON) as a partial config, merges it
+ * onto `defaultGameConfig` and returns the full config, or every problem found.
+ * Each error starts with the path of the bad value. Only own, known keys are read.
+ */
+export function validateGameConfig(input: unknown): GameConfigResult {
+  const errors: string[] = [];
+
+  const int = (path: string, value: unknown, min: number, max?: number): value is number => {
+    if (Number.isInteger(value) && (value as number) >= min && (max === undefined || (value as number) <= max)) {
+      return true;
+    }
+    const range = max === undefined ? `an integer of at least ${min}` : `an integer from ${min} to ${max}`;
+    errors.push(`${path}: must be ${range} (got ${show(value)})`);
+    return false;
+  };
+
+  /** Returns the object when plain, and reports unknown keys. */
+  const object = (path: string, value: unknown, known: readonly string[]): Record<string, unknown> | null => {
+    if (!isPlainObject(value)) {
+      errors.push(`${path}: must be an object (got ${show(value)})`);
+      return null;
+    }
+    for (const key of Object.keys(value)) {
+      if (!known.includes(key)) errors.push(`${path === 'config' ? key : `${path}.${key}`}: unknown setting`);
+    }
+    return value;
+  };
+
+  const array = (path: string, value: unknown): value is unknown[] => {
+    if (Array.isArray(value)) return true;
+    errors.push(`${path}: must be a list (got ${show(value)})`);
+    return false;
+  };
+
+  const strictlyIncreasing = (path: string, values: unknown[], min: number) => {
+    let prev: number | undefined;
+    values.forEach((v, i) => {
+      if (!int(`${path}[${i}]`, v, min)) {
+        prev = undefined;
+        return;
+      }
+      if (prev !== undefined && v <= prev) {
+        errors.push(`${path}[${i}]: must be greater than ${path}[${i - 1}] (${prev}) (got ${v})`);
+      }
+      prev = v;
+    });
+  };
+
+  const root = object('config', input, [
+    'lives',
+    'ladder',
+    'ladderExtension',
+    'startPowerUps',
+    'milestoneReward',
+    'removeWrongCount',
+    'bossCandidates',
+  ]);
+  if (!root) return { ok: false, errors };
+
+  if (has(root, 'lives')) {
+    const lives = object('lives', root.lives, DIFFICULTY_ORDER);
+    if (lives) for (const d of DIFFICULTY_ORDER) if (has(lives, d)) int(`lives.${d}`, lives[d], 1, LIVES_MARKS);
+  }
+
+  if (has(root, 'ladder') && array('ladder', root.ladder)) {
+    const rungs = root.ladder;
+    if (rungs.length < 2) errors.push(`ladder: needs at least 2 rungs (got ${rungs.length})`);
+    const hits: unknown[] = [];
+    const crore: unknown[] = [];
+    rungs.forEach((rung, i) => {
+      const r = object(`ladder[${i}]`, rung, ['crore', 'hits']);
+      hits.push(r ? r.hits : undefined);
+      crore.push(r ? r.crore : undefined);
+    });
+    if (rungs.every(isPlainObject)) {
+      strictlyIncreasing('ladder.hits', hits, 1);
+      strictlyIncreasing('ladder.crore', crore, 1);
+    }
+  }
+
+  if (has(root, 'ladderExtension')) {
+    const ext = object('ladderExtension', root.ladderExtension, ['gapGrowth', 'croreSteps', 'croreEvery']);
+    if (ext) {
+      if (has(ext, 'gapGrowth')) int('ladderExtension.gapGrowth', ext.gapGrowth, 0);
+      if (has(ext, 'croreEvery')) int('ladderExtension.croreEvery', ext.croreEvery, 1);
+      if (has(ext, 'croreSteps') && array('ladderExtension.croreSteps', ext.croreSteps)) {
+        strictlyIncreasing('ladderExtension.croreSteps', ext.croreSteps, 1);
+      }
+    }
+  }
+
+  if (has(root, 'startPowerUps') && array('startPowerUps', root.startPowerUps)) {
+    if (root.startPowerUps.length !== POWER_UP_SLOTS) {
+      errors.push(`startPowerUps: must have exactly ${POWER_UP_SLOTS} counts (got ${root.startPowerUps.length})`);
+    }
+    root.startPowerUps.forEach((n, i) => int(`startPowerUps[${i}]`, n, 0));
+  }
+
+  if (has(root, 'milestoneReward')) {
+    const reward = object('milestoneReward', root.milestoneReward, ['slot', 'amount']);
+    if (reward) {
+      if (has(reward, 'slot')) int('milestoneReward.slot', reward.slot, 0, POWER_UP_SLOTS - 1);
+      if (has(reward, 'amount')) int('milestoneReward.amount', reward.amount, 0);
+    }
+  }
+
+  if (has(root, 'removeWrongCount')) int('removeWrongCount', root.removeWrongCount, 1);
+  if (has(root, 'bossCandidates')) int('bossCandidates', root.bossCandidates, 1);
+
+  if (errors.length) return { ok: false, errors };
+  return { ok: true, config: mergeGameConfig(defaultGameConfig, root as GameConfigOverride) };
 }
