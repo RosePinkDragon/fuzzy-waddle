@@ -106,7 +106,7 @@ No new screens are needed.
 
 ## Release pipeline
 
-- **CI** (`.github/workflows/ci.yml`) runs on every pull request and on pushes to main: lint, typecheck, unit tests, then the web export.
+- **CI** (`.github/workflows/ci.yml`) runs on every pull request and on pushes to main: lint, typecheck, unit tests, then the web export. On a pull request it skips what the changed files can't affect. Docs, design, `.claude/` and most `.github/` changes run nothing. Test, `scripts/` and lint-config changes skip the web export. Any other file runs everything. The exact rules are in [`expo-tooling.md`](.claude/reference/expo-tooling.md#ci-and-pr-rules).
 - **Release** (`.github/workflows/release.yml`) is written but switched off. It only runs when started by hand, and only if the repo variable `RELEASES_ENABLED` is `true`. Before it can work, it needs:
   - the `EXPO_TOKEN` secret in GitHub
   - `eas init`, to create the Expo project
