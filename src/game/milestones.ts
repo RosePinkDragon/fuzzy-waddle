@@ -6,7 +6,14 @@ import {
 } from './config';
 import type { Club } from './types';
 
-type Rung = { crore: number; hits: number };
+export type Rung = { crore: number; hits: number };
+
+/** How the ladder continues after its last rung (see LADDER_EXTENSION). */
+export interface LadderExtension {
+  readonly gapGrowth: number;
+  readonly croreSteps: readonly number[];
+  readonly croreEvery: number;
+}
 
 function activeLadder(): readonly Rung[] {
   return process.env.EXPO_PUBLIC_TEST_LADDER === '1' ? TEST_CLUB_LADDER : CLUB_LADDER;
@@ -18,10 +25,12 @@ function activeLadder(): readonly Rung[] {
  */
 export class Ladder {
   private readonly rungs: Rung[];
+  private readonly ext: LadderExtension;
 
-  constructor(base: readonly Rung[] = activeLadder(), private readonly ext = LADDER_EXTENSION) {
+  constructor(base: readonly Rung[] = activeLadder(), ext: LadderExtension = LADDER_EXTENSION) {
     if (base.length < 2) throw new Error('Ladder needs at least two rungs');
     this.rungs = base.map((r) => ({ ...r }));
+    this.ext = { ...ext, croreSteps: [...ext.croreSteps] };
   }
 
   /** The club at a 0-based ladder position, extending the ladder as needed. */
