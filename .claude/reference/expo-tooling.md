@@ -35,7 +35,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 Planned, not built yet:
 - `npm run issue:brief -- <n>` (#47)
 
-**The simulator** lives in `scripts/simulate/` and runs under `tsx` (pinned), not Jest. `scripts/simulate-game.ts` is the only file with Node I/O. A proposed config may hold only the settings in the [game config whitelist](game-systems.md#game-config-simulation-only), and the game's own validator checks it. The player presets are provisional assumptions for the `game-designer` to recalibrate, so compare presets and policies before drawing conclusions. A change to `src/hooks/useRun.ts` `drawInto` also needs `drawWord` in `scripts/simulate/rules.ts` updated.
+**The simulator** lives in `scripts/simulate/` and runs under `tsx` (pinned), not Jest. `scripts/simulate-game.ts` is the only file with Node I/O. A proposed config may hold only the settings in the [game config whitelist](game-systems.md#game-config-simulation-only), and the game's own validator checks it. The player presets are assumptions with a documented calibration check (see [game-systems.md](game-systems.md#game-config-simulation-only)), so compare paired deltas and run a sensitivity pair before drawing conclusions. Reports print a `Config changes:` line, and the JSON header carries the full validated config. A change to `src/hooks/useRun.ts` `drawInto` also needs `drawWord` in `scripts/simulate/rules.ts` updated.
 
 `words:check` can't judge facts, Hinglish or cultural accuracy, so a person still reviews those. `screenshots` finds layout faults, not design quality, so a person or the UX reviewer still compares the images with `design/screens/`.
 
