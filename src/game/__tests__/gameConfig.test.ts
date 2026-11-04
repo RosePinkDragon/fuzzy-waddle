@@ -44,7 +44,7 @@ describe('validateGameConfig: accepts', () => {
   });
 
   it('a reward of zero, the top life count and an empty croreSteps list', () => {
-    expect(validateGameConfig({ milestoneReward: { amount: 0 } }).ok).toBe(true);
+    expect(validateGameConfig({ milestoneReward: { amount: 0 } })).toMatchObject({ ok: true, config: { milestoneReward: { amount: 0 } } });
     expect(validateGameConfig({ lives: { easy: 9 } }).ok).toBe(true);
     expect(validateGameConfig({ ladderExtension: { croreSteps: [] } }).ok).toBe(true);
   });
@@ -91,6 +91,7 @@ describe('validateGameConfig: rejects', () => {
     ['lives as a string', { lives: { easy: '9' } }, 'lives.easy: must be an integer from 1 to 9 (got "9")'],
     ['NaN', { bossCandidates: NaN }, 'bossCandidates: must be an integer of at least 1 (got NaN)'],
     ['Infinity', { bossCandidates: Infinity }, 'bossCandidates: must be an integer of at least 1 (got Infinity)'],
+    ['an unsafe integer', { bossCandidates: 2 ** 53 }, 'bossCandidates: must be an integer of at least 1 (got 9007199254740992)'],
     ['null for a count', { removeWrongCount: null }, 'removeWrongCount: must be an integer of at least 1 (got null)'],
     ['lives above the sign', { lives: { easy: 10 } }, 'lives.easy: must be an integer from 1 to 9 (got 10)'],
     ['zero lives', { lives: { easy: 0 } }, 'lives.easy: must be an integer from 1 to 9 (got 0)'],

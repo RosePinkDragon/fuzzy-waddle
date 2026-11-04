@@ -145,7 +145,7 @@ export function validateGameConfig(input: unknown): GameConfigResult {
   const errors: string[] = [];
 
   const int = (path: string, value: unknown, min: number, max?: number): value is number => {
-    if (Number.isInteger(value) && (value as number) >= min && (max === undefined || (value as number) <= max)) {
+    if (Number.isSafeInteger(value) && (value as number) >= min && (max === undefined || (value as number) <= max)) {
       return true;
     }
     const range = max === undefined ? `an integer of at least ${min}` : `an integer from ${min} to ${max}`;
