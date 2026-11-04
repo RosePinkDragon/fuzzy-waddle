@@ -29,6 +29,10 @@ jobs:
         run: npm run typecheck
       - name: Unit tests
         run: npm test -- --ci
+      - name: Simulator smoke
+        run: |
+          npm run simulate:game -- --runs 50 --seed 7
+          npm run simulate:game -- --runs 20 --seed 7 --json
       - name: Web export
         run: npx expo export --platform web
       - uses: actions/upload-artifact@v4
