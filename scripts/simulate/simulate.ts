@@ -65,6 +65,8 @@ export interface RunRecord {
   misses: number[];
   bosses: BossRecord[];
   uses: PowerUpUse[];
+  /** Power-ups gained per slot over the run, measured from stock snapshots (net of uses). */
+  earned: number[];
   /** Words that had already been played earlier in the same run. */
   repeats: number;
 }
@@ -108,6 +110,7 @@ export function simulateRun(o: RunOptions): { record: RunRecord; bag: BagState }
   const misses: number[] = [];
   const bosses: BossRecord[] = [];
   const uses: PowerUpUse[] = [];
+  const earned: number[] = run.powerUps.map(() => 0);
   const wordIds: string[] = [];
   const seen = new Set<string>();
   let repeats = 0;
@@ -139,6 +142,8 @@ export function simulateRun(o: RunOptions): { record: RunRecord; bag: BagState }
       bosses.push(boss);
     }
 
+    const stockBefore = [...run.powerUps];
+    const usesBefore = uses.length;
     const playerRng: Rng = seededRng(mixSeed(playerSeed, wordIndex));
     for (let step = 0; run.status === 'playing'; step += 1) {
       if (step > MAX_STEPS_PER_WORD) throw new Error(`Word ${play.word.id} did not finish in ${MAX_STEPS_PER_WORD} steps`);
@@ -165,6 +170,11 @@ export function simulateRun(o: RunOptions): { record: RunRecord; bag: BagState }
       run = result.run;
     }
 
+    // Stock only goes up through the game's own rewards, so gained = stock after - stock before + used.
+    run.powerUps.forEach((count, slot) => {
+      const usedHere = uses.slice(usesBefore).filter((u) => u.slot === slot).length;
+      earned[slot] += count - stockBefore[slot] + usedHere;
+    });
     if (boss && run.status !== 'over') boss.won = true;
     if (run.status === 'solved' || run.status === 'milestone') run = continueRun(run);
   }
@@ -179,6 +189,7 @@ export function simulateRun(o: RunOptions): { record: RunRecord; bag: BagState }
     misses,
     bosses,
     uses,
+    earned,
     repeats,
   };
   return { record, bag };
