@@ -9,14 +9,15 @@
 /**
  * @typedef {{ lines: string[], cutLines: number }} BriefSection
  * @typedef {{ number: number, title?: string, type?: 'issue' | 'pr', state?: string }} BriefLink
- * @typedef {{ author: string, role: string | null, title: string | null, kind: 'role' | 'owner',
+ * @typedef {{ id: number, author: string, role: string | null, title: string | null, kind: 'role' | 'owner' | 'other',
  *   createdAt: string, url: string, excerpt: string[], cutLines: number }} BriefComment
  * @typedef {{ number: number, title: string, state: string, labels: string[], url: string,
  *   sections: { userStory: BriefSection | null, criteria: BriefSection | null,
  *     priority: BriefSection | null, estimate: BriefSection | null },
  *   links: BriefLink[], files: string[], comments: BriefComment[], cut: string[], textLines: number,
+ *   commands: { full: string, comment: string },
  *   omitted?: { otherComments: number, olderComments: number, links: number, files: number,
- *     excerptsShortened: boolean, sections: Set<string> } }} Brief
+ *     excerptsShortened: boolean, excerptLines: number, sections: Set<string> } }} Brief
  */
 
 const DEFAULT_MAX_LINES = 150;
@@ -119,8 +120,8 @@ function extractFiles(texts) {
   return files;
 }
 
-/** Role comments plus the owner's own comments, newest first. */
-function selectComments(comments, owner) {
+/** Role comments plus the owner's own comments (or every comment, with all), newest first. */
+function selectComments(comments, owner, all = false) {
   const picked = [];
   let skipped = 0;
   for (const c of comments || []) {
@@ -128,7 +129,7 @@ function selectComments(comments, owner) {
     const login = (c.user && c.user.login) || 'unknown';
     const role = body.match(ROLE_RE);
     const isOwner = login.toLowerCase() === owner.toLowerCase();
-    if (!role && !isOwner) {
+    if (!role && !isOwner && !all) {
       skipped += 1;
       continue;
     }
@@ -142,7 +143,8 @@ function selectComments(comments, owner) {
       author: login,
       role: role ? role[1].trim() : null,
       title: role ? role[2].trim() || null : null,
-      kind: role ? 'role' : 'owner',
+      id: c.id,
+      kind: role ? 'role' : isOwner ? 'owner' : 'other',
       createdAt: c.created_at,
       url: c.html_url,
       lines,
@@ -162,7 +164,9 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 function cutNotes(o, shownComments) {
   const notes = [];
   if (o.otherComments) notes.push(`${plural(o.otherComments, 'comment')} without a role tag from people other than the owner left out`);
-  if (o.excerptsShortened && shownComments) notes.push(`comment excerpts shortened to ${SHORT_EXCERPT_LINES} lines`);
+  if (o.excerptsShortened && shownComments) {
+    notes.push(o.excerptLines ? `comment excerpts shortened to ${o.excerptLines} lines` : 'comments shown as one-line headers only');
+  }
   if (o.sections.size) notes.push(`long sections shortened: ${[...o.sections].join(', ')}`);
   if (o.olderComments) notes.push(`${plural(o.olderComments, 'older comment')} left out`);
   if (o.links) notes.push(`${o.links} linked ${o.links === 1 ? 'issue or PR' : 'issues or PRs'} left out`);
@@ -181,7 +185,7 @@ function render(brief) {
     if (!s) out.push(`(missing: no "${label}" section in the issue body)`);
     else {
       out.push(...s.lines);
-      if (s.cutLines) out.push(`… ${s.cutLines} more lines cut; see the issue`);
+      if (s.cutLines) out.push(`… ${s.cutLines} more lines cut (full text: ${brief.commands.full})`);
     }
   }
   const o = brief.omitted;
@@ -198,15 +202,16 @@ function render(brief) {
   out.push('', `## Role and owner comments (newest first, ${brief.comments.length} shown)`);
   if (!brief.comments.length) out.push('none');
   for (const c of brief.comments) {
-    const who = c.role ? `[${c.role}]${c.title ? ` ${c.title}` : ''}` : 'Owner';
-    out.push(`- ${who} · ${c.author} · ${String(c.createdAt).slice(0, 10)} · ${c.url}`);
+    const who = c.role ? `[${c.role}]${c.title ? ` ${c.title}` : ''}` : c.kind === 'owner' ? 'Owner' : 'Comment';
+    out.push(`- ${who} · ${c.author} · ${String(c.createdAt).slice(0, 10)} · comment ${c.id} · ${c.url}`);
     for (const l of c.excerpt) out.push(`    ${l}`);
-    if (c.cutLines) out.push(`    … ${c.cutLines} more lines`);
+    if (c.cutLines) out.push(`    … ${c.cutLines} more lines (full comment: ${brief.commands.comment.replace('<id>', String(c.id))})`);
   }
   const notes = cutNotes(o, brief.comments.length);
   if (notes.length) {
     out.push('', '## Cut to fit');
     for (const note of notes) out.push(`- ${note}`);
+    out.push(`Nothing is lost: get everything with \`${brief.commands.full}\`, or one comment with \`${brief.commands.comment}\`.`);
     out.push(`Full issue: ${brief.url}`);
   }
   // Any value with a line break would add lines the budget can't see, so split last.
@@ -218,16 +223,19 @@ function render(brief) {
  * JSON is the same trimmed content, plus `cut` and `textLines`.
  * @param {object} issue    REST issue object
  * @param {object[]} comments REST comment objects
- * @param {object} [opts]   { repo, owner, maxLines, links: { [number]: { title, type, state } } }
+ * @param {object} [opts]   { repo, owner, maxLines, full, links: { [number]: { title, type, state } } }
+ *   full: no limit, whole comments, and every comment (not just role and owner ones).
  * @returns {{ brief: Brief, text: string }}
  */
 function buildBrief(issue, comments, opts = {}) {
   const repo = opts.repo || 'RosePinkDragon/fuzzy-waddle';
-  const maxLines = opts.maxLines || DEFAULT_MAX_LINES;
+  const full = Boolean(opts.full);
+  const maxLines = full ? Infinity : opts.maxLines || DEFAULT_MAX_LINES;
   const owner = opts.owner || repo.split('/')[0];
   const sections = extractSections(issue.body);
   const texts = [issue.body, ...(comments || []).map((c) => c.body)];
-  const { picked, skipped } = selectComments(comments, owner);
+  const { picked, skipped } = selectComments(comments, owner, full);
+  const repoFlag = repo === 'RosePinkDragon/fuzzy-waddle' ? '' : ` --repo ${repo}`;
   const allLinks = extractLinks(texts, repo, issue.number).map((n) => ({ number: n, ...((opts.links && opts.links[n]) || {}) }));
   const allFiles = extractFiles(texts);
 
@@ -244,7 +252,11 @@ function buildBrief(issue, comments, opts = {}) {
     comments: [],
     cut: [],
     textLines: 0,
-    omitted: { otherComments: skipped, olderComments: 0, links: 0, files: 0, excerptsShortened: false, sections: new Set() },
+    commands: {
+      full: `npm run issue:brief -- ${issue.number} --full${repoFlag}`,
+      comment: `npm run issue:brief -- ${issue.number} --comment <id>${repoFlag}`,
+    },
+    omitted: { otherComments: skipped, olderComments: 0, links: 0, files: 0, excerptsShortened: false, excerptLines: EXCERPT_LINES, sections: new Set() },
   };
   for (const { key } of SECTIONS) {
     brief.sections[key] = sections[key] === null ? null : { lines: sections[key].split('\n'), cutLines: 0 };
@@ -252,12 +264,14 @@ function buildBrief(issue, comments, opts = {}) {
   const o = brief.omitted;
   const fits = () => render(brief).length <= maxLines;
   const setComments = (count, n) => {
+    o.excerptLines = n;
     brief.comments = picked.slice(0, count).map(({ lines, ...c }) => ({ ...c, ...excerpt(lines, n) }));
     o.olderComments = picked.length - count;
   };
 
   // Each trimmable part, as [current length, drop one item].
-  const sectionParts = SECTIONS.map(({ key, label }) => {
+  // Everything but the acceptance criteria, which get their own steps below.
+  const sectionParts = SECTIONS.filter(({ key }) => key !== 'criteria').map(({ key, label }) => {
     const s = brief.sections[key];
     return s && [() => s.lines.length, () => { s.lines.pop(); s.cutLines += 1; o.sections.add(label); }];
   }).filter(Boolean);
@@ -275,17 +289,27 @@ function buildBrief(issue, comments, opts = {}) {
   };
 
   // Trim in steps until it fits, cutting the least useful material first.
-  setComments(picked.length, EXCERPT_LINES);
+  setComments(picked.length, full ? Infinity : EXCERPT_LINES);
   if (!fits()) {
     setComments(picked.length, SHORT_EXCERPT_LINES);
     o.excerptsShortened = picked.some((c) => c.lines.length > SHORT_EXCERPT_LINES);
   }
   shrink(sectionParts, 40);
   shrink(listParts, 15);
-  for (let kept = picked.length; !fits() && kept > 0; ) setComments((kept -= 1), SHORT_EXCERPT_LINES);
+  // Headers only (author, date, id, link) before any comment is dropped.
+  if (!fits()) setComments(picked.length, 0);
+  // The acceptance criteria are the contract: they keep 10 lines before any comment
+  // header goes, and are cut below that only after everything else.
+  const crit = brief.sections.criteria;
+  const criteriaPart = crit && [() => crit.lines.length, () => { crit.lines.pop(); crit.cutLines += 1; o.sections.add('Acceptance criteria'); }];
+  const criteria = criteriaPart ? [criteriaPart] : [];
   shrink([...sectionParts, ...listParts], 3);
+  shrink(criteria, 10);
+  for (let kept = picked.length; !fits() && kept > 0; ) setComments((kept -= 1), 0);
   shrink(sectionParts, 1);
   shrink(listParts, 0);
+  shrink(criteria, 3);
+  shrink(criteria, 1);
 
   let lines = render(brief);
   brief.cut = cutNotes(o, brief.comments.length);
@@ -293,7 +317,7 @@ function buildBrief(issue, comments, opts = {}) {
   // header, the "Cut to fit" notes and the link to the full issue.
   if (lines.length > maxLines) {
     const at = lines.indexOf('## Cut to fit');
-    const tail = at === -1 ? [`Full issue: ${brief.url}`] : lines.slice(at);
+    const tail = at === -1 ? [`Get everything with \`${brief.commands.full}\`.`, `Full issue: ${brief.url}`] : lines.slice(at);
     const head = lines.slice(0, at === -1 ? lines.length : at - 1);
     const keep = Math.max(0, maxLines - tail.length - 1);
     const note = `… ${head.length - keep} more lines cut here to fit the limit`;

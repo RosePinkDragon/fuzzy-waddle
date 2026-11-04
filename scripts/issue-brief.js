@@ -12,21 +12,31 @@
  * pretty-printed JSON, which runs longer in lines; it adds `cut` (what was left
  * out) and `textLines` (the text's length) so the skills can tell.
  *
+ * Nothing is lost for good: --full prints everything uncut (every comment, in
+ * full), and --comment <id> prints one comment in full. The brief prints both
+ * commands, and each comment's id, wherever it cuts something.
+ *
  * Read only: it sends GET requests through `gh api` (REST, because GraphQL is
  * blocked in the cloud sessions) and never changes the issue.
  */
 const { execFileSync } = require('child_process');
 const { buildBrief, DEFAULT_MAX_LINES, MIN_MAX_LINES } = require('./lib/issueBrief');
 
-const USAGE = 'Usage: npm run issue:brief -- <issue number> [--json] [--max-lines <n>] [--repo <owner/name>]';
+const USAGE = [
+  'Usage: npm run issue:brief -- <issue number> [--json] [--max-lines <n>] [--repo <owner/name>]',
+  '       npm run issue:brief -- <issue number> --full [--json]          everything, uncut, every comment',
+  '       npm run issue:brief -- <issue number> --comment <id> [--json]  one comment in full',
+].join('\n');
 
 function parseArgs(argv) {
-  const opts = { json: false, maxLines: DEFAULT_MAX_LINES, repo: 'RosePinkDragon/fuzzy-waddle', number: null };
+  const opts = { json: false, full: false, comment: null, maxLines: DEFAULT_MAX_LINES, repo: 'RosePinkDragon/fuzzy-waddle', number: null };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === '--json') opts.json = true;
     else if (a === '--max-lines') opts.maxLines = Number(argv[(i += 1)]);
     else if (a === '--repo') opts.repo = argv[(i += 1)];
+    else if (a === '--full') opts.full = true;
+    else if (a === '--comment') opts.comment = Number(argv[(i += 1)]);
     else if (a === '-h' || a === '--help') opts.help = true;
     else if (/^#?\d+$/.test(a)) opts.number = Number(a.replace('#', ''));
     else throw new Error(`Unknown argument: ${a}\n${USAGE}`);
@@ -35,6 +45,8 @@ function parseArgs(argv) {
   if (!opts.number) throw new Error(USAGE);
   if (!Number.isInteger(opts.maxLines) || opts.maxLines < MIN_MAX_LINES) throw new Error(`--max-lines needs a whole number of at least ${MIN_MAX_LINES}`);
   if (!/^[\w.-]+\/[\w.-]+$/.test(opts.repo || '')) throw new Error('--repo needs the form owner/name');
+  if (opts.comment !== null && !(Number.isInteger(opts.comment) && opts.comment > 0)) throw new Error('--comment needs a comment id, as the brief prints it');
+  if (opts.comment !== null && opts.full) throw new Error('Use --full or --comment, not both');
   return opts;
 }
 
@@ -65,13 +77,21 @@ function main() {
     return;
   }
   const base = `repos/${opts.repo}`;
+  if (opts.comment) {
+    const c = ghGet(`${base}/issues/comments/${opts.comment}`);
+    if (!String(c.issue_url || '').endsWith(`/issues/${opts.number}`)) throw new Error(`Comment ${opts.comment} is not on #${opts.number}.`);
+    const out = { issue: opts.number, id: c.id, author: c.user && c.user.login, createdAt: c.created_at, url: c.html_url, body: c.body };
+    console.log(opts.json ? JSON.stringify(out, null, 2) : `#${opts.number} comment ${c.id} · ${out.author} · ${out.createdAt}\n${c.html_url}\n\n${c.body}`);
+    return;
+  }
   const issue = ghGet(`${base}/issues/${opts.number}`);
   const comments = issue.comments ? ghGet(`${base}/issues/${opts.number}/comments?per_page=100`, { paginate: true }) : [];
 
   // Titles for linked issues and PRs. A failed lookup just leaves the number.
-  const { brief: draft } = buildBrief(issue, comments, { repo: opts.repo, maxLines: opts.maxLines });
+  const build = (links) => buildBrief(issue, comments, { repo: opts.repo, maxLines: opts.maxLines, full: opts.full, links });
+  const { brief: draft } = build();
   const links = {};
-  for (const { number } of draft.links.slice(0, 25)) {
+  for (const { number } of draft.links.slice(0, opts.full ? 100 : 25)) {
     try {
       const l = ghGet(`${base}/issues/${number}`);
       links[number] = { title: l.title, type: l.pull_request ? 'pr' : 'issue', state: l.pull_request && l.pull_request.merged_at ? 'merged' : l.state };
@@ -80,7 +100,7 @@ function main() {
     }
   }
 
-  const { brief, text } = buildBrief(issue, comments, { repo: opts.repo, maxLines: opts.maxLines, links });
+  const { brief, text } = build(links);
   console.log(opts.json ? JSON.stringify(brief, null, 2) : text);
 }
 

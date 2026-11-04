@@ -7,7 +7,7 @@ jest.mock('child_process', () => ({ execFileSync: jest.fn() }));
 const { execFileSync } = require('child_process') as { execFileSync: jest.Mock };
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { parseArgs, ghGet } = require('../issue-brief') as {
-  parseArgs: (argv: string[]) => { number: number; json: boolean; maxLines: number; repo: string };
+  parseArgs: (argv: string[]) => { number: number; json: boolean; full: boolean; comment: number | null; maxLines: number; repo: string };
   ghGet: (path: string, opts?: { paginate?: boolean }) => unknown;
 };
 
@@ -156,11 +156,59 @@ describe('buildBrief line limit (review on #52)', () => {
   });
 });
 
+describe('getting back what was cut', () => {
+  const longCriteria = Array.from({ length: 60 }, (_, i) => `- **Given** case ${i}, **when** x, **then** y`).join('\n');
+  const longStory = Array.from({ length: 60 }, (_, i) => `story line ${i}`).join('\n');
+  const body = `## User story\n${longStory}\n\n## Acceptance criteria\n${longCriteria}\n\n## Priority\nP3\n\n## Estimate\nS`;
+  const long = { ...issue, body };
+
+  it('prints the command for the full text and for each cut comment, with its id', () => {
+    const { brief, text } = buildBrief(long, comments, { maxLines: 60 });
+    expect(brief.commands).toEqual({ full: 'npm run issue:brief -- 12 --full', comment: 'npm run issue:brief -- 12 --comment <id>' });
+    expect(text).toContain('more lines cut (full text: npm run issue:brief -- 12 --full)');
+    expect(text).toContain('Nothing is lost: get everything with `npm run issue:brief -- 12 --full`');
+    for (const c of brief.comments) expect(text).toContain(`comment ${c.id}`);
+    const cutComment = brief.comments.find((c: { cutLines: number }) => c.cutLines);
+    expect(text).toContain(`(full comment: npm run issue:brief -- 12 --comment ${cutComment!.id})`);
+  });
+
+  it('adds --repo to the commands for another repo', () => {
+    const { brief } = buildBrief(issue, comments, { repo: 'someone/else' });
+    expect(brief.commands.full).toBe('npm run issue:brief -- 12 --full --repo someone/else');
+  });
+
+  it('trims the acceptance criteria last, after the other sections', () => {
+    const { brief } = buildBrief(long, comments, { maxLines: 60 });
+    expect(brief.sections.userStory!.lines.length).toBeLessThan(brief.sections.criteria!.lines.length);
+    expect(brief.sections.criteria!.lines.length).toBeGreaterThanOrEqual(10);
+  });
+
+  it('keeps comment headers, with ids, before dropping any comment', () => {
+    const { brief, text } = buildBrief(long, comments, { maxLines: 60 });
+    expect(brief.comments).toHaveLength(3);
+    expect(text).toContain('comments shown as one-line headers only');
+  });
+
+  it('--full prints everything uncut, including comments without a role tag', () => {
+    const { brief, text } = buildBrief(long, comments, { full: true, maxLines: 40 });
+    expect(brief.cut).toEqual([]);
+    expect(brief.sections.criteria!.lines).toHaveLength(60);
+    expect(brief.comments).toHaveLength(4);
+    expect(text).toContain('Drive-by comment');
+    expect(text).toContain('2. Default to Easy?');
+    expect(text).not.toContain('## Cut to fit');
+  });
+});
+
 describe('issue-brief CLI', () => {
   beforeEach(() => execFileSync.mockReset());
 
   it('parses the number and flags', () => {
     expect(parseArgs(['47', '--json'])).toMatchObject({ number: 47, json: true, maxLines: 150 });
+    expect(parseArgs(['47', '--full'])).toMatchObject({ number: 47, full: true });
+    expect(parseArgs(['47', '--comment', '6609423679'])).toMatchObject({ number: 47, comment: 6609423679 });
+    expect(() => parseArgs(['47', '--comment', 'x'])).toThrow('--comment needs a comment id');
+    expect(() => parseArgs(['47', '--full', '--comment', '1'])).toThrow('not both');
     expect(() => parseArgs([])).toThrow('Usage');
     expect(() => parseArgs(['47', '--max-lines', 'x'])).toThrow('--max-lines');
   });
