@@ -6,14 +6,14 @@ Expo-specific rules: @AGENTS.md
 
 ## Workflow (required; the PR rules check enforces it)
 
-1. **Issue first.** Before changing anything, find or open a GitHub issue for the work. Write it like the templates in `.github/ISSUE_TEMPLATE/`: user story, Given/When/Then acceptance criteria, priority, estimate. GraphQL is blocked in cloud sessions, so use the REST API:
+1. **Issue first.** Before changing anything, find or open a GitHub issue for the work. Write it like the templates in `.github/ISSUE_TEMPLATE/`: user story, Given/When/Then acceptance criteria, priority, estimate. When the owner accepts review recommendations and authorizes issue updates, incorporate those decisions into the body and record the authorization and resolved choices; don't ask for the same approval again. Otherwise, reviews of existing issue bodies stay read-only. GraphQL is blocked in cloud sessions, so use the REST API:
    `gh api repos/RosePinkDragon/fuzzy-waddle/issues -f title="feat: ..." -F body=@issue.md -f "labels[]=feature"`
 2. **Branch from main** as `type/<issue>-short-name`. Types: feat, fix, chore, docs, test, refactor, ci, style, perf, build. Example: `feat/12-difficulty-picker`.
-3. **Small PRs.** At most 15 changed files per PR, not counting `package-lock.json`, files in `design/` and deleted files. If the work needs more, split the issue first. Commit in logical steps, with messages in Conventional Commits format: `type(scope): lowercase subject`. End each message with the attribution lines your session asks for.
+3. **Small PRs.** At most 15 changed files per PR, not counting `package-lock.json`, files in `design/` and deleted files. If work needs more or benefits from independent delivery, the coordinator splits the authorized scope into linked child issues with Given/When/Then criteria and dependencies, and tracks aggregate acceptance on the parent. Mechanical splitting needs no further owner approval. Use a separate branch and PR for each implementation child. Commit in logical steps, with messages in Conventional Commits format: `type(scope): lowercase subject`. End each message with the attribution lines your session asks for.
 4. **Before opening a PR,** run `npm run verify`. For UI changes, also run `npm run screenshots` (with `--screens` and `--themes` for the screens you touched). For word changes, also run `npm run words:check`. Changes to game rules, persistence, sharing or security, the agent workflow or CI, or releases need an independent `senior-developer` review before the PR.
-5. **Open a PR** from `.github/pull_request_template.md`. The title is in Conventional Commits format, and the description starts with `Closes #<issue>`. With REST:
+5. **Open a PR** from `.github/pull_request_template.md`. The title is in Conventional Commits format, and the description starts with `Closes #<issue>`. A child PR uses `Closes #<child>` and references its parent without closing it; close the parent only when all its acceptance criteria are satisfied. With REST:
    `gh api repos/RosePinkDragon/fuzzy-waddle/pulls -f title="feat: ..." -f head=<branch> -f base=main -F body=@pr.md`
-6. **Never push to main and never merge.** The owner reviews and merges.
+6. **Never push to main, merge or approve your own PR.** The owner reviews and merges.
 
 ## Quality bar
 
@@ -27,37 +27,40 @@ Expo-specific rules: @AGENTS.md
 Two skills run the team from the owner's chat. Agents are called only when a change needs them.
 
 - **`review-issue`** (`.claude/skills/review-issue/`): "review issue #31".
-  - Runs before approval on a `needs-approval` issue or a rough idea.
+  - Reviews a `needs-approval` issue or a rough idea, or applies accepted decisions when the owner authorizes updates.
   - Calls only the specialists the issue needs, then posts their reviews and a **[Review] Routing** summary with owner decisions.
-  - Never labels an issue `ready` and never writes code.
+  - May mark a routine bug `ready` under the standing delegation below, or a child that inherits authorized scope. Never writes code.
 - **`run-issue`** (`.claude/skills/run-issue/`): "run issue #12".
-  - Runs after the owner approves, on `ready` issues only.
+  - Runs authorized `ready` issues: owner-approved work, delegated routine bugs, or implementation children within authorized parent scope. It may establish delegated readiness as described below.
   - Picks Fast, Standard or Full mode by risk, runs the needed agents and checks, opens the PR and posts a **[Run] Report**.
 
 | Agent | Model / effort / turns | Does | Called when |
 |---|---|---|---|
-| `game-designer` | Opus / medium / 30 | Reviews the loop, difficulty, lives, rewards, fairness and exploits before approval | An issue changes mechanics or the game economy |
-| `business-analyst` | Opus / medium / 30 | Market evidence, player needs and build-or-defer calls. Writes issues from rough ideas. | Value or priority is unclear. Skipped for bugs, tooling and logic-only work. |
-| `ux-designer` | Opus / medium / 30 | Mockups in `design/` before anything is built | An issue marked **Design: needed** (Full mode) |
+| `game-designer` | Opus / medium / 30 | Reviews the loop, difficulty, lives, rewards, fairness and exploits before approval | An issue proposes changed mechanics or economy; routine restorations use the agreed rules |
+| `business-analyst` | Opus / medium / 30 | Market evidence, player needs and build-or-defer calls. Writes issues from rough ideas. | Value or priority is unclear. Routine bugs, tooling and logic-only work skip product discovery unless they raise a concrete product decision. |
+| `ux-designer` | Opus / medium / 30 | Mockups in `design/` before anything is built | A new design decision marked **Design: needed** (Full mode); restoring an agreed layout needs no new owner design approval |
 | `ux-reviewer` | Sonnet / medium / 30 | Independent review of mockups, built screens and word content | Player-facing UI or copy, new mockups, or word changes |
 | `senior-developer` | Opus / high / 40 | Plans Standard and Full runs, and reviews code it didn't write | Every Standard and Full run, plus any change to game rules, persistence, sharing or security, the agent workflow or CI, or releases |
-| `developer` | Sonnet / high / 80 | Builds the whole change: logic, UI, copy, words, tests and tooling | Every approved issue |
+| `developer` | Sonnet / high / 80 | Builds the whole change: logic, UI, copy, words, tests and tooling | Every authorized issue or implementation child |
 
 **Modes** (`run-issue` picks one and logs why):
 
 | Mode | For | Steps |
 |---|---|---|
-| Fast | Bugs, CI, tooling, workflow, logic-only work, word changes, copy fixes | developer → checks → reviews → PR |
+| Fast | Routine bugs restoring agreed behavior, CI, tooling, workflow, logic-only work, word changes, copy fixes | developer → checks → reviews → PR |
 | Standard | Game rules, persistence, a layout tweak marked **Design: not needed** | plan → developer → checks → reviews → PR |
-| Full | Anything marked **Design: needed** | design gate → plan → developer → checks → reviews → PR |
+| Full | A new design choice marked **Design: needed** | design gate → plan → developer → checks → reviews → PR |
 
 Some reviews happen in every mode:
 - **Senior review:** whenever game rules, persistence, sharing or security, the workflow or CI, or releases change.
 - **UX review:** whenever player-facing UI, copy or words change.
 
-**Approvals:**
-- The owner approves each issue by swapping `needs-approval` for `ready`.
-- The owner approves each design by swapping `needs-design-approval` for `ready`, or for `design-changes` with a comment asking for changes.
+**Approvals and standing delegation:**
+- The owner's 4 November 2026 instruction authorizes applying accepted review decisions, creating implementation children for large work, and handling routine bug fixes without involving the owner. Record that authorization and its scope on the issue.
+- A routine bug must be reproducible and restore agreed behavior, with expected behavior grounded in accepted requirements, approved designs or existing regression coverage. The coordinator may remove stale approval labels and set it `ready`, then handle implementation, regression tests, required independent reviews and the PR without owner issue, design or plan sign-off. Resolve exact corrective copy and theme corrections with the UX reviewer.
+- A bug label alone grants no approval. New mechanics, balance trade-offs, changed flows or new layout choices still need the owner's product or design decision. Separate these choices from any independently deliverable routine correction.
+- The owner approves other issues by swapping `needs-approval` for `ready`. A mechanical child inherits its parent's authorized scope; the coordinator records that link and may mark it `ready` once its criteria and dependencies are clear, without repeating approval. New scope still needs approval.
+- The owner approves new design choices by swapping `needs-design-approval` for `ready`, or for `design-changes` with a comment asking for changes. Restoring an agreed design uses UX review without a new owner approval gate.
 - The owner merges each PR.
 
 **Limits:**
