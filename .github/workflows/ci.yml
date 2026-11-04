@@ -34,6 +34,9 @@ jobs:
           full() { echo "checks=true" >> "$GITHUB_OUTPUT"; echo "export=true" >> "$GITHUB_OUTPUT"; echo "Running everything: $1"; exit 0; }
 
           [ "$EVENT" = "pull_request" ] || full "not a pull request"
+          # If checkout ever stops using the merge commit, HEAD^1 would be the
+          # PR's previous commit and only the last commit would be checked.
+          git rev-parse -q --verify HEAD^2 >/dev/null || full "HEAD is not a merge commit"
           files=$(git diff --name-only --no-renames HEAD^1 HEAD) || full "could not list changed files"
           [ -n "$files" ] || full "no changed files found"
           printf '%s\n' "$files"
@@ -47,11 +50,18 @@ jobs:
               # Every file under src/app is a route, so it is always bundled.
               src/app/*) export=true ;;
               # Tests and tooling are linted, typechecked or tested, not bundled.
+              # (If a babel or metro config ever imports from scripts/, move
+              # scripts/* down to the catch-all.)
               */__tests__/*|scripts/*|eslint.config.js) checks=true ;;
               src/*|assets/*) export=true ;;
-              # Can't affect lint, types, tests or the build. ci.yml runs everything.
+              # tsconfig.json typechecks every .ts and .tsx file, design/ included.
+              *.ts|*.tsx) export=true ;;
+              # Can't affect lint, types, tests or the build. ci.yml runs
+              # everything, and so would a .github/actions/ or reusable workflow
+              # it calls: list those above this line if they're ever added.
               .github/workflows/ci.yml) export=true ;;
-              *.md|LICENSE|design/*|.claude/*|.vscode/*|.github/*|commitlint.config.mjs) ;;
+              *.md|LICENSE|design/*|.claude/*|.vscode/*|commitlint.config.mjs) ;;
+              .github/ISSUE_TEMPLATE/*|.github/pull_request_template.md|.github/workflows/*) ;;
               # Anything else: package*.json, tsconfig.json, app.config.ts,
               # eas.json or a new kind of file.
               *) export=true ;;

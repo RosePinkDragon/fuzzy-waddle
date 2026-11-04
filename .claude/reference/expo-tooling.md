@@ -52,7 +52,7 @@ Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, whi
 ## CI and PR rules
 
 - **`ci.yml`** runs on every PR and push to main: `npm ci`, lint, typecheck, tests and the web export. The Node version is set there, and its token is read-only.
-  - On a PR, its "Decide what to run" step lists the changed files and skips steps they can't affect. Only docs, `design/`, `.claude/`, `.vscode/`, `.github/` (not `ci.yml`) or `commitlint.config.mjs`: nothing runs. Only `__tests__/`, `scripts/` or `eslint.config.js` added: no web export. Any other file, `ci.yml` itself, a push to main, or a failed file listing: everything runs.
+  - On a PR, its "Decide what to run" step lists the changed files and skips steps they can't affect. If the PR changes only `*.md` files (outside `src/` and `assets/`), `LICENSE`, `design/` (except `.ts`/`.tsx`, which tsc checks), `.claude/`, `.vscode/`, `commitlint.config.mjs`, issue and PR templates, or workflows other than `ci.yml`, nothing runs. If it also changes `__tests__/` (outside `src/app/`), `scripts/` or `eslint.config.js`, everything runs except the web export. Everything runs for any other file, `ci.yml` itself, a push to main, or when the file listing fails.
   - The job always runs and reports as `check`, even when its steps are skipped, so don't move this to workflow-level `paths` filters (a required check would wait forever).
   - When you add a new kind of file that can't affect the app, add it to the list in that step. Until then it runs everything, which is safe.
 - **Lint:** `npm run lint` covers `src`, `scripts` and `app.config.ts`. `eslint.config.js` gives `scripts/` the Node globals.
