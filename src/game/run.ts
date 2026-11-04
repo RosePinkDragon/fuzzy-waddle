@@ -3,9 +3,9 @@
  * state and returns a new one, so screens can hold it in a reducer and tests
  * can drive it directly.
  */
-import { MILESTONE_REWARD, START_POWER_UPS } from './config';
+import { START_POWER_UPS } from './config';
 import { isGuessable, isSolved, lettersOf } from './answer';
-import { rulesFor } from './difficulty';
+import { defaultGameConfig, type GameConfig } from './gameConfig';
 import { ladder as defaultLadder, type Ladder } from './milestones';
 import type { Club, Difficulty, ThemeId, Word } from './types';
 
@@ -66,12 +66,15 @@ export function startRun(
   };
 }
 
-export function maxLives(run: Pick<RunState, 'difficulty'>): number {
-  return rulesFor(run.difficulty).lives;
+export function maxLives(run: Pick<RunState, 'difficulty'>, config: GameConfig = defaultGameConfig): number {
+  return config.lives[run.difficulty];
 }
 
-export function livesLeft(run: Pick<RunState, 'difficulty' | 'livesLost'>): number {
-  return Math.max(0, maxLives(run) - run.livesLost);
+export function livesLeft(
+  run: Pick<RunState, 'difficulty' | 'livesLost'>,
+  config: GameConfig = defaultGameConfig,
+): number {
+  return Math.max(0, maxLives(run, config) - run.livesLost);
 }
 
 /** Whether the next word should be a boss round. */
@@ -106,13 +109,17 @@ export function lockedLetters(play: WordPlay): Set<string> {
 }
 
 /** Applies a solved word: +1 hit, and on a boss round refill lives and give the reward. */
-export function settleIfSolved(run: RunState, ladder: Ladder = defaultLadder): RunState {
+export function settleIfSolved(
+  run: RunState,
+  ladder: Ladder = defaultLadder,
+  config: GameConfig = defaultGameConfig,
+): RunState {
   const play = run.current;
   if (!play || run.status !== 'playing' || !isSolved(play.word.answer, play.correct)) return run;
   const hits = run.hits + 1;
   if (play.isBoss) {
     const powerUps = [...run.powerUps];
-    powerUps[MILESTONE_REWARD.slot] += MILESTONE_REWARD.amount;
+    powerUps[config.milestoneReward.slot] += config.milestoneReward.amount;
     return { ...run, hits, livesLost: 0, powerUps, status: 'milestone', lastClub: ladder.reached(hits) };
   }
   return { ...run, hits, status: 'solved' };
@@ -122,6 +129,7 @@ export function guess(
   run: RunState,
   letter: string,
   ladder: Ladder = defaultLadder,
+  config: GameConfig = defaultGameConfig,
 ): { run: RunState; result: GuessResult } {
   const play = run.current;
   const l = letter.toUpperCase();
@@ -130,7 +138,7 @@ export function guess(
   }
   if (lettersOf(play.word.answer).has(l)) {
     const next = { ...run, current: { ...play, correct: [...play.correct, l] } };
-    return { run: settleIfSolved(next, ladder), result: 'correct' };
+    return { run: settleIfSolved(next, ladder, config), result: 'correct' };
   }
   const livesLost = run.livesLost + 1;
   const next: RunState = {
@@ -138,7 +146,7 @@ export function guess(
     livesLost,
     current: { ...play, wrong: [...play.wrong, l] },
   };
-  if (livesLeft(next) <= 0) next.status = 'over';
+  if (livesLeft(next, config) <= 0) next.status = 'over';
   return { run: next, result: 'wrong' };
 }
 

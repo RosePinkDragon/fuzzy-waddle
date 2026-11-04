@@ -4,7 +4,7 @@ Where things live and where a change goes. Read this before planning or building
 
 **Source of truth:** the code itself, and the folder tour in [README "How the code is laid out"](../../README.md#how-the-code-is-laid-out). This sheet adds where-to-change guidance. It doesn't repeat that tour.
 
-*Last checked against `c636a30` (main, 2026-11-04).*
+*Last checked against `e91aeb0` plus #51 (2026-11-04).*
 
 ## Boundaries
 
@@ -12,6 +12,7 @@ Where things live and where a change goes. Read this before planning or building
 |---|---|---|
 | `src/game/` | Pure TypeScript game logic | No React imports. Every change has unit tests in `src/game/__tests__/`. |
 | `src/game/config.ts` | Every tuning number | Change numbers here, never inline in logic or screens. |
+| `src/game/gameConfig.ts` | The injectable `GameConfig`, its frozen default and its validator, for the simulator | No numbers of its own: defaults come from `config.ts`. Must not import `run` or `powerUps`. Hooks and screens never pass a config. See [game-systems.md](game-systems.md). |
 | `src/data/words/` | One JSON bank per category, the loader `index.ts`, and the validation test | New entries stay `draft`. See [README "Adding or editing words"](../../README.md#adding-or-editing-words). |
 | `src/lib/` | Platform helpers: `storage.ts` (AsyncStorage, `localStorage` on web), `share.ts`, and `releaseGuard.ts` (stops release builds that set test switches) | Storage failures are swallowed, so a game never breaks. |
 | `src/hooks/` | `useRun.ts` joins game logic to screens (bag, bests, haptics, test hooks). `useChallengeShare.tsx` handles the name prompt and share. `useFlopDelay.ts` holds the board before the result screen. | Keep game rules out of hooks. Call `src/game`. |
@@ -39,6 +40,7 @@ The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), 
 |---|---|
 | Lives, pools, ladder, power-up counts, boss pick size | `src/game/config.ts`, plus tests in `src/game/__tests__/` |
 | How a guess, a solve, a boss round or a power-up works | `src/game/run.ts` or `powerUps.ts`, plus tests |
+| Let the simulator override a new tuning value | `src/game/gameConfig.ts` (type, default, validator) plus the function that reads it |
 | What gets saved between sessions | `src/lib/storage.ts` keys, and the `useRun.ts` effects that load and save |
 | A theme's colours, lives sign or power-up names | `src/themes/themes.ts` and `src/copy/strings.ts` (`themeCopy`) |
 | A scene's art | `design/source/<Screen>.dc.html`, then `npm run port-scenes` |
