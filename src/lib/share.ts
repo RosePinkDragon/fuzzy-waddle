@@ -27,6 +27,8 @@ const isCancel = (e: unknown) => typeof e === 'object' && e !== null && (e as { 
  * With Web Share available, a cancel (AbortError) just stops, and any other
  * failure is logged and stops too: neither opens a WhatsApp tab the player
  * didn't ask for. Only a browser with no Web Share falls back to WhatsApp.
+ * The fallback uses 'noopener', which makes window.open return null even on
+ * success, so a blocked popup can't be detected. That is accepted.
  */
 export async function shareText(message: string): Promise<ShareResult> {
   if (Platform.OS === 'web') {
@@ -42,11 +44,7 @@ export async function shareText(message: string): Promise<ShareResult> {
       }
     }
     if (typeof window !== 'undefined') {
-      // No 'noopener' feature: it makes window.open return null even on success, which would hide
-      // a blocked popup. Sever the opener by hand instead.
-      const tab = window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-      if (!tab) return 'failed';
-      tab.opener = null;
+      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
       return 'fallback';
     }
     return 'failed';
