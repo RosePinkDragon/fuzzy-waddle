@@ -8,7 +8,7 @@ How a run works, and the rules that must keep holding. Read this before reviewin
 
 This sheet names the numbers' homes instead of copying them. If code and the brief disagree, list it under Disagreements below rather than picking one.
 
-*Last checked against `e91aeb0` plus #51 (2026-11-04).*
+*Last checked against `05b4774` plus #46 (2026-11-04).*
 
 ## The run loop
 
@@ -54,6 +54,8 @@ This sheet names the numbers' homes instead of copying them. If code and the bri
 - The config is never stored on `RunState`, so a saved run (#32) can't carry its own tuning.
 - `mergeGameConfig(base, override)` merges `lives`, `ladderExtension` and `milestoneReward` one level deep. Arrays and numbers replace.
 - `validateGameConfig(unknown)` takes parsed JSON and returns `{ ok: true, config }` or `{ ok: false, errors }` with every error and its path. It rejects: unknown keys, non-integers, negative counts, lives outside 1 to `LIVES_MARKS`, fewer than 2 rungs, hits or crore that don't strictly increase, a negative `gapGrowth` (the ladder would stop growing), `croreEvery` or `bossCandidates` or `removeWrongCount` below 1, `startPowerUps` not of length `POWER_UP_SLOTS`, and a reward slot outside the slots. A reward `amount` of 0 is allowed.
+- **The simulator** (#46, `scripts/simulate/`) reaches these rules only through `bindRules(config)` in `scripts/simulate/rules.ts`, which applies `ladderFor(config)`, the config, `startPowerUps` and `bossCandidates` in one place. A test scans the other simulator files so none can call a config-taking rule directly and fall back to the live defaults. Its `drawWord` copies how `useRun.drawInto` draws a word (boss word or next from the bag, then `beginWord`). Keep the two in step: #31 (stage pools) or #32 (resume) changing that draw also changes `drawWord`.
+- The simulator models invariant 1 (a fresh `startRun` for each run) and invariant 2 (bags `carry` between runs by default, `reset` as a labelled scenario). It flags, and still runs, a `lives` value whose lives plus pre-locked marks aren't `LIVES_MARKS`.
 - Tests: `gameConfig.test.ts` (validator and merge) and `gameConfigRules.test.ts` (defaults match the constants, seeded runs are identical with and without the default passed, and each setting changes what it controls).
 - When a new tuning value becomes injectable, add it to the type, the default, the validator and a test that shows it changes behaviour.
 
@@ -83,7 +85,6 @@ The brief numbers the power-up slots **1–4**, but the code indexes them **0–
 - **#31:** words get harder as a run goes on. Today every word in a run draws from the same pool, apart from bosses.
 - **#32:** resume a run after leaving it. Today only bests, bags and the name persist, so leaving a run loses it.
 - **#33:** rebalance survival between clubs.
-- **#46:** `npm run simulate:game` for comparing balance changes with numbers. It builds on the game config above.
 
 When reviewing these, check them against the invariants above, and against each other: #31 and #33 both change how hard it is to reach the next club.
 
