@@ -28,7 +28,7 @@ This sheet names the numbers' homes instead of copying them. If code and the bri
 | **Answers** | Uppercase, canonical spelling. Only A–Z can be guessed. Spaces split words, and digits and punctuation are revealed automatically. | `answer.ts` | `answer.test.ts` |
 | **Tiles** | Wrap at word breaks and shrink between the max and min size until the answer fits. | `tileLayout.ts` | `tileLayout.test.ts` |
 | **Bests** | One per theme and difficulty: hits and club, saved when a run ends or reaches a club. | `useRun.ts`, `storage.ts` `keys.best` | `storage.test.ts` (the wrapper only) |
-| **Challenges** | A link carries the word ID, never the answer. It plays one word with that word tier's rules, and lives don't matter beyond that word. | `src/app/c/[wordId].tsx`, `lib/share.ts` | `share.test.ts` (links) |
+| **Challenges** | A link carries the word ID, never the answer. It plays one word with that word tier's rules, and lives don't matter beyond that word. | `src/app/c/[wordId].tsx`, `lib/share.ts` | `share.test.ts` (links and `shareText`) |
 
 ## Game config (simulation only)
 

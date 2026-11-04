@@ -56,7 +56,7 @@ The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), 
 - Jest with the `jest-expo` preset. Tests sit in `__tests__/` folders next to the code (`testMatch` in `package.json`).
 - `src/game/__tests__/helpers.ts` builds runs and words for tests.
 - `src/data/words/__tests__/wordBank.test.ts` validates every word: format, IDs, duplicates, giveaways and phone fit.
-- `src/lib/__tests__/` covers challenge links (`share`), the storage wrapper, and the release guard and its wiring into `app.config.ts`.
+- `src/lib/__tests__/` covers challenge links and `shareText` behaviour (`share`), the storage wrapper, and the release guard and its wiring into `app.config.ts`.
 - There are no component or snapshot tests. Screens are checked with `npm run screenshots`.
 
 ## Sizing a change
