@@ -5,6 +5,7 @@
  */
 import { lettersOf } from '@/game/answer';
 import { DIFFICULTY_RULES, INCLUDE_DRAFT_WORDS, LIVES_MARKS, POWER_UP_SLOTS } from '@/game/config';
+import { defaultGameConfig, type GameConfig } from '@/game/gameConfig';
 import { UNDO } from '@/game/powerUps';
 
 import { configIdentity } from './rules';
@@ -25,6 +26,8 @@ export interface ReportContext {
   configSource: string | null;
   /** Where the cap came from: the computed default or the `--cap` flag. */
   capSource: 'default' | '--cap';
+  /** Show club rows down to at least this ladder position (a comparison gives both sides the same depth). */
+  clubDepth?: number;
 }
 
 export interface Header {
@@ -40,6 +43,10 @@ export interface Header {
   seed: number;
   gitSha: string;
   config: string;
+  /** Settings that differ from the live defaults, as `path=value`. */
+  configChanges: string[];
+  /** The full validated config that was simulated. */
+  configValues: GameConfig;
   pool: { size: number; drafts: number; includeDrafts: boolean };
   flags: string[];
 }
@@ -100,6 +107,30 @@ function spread(values: number[]): Spread {
   return { p10: nearestRank(sorted, 10), p50: nearestRank(sorted, 50), p90: nearestRank(sorted, 90) };
 }
 
+/** The validated config's differences from the live defaults, as `path=value` (empty for `current`). */
+export function configChanges(config: GameConfig): string[] {
+  const out: string[] = [];
+  const diff = (path: string, a: unknown, b: unknown) => {
+    if (JSON.stringify(a) !== JSON.stringify(b)) out.push(`${path}=${JSON.stringify(b)}`);
+  };
+  for (const d of Object.keys(config.lives) as (keyof GameConfig['lives'])[]) diff(`lives.${d}`, defaultGameConfig.lives[d], config.lives[d]);
+  diff('ladder', defaultGameConfig.ladder, config.ladder);
+  for (const k of ['gapGrowth', 'croreSteps', 'croreEvery'] as const) {
+    diff(`ladderExtension.${k}`, defaultGameConfig.ladderExtension[k], config.ladderExtension[k]);
+  }
+  diff('startPowerUps', defaultGameConfig.startPowerUps, config.startPowerUps);
+  diff('milestoneReward.slot', defaultGameConfig.milestoneReward.slot, config.milestoneReward.slot);
+  diff('milestoneReward.amount', defaultGameConfig.milestoneReward.amount, config.milestoneReward.amount);
+  diff('removeWrongCount', defaultGameConfig.removeWrongCount, config.removeWrongCount);
+  diff('bossCandidates', defaultGameConfig.bossCandidates, config.bossCandidates);
+  return out;
+}
+
+/** The deepest club any run entered (0 when none did). */
+export function deepestClub(result: BatchResult): number {
+  return maxOf(result.records.map((r) => r.clubs));
+}
+
 function buildHeader(result: BatchResult, ctx: ReportContext): Header {
   const o = result.options;
   const cfg = o.rules.config;
@@ -136,6 +167,8 @@ function buildHeader(result: BatchResult, ctx: ReportContext): Header {
     seed: o.seed,
     gitSha: ctx.gitSha,
     config: configIdentity(ctx.configSource, cfg),
+    configChanges: configChanges(cfg),
+    configValues: cfg,
     pool: {
       size: o.pool.ids.length,
       drafts: o.pool.words.filter((w) => w.status === 'draft').length,
@@ -145,10 +178,10 @@ function buildHeader(result: BatchResult, ctx: ReportContext): Header {
   };
 }
 
-function clubRows(result: BatchResult): ClubRow[] {
+function clubRows(result: BatchResult, minDepth: number): ClubRow[] {
   const { records, options } = result;
   const { ladder } = options.rules;
-  const deepest = maxOf(records.map((r) => r.clubs));
+  const deepest = Math.max(deepestClub(result), minDepth);
   const rows: ClubRow[] = [];
   for (let i = 0; i <= deepest; i += 1) {
     const club = ladder.clubAt(i);
@@ -184,14 +217,12 @@ function clubRows(result: BatchResult): ClubRow[] {
 export function summarize(result: BatchResult, ctx: ReportContext): Summary {
   const { records, options } = result;
   const n = records.length;
-  const reward = options.rules.config.milestoneReward;
   const lostRuns = records.filter((r) => r.outcome === 'lost');
   const uses = records.flatMap((r: RunRecord) => r.uses);
   const removes = uses.filter((u) => u.slot === 3);
   const asked = options.rules.config.removeWrongCount;
   const bossDraws = records.flatMap((r) => r.bosses);
-  const earned = Array.from({ length: POWER_UP_SLOTS }, () => 0);
-  earned[reward.slot] = bossDraws.filter((b) => b.won).length * reward.amount;
+  const earned = Array.from({ length: POWER_UP_SLOTS }, (_, s) => records.reduce((t, r) => t + (r.earned[s] ?? 0), 0));
   const usedTotal = Array.from({ length: POWER_UP_SLOTS }, (_, s) => uses.filter((u) => u.slot === s).length);
 
   return {
@@ -199,7 +230,7 @@ export function summarize(result: BatchResult, ctx: ReportContext): Summary {
     outcomes: { lost: lostRuns.length, capped: n - lostRuns.length },
     hits: spread(records.map((r) => r.hits)),
     wordsAtLoss: spread(lostRuns.map((r) => r.words)),
-    clubs: clubRows(result),
+    clubs: clubRows(result, ctx.clubDepth ?? 0),
     powerUps: {
       earnedPerRun: earned.map((e) => r6(e / n)),
       usedPerRun: usedTotal.map((u) => r6(u / n)),
@@ -308,7 +339,7 @@ function headerLines(h: Header, opts: { sides?: boolean } = {}): string[] {
     `Git: ${h.gitSha}`,
   ];
   if (!opts.sides) {
-    out.push(`Config: ${h.config}`);
+    out.push(`Config: ${h.config}`, `Config changes: ${h.configChanges.length ? h.configChanges.join(', ') : 'none'}`);
     for (const f of h.flags) out.push(`FLAG: ${f}`);
   }
   return out;
@@ -391,9 +422,10 @@ export function compare(a: Summary, b: Summary): Comparison {
 
 export function renderCompare(c: Comparison): string {
   const lines = headerLines(c.a.header, { sides: true });
-  lines.push('', 'Side A (baseline)', `  Config: ${c.a.header.config}`, ...c.a.header.flags.map((f) => `  FLAG: ${f}`));
-  lines.push('Side B (proposed)', `  Config: ${c.b.header.config}`, ...c.b.header.flags.map((f) => `  FLAG: ${f}`));
-  lines.push('', 'Same per-run game and player seeds on both sides. Word sequences match only while both sides follow the same selection rules and paths.');
+  const side = (h: Header) => [`  Config: ${h.config}`, `  Config changes: ${h.configChanges.length ? h.configChanges.join(', ') : 'none'}`, ...h.flags.map((f) => `  FLAG: ${f}`)];
+  lines.push('', 'Side A (baseline)', ...side(c.a.header));
+  lines.push('Side B (proposed)', ...side(c.b.header));
+  lines.push('', 'Same per-run game and player seeds on both sides. Word sequences match only while both sides follow the same selection rules and paths. With carry bags each side keeps its own bag, so --bags reset keeps the pairing tighter.');
   const depth = Math.max(c.a.clubs.length, c.b.clubs.length);
   lines.push('', 'Clubs matched by ladder position');
   const pair = (s: Summary, i: number) => (s.clubs[i] ? `${s.clubs[i].crore} Cr @ ${s.clubs[i].hits} hits` : '-');

@@ -8,7 +8,7 @@ import { defaultGameConfig } from '@/game/gameConfig';
 import type { Difficulty, ThemeId } from '@/game/types';
 
 import { letterOrder, POLICIES, POLICY_NAMES, PRESET_NAMES, presetPlayer, type Policy, type PresetName } from './players';
-import { compare, renderCompare, renderJson, renderText, summarize, type ReportContext } from './report';
+import { compare, deepestClub, renderCompare, renderJson, renderText, summarize, type ReportContext } from './report';
 import { bindRules, defaultCap, loadConfig, makePool, type BoundRules } from './rules';
 import { simulateBatch, type BagMode } from './simulate';
 
@@ -204,9 +204,8 @@ export function runCli(argv: readonly string[], io: Io): number {
     const git = io.gitInfo();
     const gitSha = git ? `${git.sha}${git.dirty ? '+dirty' : ''}` : 'unknown';
 
-    const summaries = sides.map((side) => {
-      const ctx: ReportContext = { gitSha, configSource: side.source, capSource: o.cap === null ? 'default' : '--cap' };
-      const result = simulateBatch({
+    const results = sides.map((side) =>
+      simulateBatch({
         rules: side.rules,
         theme: o.theme,
         difficulty: o.difficulty,
@@ -217,7 +216,12 @@ export function runCli(argv: readonly string[], io: Io): number {
         player,
         policy: POLICIES[o.powerUps],
         pool,
-      });
+      }),
+    );
+    // A comparison shows both sides' club rows to the same depth, so a club one side never reaches reads 0.0%.
+    const clubDepth = Math.max(...results.map(deepestClub));
+    const summaries = results.map((result, i) => {
+      const ctx: ReportContext = { gitSha, configSource: sides[i].source, capSource: o.cap === null ? 'default' : '--cap', clubDepth };
       return summarize(result, ctx);
     });
 
