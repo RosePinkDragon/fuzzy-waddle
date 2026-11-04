@@ -47,7 +47,7 @@ describe('shareText', () => {
   const setWeb = (share?: unknown) => {
     (Platform as { OS: string }).OS = 'web';
     g.navigator = share === undefined ? {} : { share };
-    open = jest.fn();
+    open = jest.fn(() => ({ opener: 'self' }));
     g.window = { open, location: { origin: 'https://play.test' } };
   };
   const abort = () => Object.assign(new Error('cancelled'), { name: 'AbortError' });
@@ -90,12 +90,26 @@ describe('shareText', () => {
     const message = 'Ek film word & more? https://play.test/c/f1?from=Ravi%20K';
     await expect(shareText(message)).resolves.toBe('fallback');
     expect(open).toHaveBeenCalledTimes(1);
-    const [url, target, features] = open.mock.calls[0];
+    const [url, target] = open.mock.calls[0];
     expect(target).toBe('_blank');
-    expect(features).toBe('noopener');
+    expect(open.mock.results[0].value.opener).toBeNull();
     const parsed = new URL(url);
     expect(parsed.origin + parsed.pathname).toBe('https://wa.me/');
     expect(parsed.searchParams.get('text')).toBe(message);
+  });
+
+  it('web without Web Share: a blocked popup (window.open returns null) is reported as failed', async () => {
+    setWeb();
+    open.mockReturnValue(null);
+    await expect(shareText('hi')).resolves.toBe('failed');
+  });
+
+  it('web: a DOMException AbortError is treated as a cancel', async () => {
+    if (typeof DOMException === 'undefined') return;
+    setWeb(jest.fn().mockRejectedValue(new DOMException('cancelled', 'AbortError')));
+    await expect(shareText('hi')).resolves.toBe('cancelled');
+    expect(open).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it('native: opens the React Native share sheet and never a tab', async () => {
@@ -105,6 +119,12 @@ describe('shareText', () => {
     await expect(shareText('hi')).resolves.toBe('shared');
     expect(sheet).toHaveBeenCalledWith({ message: 'hi' });
     expect((g.window as { open: jest.Mock }).open).not.toHaveBeenCalled();
+  });
+
+  it('native: dismissing the sheet is reported as cancelled', async () => {
+    (Platform as { OS: string }).OS = 'ios';
+    jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.dismissedAction } as never);
+    await expect(shareText('hi')).resolves.toBe('cancelled');
   });
 
   it('native: a sheet error is contained and reported as failed', async () => {

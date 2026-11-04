@@ -42,14 +42,18 @@ export async function shareText(message: string): Promise<ShareResult> {
       }
     }
     if (typeof window !== 'undefined') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+      // No 'noopener' feature: it makes window.open return null even on success, which would hide
+      // a blocked popup. Sever the opener by hand instead.
+      const tab = window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+      if (!tab) return 'failed';
+      tab.opener = null;
       return 'fallback';
     }
     return 'failed';
   }
   try {
-    await Share.share({ message });
-    return 'shared';
+    const result = await Share.share({ message });
+    return result.action === Share.dismissedAction ? 'cancelled' : 'shared';
   } catch (e) {
     // The native sheet reports a dismissal as a result, so a throw is a real failure.
     console.warn('Share failed', e);
