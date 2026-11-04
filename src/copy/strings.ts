@@ -34,7 +34,7 @@ export const ui = {
   next: 'Next: ',
   hitsToGo: (n: number) => `${plural(n, 'hit', 'hits')} to go`,
   shareCard: (label: string) => `${label} · SHARE CARD`,
-  challengeOnWhatsApp: 'Challenge on WhatsApp',
+  shareChallenge: 'Share challenge',
   keepPlaying: 'Keep playing',
   newRandomRun: 'New random run',
   challengeThisOne: 'Challenge a friend with this one',
