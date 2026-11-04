@@ -1,4 +1,7 @@
 # Runs on every pull request and on pushes to main.
+# On a pull request, the "Decide what to run" step skips the steps the changed
+# files can't affect. The job itself always runs and reports as "check", so a
+# required status check never waits for a job that was skipped.
 name: CI
 
 on:
@@ -18,20 +21,69 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # On a pull request this checks out GitHub's merge commit, whose
+          # first parent is the base branch, so HEAD^1..HEAD is the PR's change.
+          fetch-depth: 2
+
+      - name: Decide what to run
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          full() { echo "checks=true" >> "$GITHUB_OUTPUT"; echo "export=true" >> "$GITHUB_OUTPUT"; echo "Running everything: $1"; exit 0; }
+
+          [ "$EVENT" = "pull_request" ] || full "not a pull request"
+          files=$(git diff --name-only --no-renames HEAD^1 HEAD) || full "could not list changed files"
+          [ -n "$files" ] || full "no changed files found"
+          printf '%s\n' "$files"
+
+          checks=false
+          export=false
+          # Patterns are checked in order and the first match wins. In a case
+          # pattern, * also matches "/". Unknown files run everything.
+          while IFS= read -r f; do
+            case "$f" in
+              # Every file under src/app is a route, so it is always bundled.
+              src/app/*) export=true ;;
+              # Tests and tooling are linted, typechecked or tested, not bundled.
+              */__tests__/*|scripts/*|eslint.config.js) checks=true ;;
+              src/*|assets/*) export=true ;;
+              # Can't affect lint, types, tests or the build. ci.yml runs everything.
+              .github/workflows/ci.yml) export=true ;;
+              *.md|LICENSE|design/*|.claude/*|.vscode/*|.github/*|commitlint.config.mjs) ;;
+              # Anything else: package*.json, tsconfig.json, app.config.ts,
+              # eas.json or a new kind of file.
+              *) export=true ;;
+            esac
+          done <<< "$files"
+          if [ "$export" = true ]; then checks=true; fi
+
+          echo "checks=$checks" >> "$GITHUB_OUTPUT"
+          echo "export=$export" >> "$GITHUB_OUTPUT"
+          echo "Lint, typecheck and tests: $checks. Web export: $export."
+
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.checks == 'true'
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - if: steps.scope.outputs.checks == 'true'
+        run: npm ci
       - name: Lint
+        if: steps.scope.outputs.checks == 'true'
         run: npm run lint
       - name: Typecheck
+        if: steps.scope.outputs.checks == 'true'
         run: npm run typecheck
       - name: Unit tests
+        if: steps.scope.outputs.checks == 'true'
         run: npm test -- --ci
       - name: Web export
+        if: steps.scope.outputs.export == 'true'
         run: npx expo export --platform web
       - uses: actions/upload-artifact@v4
+        if: steps.scope.outputs.export == 'true'
         with:
           name: web-dist
           path: dist
