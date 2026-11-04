@@ -26,10 +26,15 @@ export interface PresetParams {
   readonly clueBonus: number;
 }
 
-/** Provisional assumptions. The game designer may recalibrate them. */
+/**
+ * Assumptions, not player data. `casual` is a Bollywood-familiar player who gets most words from
+ * the clue and stumbles on some; `skilled` rarely misses. Calibration target for `casual` on
+ * Easy filmy with `greedy` and seed 7: median 6 to 10 hits, and 20% to 45% of runs reaching
+ * club 1. That is a documented check (see game-systems.md), not a test, because word changes move it.
+ */
 export const PRESETS: Readonly<Record<'casual' | 'skilled', PresetParams>> = {
-  casual: { insight: { easy: 0.3, medium: 0.2, hard: 0.1 }, clueBonus: 0.1 },
-  skilled: { insight: { easy: 0.6, medium: 0.45, hard: 0.3 }, clueBonus: 0.15 },
+  casual: { insight: { easy: 0.6, medium: 0.45, hard: 0.3 }, clueBonus: 0.15 },
+  skilled: { insight: { easy: 0.75, medium: 0.6, hard: 0.45 }, clueBonus: 0.15 },
 };
 
 export type PresetName = keyof typeof PRESETS;

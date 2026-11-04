@@ -119,28 +119,28 @@ describe('preset player', () => {
   it('raises the chance by clueBonus for each clue level on screen, and by Extra Clue', () => {
     const p = PRESETS.casual;
     const easy = runOn('ZEBU');
-    expect(insightChance(easy, p)).toBeCloseTo(0.3 + 0.1); // Easy shows the clue
+    expect(insightChance(easy, p)).toBeCloseTo(0.6 + 0.15); // Easy shows the clue
     const unlocked = applyPowerUp(easy, EXTRA_CLUE, seededRng(1)).run;
-    expect(insightChance(unlocked, p)).toBeCloseTo(0.3 + 0.2);
+    expect(insightChance(unlocked, p)).toBeCloseTo(0.6 + 0.3);
     const hard = runOn('ZEBU', { difficulty: 'hard', tier: 'hard' });
-    expect(insightChance(hard, p)).toBeCloseTo(0.1); // Hard hides both clues
+    expect(insightChance(hard, p)).toBeCloseTo(0.3); // Hard hides both clues
     const hardOne = applyPowerUp(hard, EXTRA_CLUE, seededRng(1)).run;
-    expect(insightChance(hardOne, p)).toBeCloseTo(0.1 + 0.1);
+    expect(insightChance(hardOne, p)).toBeCloseTo(0.3 + 0.15);
     const medium = runOn('ZEBU', { difficulty: 'medium', tier: 'medium' });
-    expect(insightChance(medium, PRESETS.skilled)).toBeCloseTo(0.45 + 0.15);
+    expect(insightChance(medium, PRESETS.skilled)).toBeCloseTo(0.6 + 0.15);
     expect(insightChance(easy, params(0.95, 0.5))).toBe(1);
   });
 
   it('uses the tier of the word on screen, not the run difficulty', () => {
     const run = runOn('ZEBU', { difficulty: 'medium', tier: 'easy' });
-    expect(insightChance(run, PRESETS.casual)).toBeCloseTo(0.3 + 0.1);
+    expect(insightChance(run, PRESETS.casual)).toBeCloseTo(0.6 + 0.15);
   });
 
   it('describes every parameter in the header lines', () => {
     const text = presetPlayer('skilled', ORDER).describe.join('\n');
+    expect(text).toContain('0.75');
     expect(text).toContain('0.6');
     expect(text).toContain('0.45');
-    expect(text).toContain('0.3');
     expect(text).toContain('clueBonus 0.15');
     expect(text).toContain(ALPHABET.join(''));
   });
