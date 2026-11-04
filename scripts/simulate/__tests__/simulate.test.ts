@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { poolFor } from '@/data/words';
 import { word } from '@/game/__tests__/helpers';
+import { lettersOf } from '@/game/answer';
 import { defaultGameConfig, mergeGameConfig, type GameConfigOverride } from '@/game/gameConfig';
 import { REVEAL } from '@/game/powerUps';
 import { seededRng } from '@/game/rng';
@@ -179,6 +180,24 @@ describe('simulateBatch', () => {
       expect(run.lastClub?.crore).toBe(50);
     });
 
+    it('hands the ladder to guess: solving the boss at 4 hits with real guesses enters the 50 Cr club', () => {
+      const loaded = loadConfig(ladder);
+      if (!loaded.ok) throw new Error('config');
+      const rules = bindRules(loaded.config);
+      const drawn = drawWord(rules, { ...rules.startRun('filmy', 'easy'), hits: 4 }, { remaining: [] }, FILMY_EASY, seededRng(1));
+      expect(drawn.boss).toBe(true);
+      let run = drawn.run;
+      const letters = [...lettersOf(run.current!.word.answer)];
+      letters.forEach((l, i) => {
+        expect(run.status).toBe('playing');
+        run = rules.guess(run, l).run;
+        if (i < letters.length - 1) expect(run.status).toBe('playing');
+      });
+      expect(run.status).toBe('milestone');
+      expect(run.hits).toBe(5);
+      expect(run.lastClub?.crore).toBe(50);
+    });
+
     it('starts each run from the injected power-up counts', () => {
       const loaded = loadConfig({ startPowerUps: [5, 6, 7, 8] });
       if (!loaded.ok) throw new Error('config');
@@ -258,6 +277,24 @@ describe('rule wiring', () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  it('does not import whole game modules by namespace or require them', () => {
+    for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.ts') && f !== 'rules.ts')) {
+      const text = fs.readFileSync(path.join(dir, file), 'utf8');
+      expect(text).not.toMatch(/import\s*\*\s*as\s+\w+\s+from\s*'@\/game\/(run|powerUps|shuffleBag|gameConfig)'/);
+      expect(text).not.toMatch(/require\(/);
+    }
+  });
+
+  it('drawWord still mirrors useRun.drawInto: update drawWord in scripts/simulate/rules.ts if this fails', () => {
+    const hook = fs.readFileSync(path.resolve(__dirname, '../../../src/hooks/useRun.ts'), 'utf8');
+    const start = hook.indexOf('const drawInto');
+    expect(start).toBeGreaterThan(-1);
+    const body = hook.slice(start, hook.indexOf('[theme, difficulty]', start));
+    for (const call of ['poolFor(theme, difficulty)', 'nextIsBoss(r, ladder)', 'drawBoss(bag.current, pool,', 'drawNext(bag.current, pool.map((w) => w.id),', 'beginWord(r, word, boss)']) {
+      expect(`${call} in drawInto:${body.includes(call)}`).toBe(`${call} in drawInto:true`);
+    }
   });
 
   it('never reads Math.random or the clock', () => {

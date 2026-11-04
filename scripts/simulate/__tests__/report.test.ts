@@ -4,7 +4,7 @@ import { EXTRA_CLUE, REMOVE, REVEAL, UNDO } from '@/game/powerUps';
 
 import { runCli, USAGE, type Io } from '../cli';
 import { letterOrder, POLICIES, presetPlayer, scriptedPlayer, type Player, type Policy } from '../players';
-import { BANNER, compare, metrics, renderCompare, renderJson, renderText, summarize, type ReportContext, type Summary } from '../report';
+import { BANNER, compare, deepestClub, metrics, renderCompare, renderJson, renderText, summarize, type ReportContext, type Summary } from '../report';
 import { bindRules, loadConfig, makePool } from '../rules';
 import { simulateBatch, type BatchResult, type RunRecord } from '../simulate';
 
@@ -57,6 +57,7 @@ describe('summarize, checked against hand-computed values', () => {
     misses: [],
     bosses: [],
     uses: [],
+    earned: [0, 0, 0, 0],
     repeats: 0,
     ...over,
   });
@@ -74,6 +75,7 @@ describe('summarize, checked against hand-computed values', () => {
       misses: [3, 9],
       bosses: [boss(0, true, 5, [2, 1, 1, 1], 15)],
       uses: [use(UNDO, 1), use(UNDO, 1), use(REMOVE, 1, 3), use(REMOVE, 1, 1)],
+      earned: [1, 0, 0, 0],
     }),
     rec({
       runIndex: 2,
@@ -84,8 +86,9 @@ describe('summarize, checked against hand-computed values', () => {
       misses: [1, 2, 0],
       bosses: [boss(0, true, 7, [2, 1, 0, 1], 2), boss(1, true, 6, [3, 0, 0, 1], 15)],
       repeats: 2,
+      earned: [2, 0, 0, 0],
     }),
-    rec({ runIndex: 3, outcome: 'capped', hits: 14, words: 14, clubs: 1, misses: [0, 4], bosses: [boss(0, true, 9, [2, 1, 1, 1], 3)] }),
+    rec({ runIndex: 3, outcome: 'capped', hits: 14, words: 14, clubs: 1, misses: [0, 4], bosses: [boss(0, true, 9, [2, 1, 1, 1], 3)], earned: [1, 0, 0, 0] }),
     rec({
       runIndex: 4,
       outcome: 'lost',
@@ -96,6 +99,7 @@ describe('summarize, checked against hand-computed values', () => {
       bosses: [boss(0, true, 4, [2, 1, 1, 1], 7), boss(1, false, 1, [3, 0, 0, 0], 9)],
       repeats: 1,
       uses: [use(REVEAL, 1), use(UNDO, 0), use(EXTRA_CLUE, 0)],
+      earned: [1, 0, 0, 0],
     }),
   ];
   const result: BatchResult = { options: { ...batch().options, runs: 5 }, records };
@@ -137,7 +141,7 @@ describe('summarize, checked against hand-computed values', () => {
   });
 
   it('counts power-ups earned (boss wins times the reward) and used, per run', () => {
-    expect(s.powerUps.earnedPerRun).toEqual([1, 0, 0, 0]); // 5 boss wins x 1 Reveal / 5 runs
+    expect(s.powerUps.earnedPerRun).toEqual([1, 0, 0, 0]); // 5 gained / 5 runs
     expect(s.powerUps.usedTotal).toEqual([1, 1, 3, 2]);
     expect(s.powerUps.usedPerRun).toEqual([0.2, 0.2, 0.6, 0.4]);
   });
@@ -148,6 +152,21 @@ describe('summarize, checked against hand-computed values', () => {
     // Boss bags of 15, 2, 15, 3, 7, 9: bossCandidates is 3, so the bags of 2 and 3 count.
     expect(s.boss.draws).toBe(6);
     expect(s.boss.shareSmallBag).toBeCloseTo(2 / 6, 5);
+  });
+});
+
+describe('power-ups earned are measured from stock, net of uses', () => {
+  it('counts the reward on the slot it goes to, even while the policy spends that slot', () => {
+    const setup: Setup = { cap: 25, runs: 5, config: { milestoneReward: { slot: 1, amount: 2 } } };
+    expect(sum(setup).powerUps.earnedPerRun).toEqual([0, 4, 0, 0]);
+    // Greedy spends the Extra Clue stock on every word; earned must not shrink by what was spent.
+    const greedy = sum({ ...setup, policy: POLICIES.greedy });
+    expect(greedy.powerUps.usedPerRun[1]).toBeGreaterThan(0);
+    expect(greedy.powerUps.earnedPerRun).toEqual([0, 4, 0, 0]);
+  });
+
+  it('is zero when nothing is rewarded', () => {
+    expect(sum({ cap: 25, runs: 5, config: { milestoneReward: { amount: 0 } } }).powerUps.earnedPerRun).toEqual([0, 0, 0, 0]);
   });
 });
 
@@ -214,6 +233,18 @@ describe('header', () => {
     expect(h.policy.triggers).toHaveLength(3);
     expect(h.config).toMatch(/^proposed\.json \(fnv1a [0-9a-f]{8}\)$/);
     expect(h.pool).toEqual({ size: 15, drafts: 15, includeDrafts: true });
+  });
+
+  it('lists what a proposed config changes, and carries the full validated config', () => {
+    const changed = sum({ config: { lives: { easy: 8 }, bossCandidates: 1, ladder: [{ crore: 50, hits: 5 }, { crore: 100, hits: 12 }] } }, { ...CTX, configSource: 'p.json' });
+    expect(changed.header.configChanges).toEqual(['lives.easy=8', 'ladder=[{"crore":50,"hits":5},{"crore":100,"hits":12}]', 'bossCandidates=1']);
+    expect(renderText(changed)).toContain('Config changes: lives.easy=8, ladder=[{"crore":50,"hits":5},{"crore":100,"hits":12}], bossCandidates=1');
+    const values = JSON.parse(renderJson(changed)).header.configValues;
+    expect(values.lives).toEqual({ easy: 8, medium: 7, hard: 5 });
+    expect(values.bossCandidates).toBe(1);
+    expect(values.startPowerUps).toEqual([2, 1, 1, 1]);
+    expect(sum().header.configChanges).toEqual([]);
+    expect(renderText(sum())).toContain('Config changes: none');
   });
 
   it('calls the live rules "current" and hashes a file config by its content', () => {
@@ -359,6 +390,22 @@ describe('determinism and comparison', () => {
     expect(other.delta).toBe(1);
   });
 
+  it('shows both sides to the same club depth, so a club one side never reaches reads 0.0%', () => {
+    const shallow = batch({ cap: 8, runs: 5 });
+    const deep = batch({ cap: 8, runs: 5, config: { ladder: [{ crore: 50, hits: 3 }, { crore: 100, hits: 6 }] } });
+    const depth = Math.max(deepestClub(shallow), deepestClub(deep));
+    expect(depth).toBe(2);
+    const c = compare(summarize(shallow, { ...CTX, clubDepth: depth }), summarize(deep, { ...CTX, clubDepth: depth }));
+    expect(c.a.clubs).toHaveLength(3);
+    expect(c.b.clubs).toHaveLength(3);
+    const reach = c.deltas.find((d) => d.key === 'club1.reachedPct')!;
+    expect(reach).toMatchObject({ a: 0, b: 1, delta: 1 });
+    const text = renderCompare(c);
+    expect(text).toContain('0.0%');
+    // Club rows come before the power-up rows.
+    expect(c.deltas.findIndex((d) => d.key === 'club2.reachedPct')).toBeLessThan(c.deltas.findIndex((d) => d.key === 'earned0'));
+  });
+
   it('shows the sensitivity of a result to the assumed player and policy', () => {
     const order = letterOrder(WORDS);
     const casual = sum({ player: presetPlayer('casual', order), policy: POLICIES.greedy, runs: 100, cap: 30 });
@@ -369,6 +416,16 @@ describe('determinism and comparison', () => {
     expect(casual.header.banner).toBe(BANNER);
     expect(skilled.header.banner).toBe(BANNER);
     expect(skilled.hits.p50!).toBeGreaterThan(casual.hits.p50!);
+  });
+});
+
+describe('presets', () => {
+  it('skilled reaches at least as many hits as casual on every difficulty (same seed, greedy)', () => {
+    for (const difficulty of ['easy', 'medium', 'hard'] as const) {
+      const order = letterOrder(poolFor('filmy', difficulty));
+      const run = (name: 'casual' | 'skilled') => sum({ difficulty, runs: 200, cap: 60, policy: POLICIES.greedy, player: presetPlayer(name, order) });
+      expect(run('skilled').hits.p50!).toBeGreaterThanOrEqual(run('casual').hits.p50!);
+    }
   });
 });
 
