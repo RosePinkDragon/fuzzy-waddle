@@ -173,7 +173,7 @@ describe('simulateBatch', () => {
       const drawn = drawWord(rules, run, { remaining: [] }, FILMY_EASY, seededRng(1));
       expect(drawn.boss).toBe(true);
       run = drawn.run;
-      while (run.status === 'playing') run = rules.applyPowerUp(run, REVEAL, seededRng(2)).run;
+      for (let i = 0; i < 60 && run.status === 'playing'; i += 1) run = rules.applyPowerUp(run, REVEAL, seededRng(2)).run;
       expect(run.status).toBe('milestone');
       expect(run.hits).toBe(5);
       expect(run.lastClub?.crore).toBe(50);
