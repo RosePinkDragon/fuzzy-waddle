@@ -4,8 +4,8 @@
  *   0 reveal a letter · 1 extra clue · 2 undo a wrong guess · 3 remove wrong letters
  */
 import { ALPHABET, lettersOf } from './answer';
-import { REMOVE_WRONG_COUNT } from './config';
 import { visibleClues } from './difficulty';
+import { defaultGameConfig, type GameConfig } from './gameConfig';
 import { ladder as defaultLadder, type Ladder } from './milestones';
 import { pick, sample } from './rng';
 import { lockedLetters, settleIfSolved, type RunState, type WordPlay } from './run';
@@ -66,6 +66,7 @@ export function applyPowerUp(
   slot: PowerUpSlot,
   rng: Rng,
   ladder: Ladder = defaultLadder,
+  config: GameConfig = defaultGameConfig,
 ): { run: RunState; effect: PowerUpEffect | null } {
   if (!canUse(run, slot)) return { run, effect: null };
   const play = run.current!;
@@ -80,7 +81,7 @@ export function applyPowerUp(
         ...spent,
         current: { ...play, correct: [...play.correct, letter], revealed: [...play.revealed, letter] },
       };
-      return { run: settleIfSolved(next, ladder), effect: { slot: 0, letter } };
+      return { run: settleIfSolved(next, ladder, config), effect: { slot: 0, letter } };
     }
     case EXTRA_CLUE: {
       const unlocked = visibleClues(run.difficulty, play.cluesRevealed).locked[0];
@@ -97,7 +98,7 @@ export function applyPowerUp(
       };
     }
     case REMOVE: {
-      const letters = sample(removableLetters(play), REMOVE_WRONG_COUNT, rng).sort();
+      const letters = sample(removableLetters(play), config.removeWrongCount, rng).sort();
       return {
         run: { ...spent, current: { ...play, removed: [...play.removed, ...letters] } },
         effect: { slot: 3, letters },
