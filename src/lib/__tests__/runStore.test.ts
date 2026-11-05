@@ -589,6 +589,45 @@ describe('storage that comes and goes', () => {
     expect(stored(storage)).toEqual(docOf(out));
   });
 
+  it('still calls a run that beat the recovered best a new best (the bar is the recovered best, not the run score)', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.best('filmy', 'easy'), JSON.stringify({ hits: 1, club: null }));
+    storage.unreadable.add(key).add(keys.best('filmy', 'easy'));
+    const store = makeStore(storage);
+    let doc = docOf(await store.open('filmy', 'easy'));
+    for (let i = 0; i < 2; i += 1) {
+      doc = await solve(store, doc);
+      doc = docOf(await act(store, doc, { type: 'continue' }));
+    }
+    const ended = docOf(await act(store, doc, { type: 'abandon' }));
+    expect(ended.terminal).toMatchObject({ reason: 'abandoned', hits: 2 });
+
+    storage.unreadable.clear();
+    const out = await store.open('filmy', 'easy');
+    expect(out).toMatchObject({ kind: 'terminal', saved: true });
+    expect(docOf(out).bestAtStart?.hits).toBe(1);
+    expect(docOf(out).best?.hits).toBe(2);
+    expect(isNewBest(docOf(out))).toBe(true);
+    expect(stored(storage)).toEqual(docOf(out));
+  });
+
+  it('keeps the start bar it already had when the best it recovers is unreadable or corrupt', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.best('filmy', 'easy'), JSON.stringify({ hits: 8, club: 50 }));
+    storage.unreadable.add(key); // only the run key: the legacy best (8) seeds the start bar
+    const store = makeStore(storage);
+    const first = await store.open('filmy', 'easy');
+    expect(first).toMatchObject({ kind: 'unsaved', cause: 'read-failed' });
+    expect(docOf(first).bestAtStart).toEqual({ hits: 8, club: 50 });
+
+    storage.data.set(keys.best('filmy', 'easy'), '{not json');
+    storage.unreadable.clear();
+    const out = await store.open('filmy', 'easy');
+    expect(docOf(out).bestAtStart).toEqual({ hits: 8, club: 50 });
+    expect(docOf(out).best).toEqual({ hits: 8, club: 50 });
+    expect(stored(storage)).toEqual(docOf(out));
+  });
+
   it('prefers the stored run once an unreadable slot becomes readable and holds one', async () => {
     const elsewhere = new FakeStorage();
     const theirs = docOf(await makeStore(elsewhere, BANK_WORDS, 9).open('filmy', 'easy'));
