@@ -22,8 +22,8 @@ import { lifeMarks } from '@/game/difficulty';
 import { pick } from '@/game/rng';
 import type { Word } from '@/game/types';
 import { useChallengeShare } from '@/hooks/useChallengeShare';
+import { useChallenge } from '@/hooks/useChallenge';
 import { useFlopDelay } from '@/hooks/useFlopDelay';
-import { useRun } from '@/hooks/useRun';
 import { challengeUrl } from '@/lib/share';
 import { FLOP_STAMP } from '@/screens/FlopView';
 import { GameView } from '@/screens/GameView';
@@ -44,7 +44,7 @@ function Challenge({ word, from }: { word: Word; from: string }) {
   const { colors, copy } = theme;
   const [accepted, setAccepted] = useState(false);
   // The challenge plays with the rules of the word's own difficulty tier.
-  const game = useRun(word.category, word.difficulty, { challengeWord: word });
+  const game = useChallenge(word);
   const { share, prompt } = useChallengeShare();
   const { contentWidth } = useScreenSize();
   // A loss holds the game screen briefly; a win shows its result straight away.
