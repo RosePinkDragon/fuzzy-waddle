@@ -306,7 +306,7 @@ describe('explicit recovery and unsaved outcomes', () => {
     expect(storage.writes).toHaveLength(0);
     storage.data.clear();
     const doc = docOf(await store.open('filmy', 'easy'));
-    expect(await store.inspect('filmy', 'easy')).toEqual({ kind: 'resumable', doc });
+    expect(await store.inspect('filmy', 'easy')).toEqual({ kind: 'resumable', doc, unsaved: null });
   });
 
   it('reports an empty pool without writing or throwing', async () => {
@@ -589,7 +589,7 @@ describe('a second store after a failed write', () => {
     expect(storage.writes).toHaveLength(writes);
     expect(stored(storage)).toEqual(ended);
     expect(stored(storage).terminal).not.toBeNull();
-    expect(await x.inspect('filmy', 'easy')).toEqual({ kind: 'terminal', doc: ended });
+    expect(await x.inspect('filmy', 'easy')).toEqual({ kind: 'terminal', doc: ended, unsaved: null });
   });
 
   it('still retries the unsaved run when nobody else changed storage', async () => {
@@ -687,7 +687,7 @@ describe('storage that comes and goes', () => {
     const during = await store.open('filmy', 'easy');
     expect(during).toMatchObject({ kind: 'saved', source: 'resumed' });
     expect(docOf(during)).toEqual(doc);
-    expect(await store.inspect('filmy', 'easy')).toEqual({ kind: 'resumable', doc });
+    expect(await store.inspect('filmy', 'easy')).toEqual({ kind: 'resumable', doc, unsaved: null });
     storage.unreadable.clear();
     expect(docOf(await store.open('filmy', 'easy'))).toEqual(doc);
     expect(storage.writes).toHaveLength(writes);

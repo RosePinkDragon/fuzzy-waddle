@@ -69,8 +69,8 @@ export type ActResult =
 
 export type SlotView =
   | { kind: 'none'; best: BestScore | null }
-  | { kind: 'resumable'; doc: SlotDoc }
-  | { kind: 'terminal'; doc: SlotDoc }
+  | { kind: 'resumable'; doc: SlotDoc; unsaved: UnsavedCause | null }
+  | { kind: 'terminal'; doc: SlotDoc; unsaved: UnsavedCause | null }
   /** Saved data that can't be used; opening replaces it with a fresh run. */
   | { kind: 'unreadable'; reason: RecoveryReason | 'unavailable'; best: BestScore | null };
 
@@ -232,13 +232,15 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
       const slot = slotFor(theme, difficulty);
       return enqueue(slot, async (): Promise<SlotView> => {
         let loaded: Loaded = { kind: 'doc', doc: slot.doc! };
-        if (!(slot.unsaved && slot.doc)) {
+        // Set while this store holds a run that never reached storage: the NOT SAVED state.
+        const unsaved = slot.unsaved && slot.doc ? slot.unsaved : null;
+        if (!unsaved) {
           loaded = await load(theme, difficulty);
           // A temporary read failure doesn't erase a run this store already saved.
           if (loaded.kind === 'nothing' && loaded.canonicalFailed && slot.doc) loaded = { kind: 'doc', doc: slot.doc };
         }
         if (loaded.kind === 'doc') {
-          return loaded.doc.terminal ? { kind: 'terminal', doc: loaded.doc } : { kind: 'resumable', doc: loaded.doc };
+          return loaded.doc.terminal ? { kind: 'terminal', doc: loaded.doc, unsaved } : { kind: 'resumable', doc: loaded.doc, unsaved };
         }
         if (loaded.recovery) return { kind: 'unreadable', reason: loaded.recovery, best: loaded.best };
         return loaded.blocked ? { kind: 'unreadable', reason: 'unavailable', best: loaded.best } : { kind: 'none', best: loaded.best };
