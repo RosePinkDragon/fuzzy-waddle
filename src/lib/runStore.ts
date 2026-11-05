@@ -97,7 +97,7 @@ export interface RunStore {
 
 interface Slot {
   tail: Promise<unknown>;
-  /** The latest document this store committed or tried to commit. */
+  /** The latest document this store committed or tried to commit. Null again after a stale re-read, until the next `open`. */
   doc: SlotDoc | null;
   /** Set while `doc` is ahead of storage. */
   unsaved: UnsavedCause | null;

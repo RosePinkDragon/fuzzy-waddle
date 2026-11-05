@@ -568,6 +568,20 @@ describe('a second store after a failed write', () => {
     expect(stored(storage)).toEqual(docOf(fresh));
   });
 
+  it('a stale act then an unreadable slot: open plays unsaved and never overwrites the ended run', async () => {
+    const { storage, x, ended, ahead } = await setup();
+    expect(await act(x, ahead, { type: 'abandon' })).toEqual({ kind: 'stale', doc: ended });
+    const writes = storage.writes.length;
+
+    storage.unreadable.add(keys.run('filmy', 'easy'));
+    expect(await x.open('filmy', 'easy')).toMatchObject({ kind: 'unsaved', cause: 'read-failed' });
+    expect(storage.writes).toHaveLength(writes);
+    expect(stored(storage)).toEqual(ended);
+
+    storage.unreadable.clear();
+    expect(await x.open('filmy', 'easy')).toEqual({ kind: 'terminal', doc: ended, saved: true });
+  });
+
   it('open re-reads after a failed write: it resumes the stored run instead of reviving the finished one', async () => {
     const { storage, x, ended } = await setup();
     const writes = storage.writes.length;
