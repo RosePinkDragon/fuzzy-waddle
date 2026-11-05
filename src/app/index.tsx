@@ -10,30 +10,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MAX_WIDTH } from '@/components/Screen';
 import { Txt } from '@/components/Txt';
 import { GAME_NAME, home } from '@/copy/strings';
-import { DIFFICULTY_ORDER } from '@/game/config';
 import { clubShort, ladder } from '@/game/milestones';
 import type { ThemeId } from '@/game/types';
-import { keys, load, type Best } from '@/lib/storage';
+import type { BestScore } from '@/game/runSnapshot';
+import { bestForTheme } from '@/lib/runController';
 import { GlyphImage } from '@/themes/glyphs';
 import { THEME_ORDER, THEMES } from '@/themes/themes';
 
 const SHELL = THEMES.filmy.colors;
 
-/** Best across difficulties for a theme, for the card's small print. */
-async function bestFor(theme: ThemeId): Promise<Best | null> {
-  const all = await Promise.all(DIFFICULTY_ORDER.map((d) => load<Best | null>(keys.best(theme, d), null)));
-  return all.reduce<Best | null>((a, b) => (b && (!a || b.hits > a.hits) ? b : a), null);
-}
-
 export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [bests, setBests] = useState<Partial<Record<ThemeId, Best | null>>>({});
+  const [bests, setBests] = useState<Partial<Record<ThemeId, BestScore | null>>>({});
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
-      Promise.all(THEME_ORDER.map(async (t) => [t, await bestFor(t)] as const)).then((rows) => {
+      Promise.all(THEME_ORDER.map(async (t) => [t, await bestForTheme(t)] as const)).then((rows) => {
         if (alive) setBests(Object.fromEntries(rows));
       });
       return () => {
