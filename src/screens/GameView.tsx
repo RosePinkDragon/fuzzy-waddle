@@ -10,7 +10,8 @@ import { ProgressRow } from '@/components/ProgressRow';
 import { SceneBox } from '@/components/SceneBox';
 import { Screen, useScreenSize } from '@/components/Screen';
 import { Tiles } from '@/components/Tiles';
-import { DIFFICULTY_LABEL, challenge, ui } from '@/copy/strings';
+import { Notice } from '@/components/Notice';
+import { DIFFICULTY_LABEL, challenge, ui, unsaved } from '@/copy/strings';
 import { lettersOf } from '@/game/answer';
 import { lifeMarks } from '@/game/difficulty';
 import { clubShort, ladder } from '@/game/milestones';
@@ -31,9 +32,11 @@ interface GameViewProps {
   onPower: (slot: PowerUpSlot) => void;
   powerEnabled: boolean[];
   onBack: () => void;
+  /** False when the run only exists in memory: a strip (or a header chip on compact screens) says so. */
+  saved?: boolean;
 }
 
-export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, onPower, powerEnabled, onBack }: GameViewProps) {
+export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, onPower, powerEnabled, onBack, saved = true }: GameViewProps) {
   const { contentWidth, compact } = useScreenSize();
   const [sceneHeight, setSceneHeight] = useState(200);
   const play = run.current!;
@@ -76,11 +79,15 @@ export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, 
           title={`${DIFFICULTY_LABEL[run.difficulty]} · ${ui.hits(run.hits)}`}
           club={reached ? clubShort(reached) : null}
           onBack={onBack}
+          status={!saved && compact ? { text: unsaved.gameChip, a11yLabel: unsaved.gameStrip } : undefined}
         />
       ) : (
         <Header label={challenge.label} title={`${theme.copy.name} · ${challenge.oneWord}`} onBack={onBack} backLabel={challenge.home} />
       )}
       {mode === 'run' && <ProgressRow progress={ladder.progress(run.hits)} />}
+      {mode === 'run' && !saved && !compact && (
+        <Notice variant="strip" icon="cloudOff" title={unsaved.gameStripTitle} body={unsaved.gameStripBody} testID="unsaved-strip" />
+      )}
 
       <View
         style={styles.sceneRegion}

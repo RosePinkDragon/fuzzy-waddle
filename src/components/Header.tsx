@@ -13,10 +13,15 @@ interface HeaderProps {
   club?: string | null;
   onBack?: () => void;
   backLabel?: string;
+  /**
+   * A small status chip that takes the place of the category label (compact screens, where the
+   * unsaved strip has no room). `a11yLabel` carries the full message.
+   */
+  status?: { text: string; a11yLabel: string };
 }
 
 /** Back button, category label + title, and the club badge. */
-export function Header({ label, title, club, onBack, backLabel = 'Back to categories' }: HeaderProps) {
+export function Header({ label, title, club, onBack, backLabel = 'Back to categories', status }: HeaderProps) {
   const { colors } = useTheme();
   const hasClub = club !== undefined;
   return (
@@ -25,14 +30,30 @@ export function Header({ label, title, club, onBack, backLabel = 'Back to catego
         onPress={onBack}
         accessibilityRole="button"
         accessibilityLabel={backLabel}
+        testID="header-back"
         style={[styles.back, { borderColor: colors.border, backgroundColor: colors.panel }]}
       >
         <Icon name="back" size={20} color={colors.text} strokeWidth={2.4} />
       </Pressable>
       <View style={styles.middle}>
-        <Txt size={11} weight={800} em={0.14} color={colors.accent} lh={1.3}>
-          {label}
-        </Txt>
+        {status ? (
+          <View
+            role="status"
+            accessible
+            accessibilityLabel={status.a11yLabel}
+            testID="header-status"
+            style={[styles.status, { borderColor: colors.accent }]}
+          >
+            <Icon name="cloudOff" size={12} color={colors.accent} strokeWidth={2.2} />
+            <Txt size={10.5} weight={800} em={0.08} color={colors.accent} lh={1.2}>
+              {status.text}
+            </Txt>
+          </View>
+        ) : (
+          <Txt size={11} weight={800} em={0.14} color={colors.accent} lh={1.3}>
+            {label}
+          </Txt>
+        )}
         <Txt size={17} weight={700} color={colors.text} lh={1.2} accessibilityRole="header">
           {title}
         </Txt>
@@ -72,4 +93,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   spacer: { width: 44 },
+  status: {
+    height: 18,
+    paddingHorizontal: 8,
+    marginTop: -1,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
 });
