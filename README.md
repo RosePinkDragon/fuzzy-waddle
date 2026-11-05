@@ -144,7 +144,7 @@ These three screens have no mockups. They are built in the same visual language 
 - **Pre-locked marks** are drawn very faint on every lives sign (e.g. Filmy uses a dark letter colour), as the brief asks. Only Masala Mix and Safar had locked styles in the mockups; the other themes' locked colours are my choice.
 - **Short screens.** Below 780px of usable height, the gaps tighten from 12px to 8px. When the scene ends up under 170px, the lives sign moves above it. Answers needing 3 lines shrink their tiles.
 - **Flop screen best score.** "Your best" includes the run just finished; if it beat the old best, the label reads "New best!".
-- **Web sharing.** Uses the Web Share API where the browser has it, and otherwise opens WhatsApp's share link.
+- **Web sharing.** Uses the Web Share API where the browser has it. A cancelled share just stops, and any other failure is logged, with no WhatsApp tab either way. Only a browser without Web Share opens WhatsApp's share link.
 
 ## What's left
 

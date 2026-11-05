@@ -112,7 +112,7 @@ export function MilestoneView({ theme, run, onKeepPlaying, onBack, share }: Mile
 
       <View style={styles.buttons}>
         <PrimaryButton
-          label={ui.challengeOnWhatsApp}
+          label={ui.shareChallenge}
           icon="share"
           testID="share-win"
           onPress={() => share((name) => shareMessage(line, challengeUrl(word.id, name)))}

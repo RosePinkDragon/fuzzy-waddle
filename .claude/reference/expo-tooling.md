@@ -79,7 +79,7 @@ Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, whi
 - **GitHub API:** GraphQL is blocked in Claude's cloud sessions, so `gh issue view` and `gh pr view` fail. Use REST: `gh api repos/RosePinkDragon/fuzzy-waddle/issues/<n>`.
 - **Playwright** isn't a project dependency, because the cloud sessions bring their own. On your own machine, run `npm i --no-save playwright && npx playwright install chromium`.
 - **`dist-test/`** is git-ignored, so screenshot builds never get committed by accident.
-- **Sharing on web:** it uses the Web Share API where the browser has it, and otherwise opens WhatsApp's share link (`src/lib/share.ts`).
+- **Sharing on web:** it uses the Web Share API where the browser has it. A cancel (`AbortError`) or any other failure stops without opening a tab. Only a browser without Web Share opens WhatsApp's share link (`src/lib/share.ts`).
 
 ## Disagreements
 
