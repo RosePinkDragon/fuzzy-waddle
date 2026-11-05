@@ -1,4 +1,5 @@
 import { ALPHABET, lettersOf } from '../answer';
+import { visibleClues } from '../difficulty';
 import { EXTRA_CLUE, REMOVE, REVEAL, UNDO } from '../powerUps';
 import { livesLeft } from '../run';
 import { isNewBest, reconcileContent, reduce, startDoc, type SessionAction, type SessionEnv } from '../runSession';
@@ -142,6 +143,7 @@ describe('snapshot validation', () => {
     ['more clue uses than clues', () => tweak((d) => (d.run.current.cluesRevealed = 5))],
     ['a lost terminal on a run with lives left', () => tweak((d) => (d.terminal = { reason: 'lost', hits: 0, club: null }))],
     ['a best below the best at the start', () => tweak((d) => (d.bestAtStart = { hits: 5, club: null }))],
+    ['a chips setting that is not a boolean', () => tweak((d) => (d.rules.clues.showChips = 'yes'))],
     ['rules missing a setting', () => tweak((d) => delete d.rules.config.removeWrongCount)],
     ['rules with a bad ladder', () => tweak((d) => (d.rules.config.ladder = [{ crore: 1, hits: 5 }]))],
   ])('recovers visibly from %s', (_name, make) => {
@@ -327,12 +329,15 @@ describe('original rules', () => {
       rules: {
         ...doc.rules,
         config: { ...doc.rules.config, lives: { ...doc.rules.config.lives, easy: 3 }, removeWrongCount: 1 },
-        clues: { shownClues: ['clue'], hiddenClues: [] },
+        clues: { showChips: false, shownClues: ['clue'], hiddenClues: [] },
       },
     };
     expect(currentRules('easy').config.lives.easy).toBe(9);
     const restored = roundtrip(old);
     expect(restored.rules.config.lives.easy).toBe(3);
+    // Chips visibility is frozen with the clues: easy shows chips today, this run began without them.
+    expect(visibleClues('easy', 0).chips).toBe(true);
+    expect(visibleClues('easy', 0, restored.rules.clues).chips).toBe(false);
     const lost = loseLives(restored, 3, env);
     expect(lost.run.status).toBe('over');
     // Clue settings come from the saved rules too: this run has no hidden clue to unlock.

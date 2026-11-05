@@ -76,7 +76,7 @@ export function currentRules(difficulty: Difficulty, rungs: readonly Rung[] = ac
   const d = DIFFICULTY_RULES[difficulty];
   return {
     config: mergeGameConfig(defaultGameConfig, { ladder: rungs }),
-    clues: { shownClues: [...d.shownClues], hiddenClues: [...d.hiddenClues] },
+    clues: { showChips: d.showChips, shownClues: [...d.shownClues], hiddenClues: [...d.hiddenClues] },
     pool: [...d.pool],
   };
 }
@@ -178,12 +178,13 @@ function readRules(v: unknown): SavedRules {
   const checked = validateGameConfig(config);
   need(checked.ok, `rules.config: ${checked.ok ? '' : checked.errors[0]}`);
   const clues = v.clues as Record<string, unknown>;
+  need(typeof clues.showChips === 'boolean', 'rules.clues.showChips: not a boolean');
   const pool = v.pool;
   need(Array.isArray(pool) && pool.length > 0 && pool.every((d) => DIFFICULTY_ORDER.includes(d as Difficulty)), 'rules.pool: bad tiers');
   need(new Set(pool as string[]).size === (pool as string[]).length, 'rules.pool: repeated tiers');
   return {
     config: (checked as { ok: true; config: GameConfig }).config,
-    clues: { shownClues: readClueLevels(clues.shownClues, 'rules.clues.shownClues'), hiddenClues: readClueLevels(clues.hiddenClues, 'rules.clues.hiddenClues') },
+    clues: { showChips: clues.showChips as boolean, shownClues: readClueLevels(clues.shownClues, 'rules.clues.shownClues'), hiddenClues: readClueLevels(clues.hiddenClues, 'rules.clues.hiddenClues') },
     pool: [...(pool as Difficulty[])],
   };
 }

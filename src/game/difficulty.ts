@@ -29,8 +29,8 @@ export interface VisibleClues {
   locked: ClueLevel[];
 }
 
-/** The clue levels a saved run was started with (see `ClueRules` in `sessionRules`). */
-export type ClueSettings = Pick<DifficultyRules, 'shownClues' | 'hiddenClues'>;
+/** The clue settings a saved run was started with (stored as `SavedRules.clues` in `runSnapshot.ts`). */
+export type ClueSettings = Pick<DifficultyRules, 'showChips' | 'shownClues' | 'hiddenClues'>;
 
 /**
  * Which clues show for a difficulty after `revealed` uses of the slot-2 power-up.
@@ -40,7 +40,7 @@ export function visibleClues(difficulty: Difficulty, revealed: number, clues: Cl
   const unlocked = clues.hiddenClues.slice(0, Math.max(0, revealed));
   const shown = new Set<ClueLevel>([...clues.shownClues, ...unlocked]);
   return {
-    chips: rulesFor(difficulty).showChips,
+    chips: clues.showChips,
     clue: shown.has('clue'),
     extraClue: shown.has('extraClue'),
     locked: clues.hiddenClues.slice(unlocked.length),
