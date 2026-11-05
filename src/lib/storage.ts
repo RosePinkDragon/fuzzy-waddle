@@ -1,6 +1,8 @@
 /**
- * Small AsyncStorage wrapper (localStorage on web). Failures are swallowed:
- * losing a saved bag or best score must never break a game.
+ * Small AsyncStorage wrapper (localStorage on web). `load` and `save` swallow
+ * failures: losing a saved bag or best score must never break a game.
+ * `readRaw` and `writeRaw` report failures instead, for the run store, which
+ * must tell the UI when a run is not saved.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
