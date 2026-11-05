@@ -287,14 +287,23 @@ describe('rule wiring', () => {
     }
   });
 
-  it('drawWord still mirrors useRun.drawInto: update drawWord in scripts/simulate/rules.ts if this fails', () => {
-    const hook = fs.readFileSync(path.resolve(__dirname, '../../../src/hooks/useRun.ts'), 'utf8');
-    const start = hook.indexOf('const drawInto');
+  it('drawWord still mirrors runSession.drawInto: update drawWord in scripts/simulate/rules.ts if this fails', () => {
+    const session = fs.readFileSync(path.resolve(__dirname, '../../../src/game/runSession.ts'), 'utf8');
+    const start = session.indexOf('function drawInto(');
     expect(start).toBeGreaterThan(-1);
-    const body = hook.slice(start, hook.indexOf('[theme, difficulty]', start));
-    for (const call of ['poolFor(theme, difficulty)', 'nextIsBoss(r, ladder)', 'drawBoss(bag.current, pool,', 'drawNext(bag.current, pool.map((w) => w.id),', 'beginWord(r, word, boss)']) {
+    const body = session.slice(start, session.indexOf('\n}\n', start));
+    for (const call of [
+      'env.content.pool(',
+      'rules.pool)',
+      'drawBoss(bag, pool, env.rng, rules.config.bossCandidates)',
+      'drawNext(bag, pool.map((w) => w.id), env.rng)',
+      'beginWord(run, word, boss)',
+    ]) {
       expect(`${call} in drawInto:${body.includes(call)}`).toBe(`${call} in drawInto:true`);
     }
+    // The boss decision is made by the callers of drawInto, from the saved ladder.
+    expect(session).toContain('ladderOf(rules).isBossWord(0)');
+    expect(session).toContain('ladder.isBossWord(ready.hits)');
   });
 
   it('never reads Math.random or the clock', () => {

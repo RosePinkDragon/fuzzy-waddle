@@ -4,7 +4,7 @@ Where things live and where a change goes. Read this before planning or building
 
 **Source of truth:** the code itself, and the folder tour in [README "How the code is laid out"](../../README.md#how-the-code-is-laid-out). This sheet adds where-to-change guidance. It doesn't repeat that tour.
 
-*Last checked against `a0ce066` plus #58 (2026-11-05).*
+*Last checked against `0ac7ef8` plus #93 (2026-11-05).*
 
 ## Boundaries
 
@@ -16,8 +16,8 @@ Where things live and where a change goes. Read this before planning or building
 | `src/game/runSnapshot.ts`, `runSession.ts` | The saved-run core (#58): the `SlotDoc` schema, validation and frozen `SavedRules`, and the pure reducer for guesses, power-ups, continue, abandon, New run and content migration | Injected RNG, ids and word bank. See "Saved runs" in [game-systems.md](game-systems.md). |
 | `src/data/words/` | One JSON bank per category, the loader `index.ts`, and the validation test | New entries stay `draft`. See [README "Adding or editing words"](../../README.md#adding-or-editing-words). |
 | `scripts/simulate/` | The game-balance simulator behind `npm run simulate:game`: `rules.ts`, `players.ts`, `simulate.ts`, `report.ts`, `cli.ts` and tests. Run by `tsx` from `scripts/simulate-game.ts`. | No React, and nothing in `src/` imports it. Only `rules.ts` calls a rule that takes a config or ladder; everything else gets `BoundRules`. No `Math.random` or clock. See [game-systems.md](game-systems.md). |
-| `src/lib/` | Platform helpers: `storage.ts` (AsyncStorage, `localStorage` on web), `runStore.ts` (the serialized saved-run store; screens share its exported `runStore`), `share.ts`, and `releaseGuard.ts` (stops release builds that set test switches) | `load` and `save` swallow failures, so a game never breaks. `runStore` uses `readRaw` and `writeRaw` and returns explicit outcomes instead. |
-| `src/hooks/` | `useRun.ts` joins game logic to screens (bag, bests, haptics, test hooks). It is the legacy path: it doesn't use `runStore` yet, and #59 moves it over. `useChallengeShare.tsx` handles the name prompt and share; it takes the theme explicitly, because the run route renders the prompt outside its `Screen` theme. `useFlopDelay.ts` holds the board before the result screen. | Keep game rules out of hooks. Call `src/game`. |
+| `src/lib/` | Platform helpers: `storage.ts` (AsyncStorage, `localStorage` on web), `runStore.ts` (the serialized saved-run store; screens share its exported `runStore`), `runController.ts` (the one way the app reads and changes a saved run: queue, solved timer, recovery registry and picker helpers; no React), `device.ts` (`subscribeLifecycle`, `wrongHaptic`, `exposeRunForTests`), `share.ts`, and `releaseGuard.ts` (stops release builds that set test switches) | `load` and `save` swallow failures, so a game never breaks. `runStore` uses `readRaw` and `writeRaw` and returns explicit outcomes instead. |
+| `src/hooks/` | `useRun.ts` joins game logic to screens (bag, bests, haptics, test hooks). It is the legacy path: it doesn't use `runController` yet, and #94 moves it over. `useChallenge.ts` plays one challenge word in local state and never reaches `runStore`, `runController` or storage. `useChallengeShare.tsx` handles the name prompt and share; it takes the theme explicitly, because the run route renders the prompt outside its `Screen` theme. `useFlopDelay.ts` holds the board before the result screen. | Keep game rules out of hooks. Call `src/game`. |
 | `src/app/` | Expo Router routes only | Non-route code goes elsewhere (see `AGENTS.md`). |
 | `src/screens/` | `GameView`, `MilestoneView` (the win screen) and `FlopView` | Shared by run and challenge routes. |
 | `src/components/` | Shared UI: `Screen`, `Header`, `SceneBox`, `Tiles`, `Keyboard`, `PowerUpBar`, `CluePanel`, `LivesSign`, `Stamp`, `ShareCard`, `NamePrompt` and others | Theme comes from `ThemeContext` or props, never hard-coded per theme. |
@@ -29,10 +29,10 @@ Where things live and where a change goes. Read this before planning or building
 
 | Path | File | Shows |
 |---|---|---|
-| `/` | `src/app/index.tsx` | Home: category picker |
+| `/` | `src/app/index.tsx` | Home: category picker (bests come from `runController` `bestForTheme`) |
 | `/play/[theme]` | `src/app/play/[theme]/index.tsx` | Difficulty picker |
 | `/play/[theme]/[difficulty]` | `src/app/play/[theme]/[difficulty].tsx` | A run: `GameView`, then `MilestoneView` or `FlopView` |
-| `/c/[wordId]?from=` | `src/app/c/[wordId].tsx` | Challenge: landing, one-word game, result, or bad link |
+| `/c/[wordId]?from=` | `src/app/c/[wordId].tsx` | Challenge: landing, one-word game (`useChallenge`), result, or bad link. It must not reach `runStore`, `runController` or `useRun`. |
 
 The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), so every path serves `index.html`.
 
@@ -43,9 +43,9 @@ The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), 
 | Lives, pools, ladder, power-up counts, boss pick size | `src/game/config.ts`, plus tests in `src/game/__tests__/` |
 | How a guess, a solve, a boss round or a power-up works | `src/game/run.ts` or `powerUps.ts`, plus tests |
 | Let the simulator override a new tuning value | `src/game/gameConfig.ts` (type, default, validator) plus the function that reads it, then wire it in `scripts/simulate/rules.ts` `bindRules` with a test that it changes the report |
-| The simulated player, power-up policies or report | `scripts/simulate/players.ts` or `report.ts`, plus their tests. Keep `drawWord` in `rules.ts` in step with `useRun.ts`. |
+| The simulated player, power-up policies or report | `scripts/simulate/players.ts` or `report.ts`, plus their tests. Keep `drawWord` in `rules.ts` in step with `drawInto` in `src/game/runSession.ts`. |
 | What a saved run holds, or how it migrates | `src/game/runSnapshot.ts` and `runSession.ts` (bump `SCHEMA_VERSION` or `RULES_VERSION` when the layout or the meaning of the rules changes), and `src/lib/runStore.ts` for ordering and outcomes |
-| What else gets saved between sessions | `src/lib/storage.ts` keys, and the `useRun.ts` effects that load and save (until #59) |
+| What else gets saved between sessions | `src/lib/storage.ts` keys, and the `useRun.ts` effects that load and save (until #94). Anything about a saved run goes through `src/lib/runController.ts`. |
 | A theme's colours, lives sign or power-up names | `src/themes/themes.ts` and `src/copy/strings.ts` (`themeCopy`) |
 | A scene's art | `design/source/<Screen>.dc.html`, then `npm run port-scenes` |
 | A new category | The five steps in [README "Adding a category"](../../README.md#adding-a-category). No new screens. |
@@ -60,10 +60,11 @@ The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), 
 - Jest with the `jest-expo` preset. Tests sit in `__tests__/` folders next to the code (`testMatch` in `package.json`).
 - `src/game/__tests__/helpers.ts` builds runs and words for tests.
 - `src/data/words/__tests__/wordBank.test.ts` validates every word: format, IDs, duplicates, giveaways and phone fit.
-- `src/lib/__tests__/` covers challenge links and `shareText` behaviour (`share`), the storage wrapper, the saved-run store (`runStore`, with an in-memory storage that can fail or hold writes), the release guard and its wiring into `app.config.ts`, and `challengeRunStoreGuard` (the challenge route's import graph never reaches `runStore`).
+- `src/lib/__tests__/` covers challenge links and `shareText` behaviour (`share`), the storage wrapper, the saved-run store (`runStore`, with an in-memory storage that can fail or hold writes), the release guard and its wiring into `app.config.ts`, `runController` (the controller, picker helpers and `subscribeLifecycle`, with fake timers and an in-memory storage), and `challengeRunStoreGuard` (the challenge route's import graph never reaches `runStore`, `runController` or `useRun`, and `useChallenge` rendered through a win and a loss writes nothing).
 - `src/game/__tests__/runSession.test.ts` covers the saved-run document and reducer. `helpers.ts` also holds a small fixed word bank (`bankContent`, `testEnv`).
 - `scripts/simulate/__tests__/` covers the simulator: run loop and golden runs, players and policies, the report, and the CLI through a fake `Io`. They run in Jest; the CLI itself runs under `tsx`.
-- There are no snapshot tests, and no screen tests: screens are checked with `npm run screenshots`. The one component-level test is `src/hooks/__tests__/useChallengeShare.test.tsx` (#39), which mounts the hook with `@testing-library/react-native` (a dev dependency) to check the name prompt's theme, submit and cancel. Use the same approach only for behaviour a plain function can't show.
+- Hook tests use `@testing-library/react-native` `renderHook` (see [expo-tooling.md](expo-tooling.md)). `src/hooks/__tests__/useChallengeShare.test.tsx` (#39) also renders the name prompt to check its theme, submit and cancel.
+- There are no screen or snapshot tests. Screens are checked with `npm run screenshots`.
 
 ## Sizing a change
 
