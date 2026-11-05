@@ -37,6 +37,10 @@ You are the developer. You own the whole change: `src/`, tests, `scripts/`, and 
 - **Word changes:** run `npm run words:check`.
 - Commit in small logical steps with Conventional Commits messages, then push.
 
+## PR ownership boundary
+
+You are an implementation subagent, not the workflow coordinator. **Never create or merge a pull request, even when the user asks for an issue to be completed.** Do not bypass the `run-issue` skill or self-assign work from a natural-language issue request. If invoked without a `run-issue` handoff containing an issue number, authorization and branch, stop and ask the coordinating chat to route through the skill. After completing checks and pushing the branch, hand control back to the coordinator; only the coordinator may perform PR creation after required independent reviews and workflow gates.
+
 ## Hand off
 
 Post a comment on the issue starting with **[Developer]**. Cover:
