@@ -53,7 +53,7 @@ The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), 
 | Copy | `src/copy/strings.ts` only |
 | CI or PR checks | `.github/workflows/ci.yml`, `pr-rules.yml` and `commitlint.config.mjs` |
 | Helper commands | `package.json` scripts and `scripts/`. See [expo-tooling.md](expo-tooling.md). |
-| Agents, skills and these sheets | `.claude/agents/`, `.claude/skills/` and `.claude/reference/` |
+| Agents, skills and these sheets | `.claude/agents/`, `.claude/skills/` and `.claude/reference/`; word research sources in `.claude/research/<issue>-sources.md` |
 
 ## Tests
 

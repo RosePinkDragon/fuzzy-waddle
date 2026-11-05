@@ -46,7 +46,7 @@ First read `.claude/reference/design-system.md` (and BRIEF sections 4 and 5), th
 
 1. Run `npm run words:check` and read its report.
 2. Then check what a script can't, for each new or edited entry:
-   - **Facts:** year, place, origin. Flag anything doubtful; don't guess.
+   - **Facts:** year, place, origin. Check them against the sources file in your brief (`.claude/research/<issue>-sources.md`), if there is one. Flag any entry resting on an **unverified** claim, anything the file doesn't support, and anything doubtful; don't guess.
    - **Spelling:** each answer uses one canonical spelling, the one fans would type.
    - **Hinglish:** the clue sounds natural to a fan.
    - **Giveaways:** the clue and chips don't hint at the answer through synonyms or translations.
