@@ -66,6 +66,21 @@ export function markRecoveryShown(theme: ThemeId, difficulty: Difficulty): void 
   pending.delete(key);
 }
 
+/** What a tap on a recovery card should do. */
+export type RecoveryTap = 'show notice' | 'navigate';
+
+/**
+ * A tap on a picker card for a slot whose data was replaced. The first tap on a notice nobody has seen
+ * marks it shown and says `'show notice'` (show it, don't navigate). Every later tap, and any tap on a
+ * card whose notice was already shown, says `'navigate'`: the route then opens the slot as `recovered`
+ * and goes straight to the game, with no redirect back to the picker.
+ */
+export function tapRecoveryCard(theme: ThemeId, difficulty: Difficulty): RecoveryTap {
+  if (recoveryShown(theme, difficulty)) return 'navigate';
+  markRecoveryShown(theme, difficulty);
+  return 'show notice';
+}
+
 /** Notices still waiting for a theme, in difficulty order. */
 export function pendingRecoveries(theme: ThemeId): RecoveryEntry[] {
   return DIFFICULTY_ORDER.flatMap((d) => pending.get(slotKey(theme, d)) ?? []);
@@ -232,7 +247,12 @@ export function createRunController(
       if (forEpoch !== epoch || snapshot.phase !== 'ready' || !doc || doc.runId !== forRun || !allowed(doc)) return null;
       const result = await store.act(theme, difficulty, { runId: doc.runId, revision: doc.revision }, action);
       if (result.kind === 'saved' || result.kind === 'unsaved') {
-        update({ doc: result.doc, saved: result.kind === 'saved' });
+        // A notice explains one run's word swap: an action that moved to a different run (a new run) ends it.
+        update({
+          doc: result.doc,
+          saved: result.kind === 'saved',
+          notice: result.doc.runId === doc.runId ? snapshot.notice : null,
+        });
         armSolved();
         return pick ? pick(result) : null;
       }

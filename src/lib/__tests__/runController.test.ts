@@ -14,6 +14,7 @@ import {
   pendingRecoveries,
   resetRecoveryRegistry,
   startNewRun,
+  tapRecoveryCard,
   type RunController,
 } from '../runController';
 import { createRunStore, type RawStorage, type RunStore } from '../runStore';
@@ -338,6 +339,38 @@ describe('leaving and returning', () => {
     expect(docOf(a.controller)).toEqual(moved.doc);
   });
 
+  it('an app that is already hidden when the lifecycle starts leaves at once; the next return re-opens exactly once', async () => {
+    const { controller, calls } = make(new FakeStorage());
+    await controller.start();
+    await solve(controller);
+    let listener: ((state: string) => void) | null = null;
+    const env: LifecycleEnv = {
+      kind: 'native',
+      appState: {
+        currentState: 'background',
+        addEventListener: (_type, l) => {
+          listener = l;
+          return { remove: () => undefined };
+        },
+      },
+    };
+    const handlers = { onLeave: () => controller.leave(), onReturn: () => void controller.return() };
+    // The effect runs twice (a re-run while still hidden): the timer stays stopped both times.
+    subscribeLifecycle(handlers, env)();
+    subscribeLifecycle(handlers, env);
+    await wait(5 * PAUSE);
+    expect(docOf(controller).run.status).toBe('solved');
+    expect(calls.act.filter((a) => a.startsWith('continue'))).toEqual([]);
+
+    listener!('active');
+    listener!('active');
+    await wait(0);
+    expect(calls.open).toBe(2);
+    await wait(PAUSE);
+    expect(docOf(controller).run.status).toBe('playing');
+    expect(calls.act.filter((a) => a.startsWith('continue'))).toEqual(['continue:saved']);
+  });
+
   it('a return before the first open finishes shares it instead of opening again', async () => {
     const { controller, calls } = make(new FakeStorage());
     const started = controller.start();
@@ -612,6 +645,29 @@ describe('changed word content', () => {
     expect(b.controller.getSnapshot().notice).toBeNull();
   });
 
+  it('clears the notice when an action succeeds on a different run, and keeps it on the same run', async () => {
+    const storage = new FakeStorage();
+    const a = make(storage);
+    await a.controller.start();
+    await a.controller.usePower(0);
+    const id = docOf(a.controller).run.current!.word.id;
+    const b = make(storage, { words: BANK_WORDS.filter((w) => w.id !== id), seed: 2 });
+    await b.controller.start();
+    const notice = b.controller.getSnapshot().notice;
+    expect(notice).not.toBeNull();
+
+    await b.controller.press(wrongLetters(b.controller)[0]);
+    expect(b.controller.getSnapshot().notice).toBe(notice); // same run: kept
+
+    await lose(b.controller);
+    expect(docOf(b.controller).terminal).not.toBeNull();
+    expect(b.controller.getSnapshot().notice).toBe(notice); // finished, not replaced yet
+    const before = docOf(b.controller).runId;
+    await b.controller.restart();
+    expect(docOf(b.controller).runId).not.toBe(before);
+    expect(b.controller.getSnapshot().notice).toBeNull();
+  });
+
   it('has an empty phase when the pool has no word', async () => {
     const { controller } = make(new FakeStorage(), { words: [] });
     await controller.start();
@@ -687,6 +743,31 @@ describe('recovery', () => {
     const third = make(storage, { seed: 5 });
     await third.controller.start();
     expect(third.controller.getSnapshot().phase).toBe('ready');
+  });
+
+  it('a first tap on an unshown recovery card shows the notice; the second navigates and opens as recovered', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.run('filmy', 'easy'), unsupported);
+    const first = make(storage);
+    await first.controller.start();
+    expect(pendingRecoveries('filmy')).toHaveLength(1);
+
+    expect(tapRecoveryCard('filmy', 'easy')).toBe('show notice');
+    expect(pendingRecoveries('filmy')).toEqual([]);
+    expect(tapRecoveryCard('filmy', 'easy')).toBe('navigate');
+
+    // The route then opens the slot: it recovers once and is ready, with no new notice to bounce to.
+    const route = make(storage, { seed: 2 });
+    await route.controller.start();
+    expect(route.controller.getSnapshot()).toMatchObject({ phase: 'ready', saved: true });
+    expect(route.calls.open).toBe(1);
+    expect(pendingRecoveries('filmy')).toEqual([]);
+  });
+
+  it('a card whose notice was already shown navigates on the first tap', () => {
+    markRecoveryShown('filmy', 'easy');
+    expect(tapRecoveryCard('filmy', 'easy')).toBe('navigate');
+    expect(tapRecoveryCard('filmy', 'hard')).toBe('show notice'); // another slot is unaffected
   });
 
   it('does not hold back a slot that is only unavailable', async () => {
@@ -822,7 +903,7 @@ describe('picker helpers', () => {
 });
 
 describe('subscribeLifecycle', () => {
-  function native() {
+  function native(currentState?: string) {
     let listener: ((state: string) => void) | null = null;
     const remove = jest.fn(() => {
       listener = null;
@@ -830,6 +911,7 @@ describe('subscribeLifecycle', () => {
     const env: LifecycleEnv = {
       kind: 'native',
       appState: {
+        currentState,
         addEventListener: (_type, l) => {
           listener = l;
           return { remove };
@@ -899,6 +981,46 @@ describe('subscribeLifecycle', () => {
     w.fire('pagehide');
     w.fire('pageshow', { persisted: true }); // a bfcache restore
     expect(log).toEqual(['leave', 'return', 'leave', 'return']);
+  });
+
+  it('native: an app that is already in the background leaves at once, then returns once', () => {
+    const n = native('background');
+    const log: string[] = [];
+    subscribeLifecycle({ onLeave: () => log.push('leave'), onReturn: () => log.push('return') }, n.env);
+    expect(log).toEqual(['leave']);
+    n.emit('background'); // already away
+    n.emit('active');
+    n.emit('active');
+    expect(log).toEqual(['leave', 'return']);
+  });
+
+  it('native: active or inactive at the start is not a leave', () => {
+    for (const state of ['active', 'inactive', undefined]) {
+      const n = native(state);
+      const onLeave = jest.fn();
+      subscribeLifecycle({ onLeave, onReturn: jest.fn() }, n.env);
+      expect(onLeave).not.toHaveBeenCalled();
+    }
+  });
+
+  it('web: a page that is already hidden leaves at once, then returns once', () => {
+    const w = web();
+    w.document.visibilityState = 'hidden';
+    const log: string[] = [];
+    subscribeLifecycle({ onLeave: () => log.push('leave'), onReturn: () => log.push('return') }, w.env);
+    expect(log).toEqual(['leave']);
+    w.fire('pagehide');
+    w.document.visibilityState = 'visible';
+    w.fire('visibilitychange');
+    w.fire('visibilitychange');
+    expect(log).toEqual(['leave', 'return']);
+  });
+
+  it('web: a visible page does not leave at the start', () => {
+    const w = web();
+    const onLeave = jest.fn();
+    subscribeLifecycle({ onLeave, onReturn: jest.fn() }, w.env);
+    expect(onLeave).not.toHaveBeenCalled();
   });
 
   it('web: unsubscribe removes every listener', () => {
