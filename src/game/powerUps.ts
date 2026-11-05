@@ -4,7 +4,7 @@
  *   0 reveal a letter · 1 extra clue · 2 undo a wrong guess · 3 remove wrong letters
  */
 import { ALPHABET, lettersOf } from './answer';
-import { visibleClues } from './difficulty';
+import { visibleClues, type ClueSettings } from './difficulty';
 import { defaultGameConfig, type GameConfig } from './gameConfig';
 import { ladder as defaultLadder, type Ladder } from './milestones';
 import { pick, sample } from './rng';
@@ -33,14 +33,14 @@ function undoableGuess(play: WordPlay): string | undefined {
 }
 
 /** Whether a slot would do something right now (ignores the count). */
-export function canApply(run: RunState, slot: PowerUpSlot): boolean {
+export function canApply(run: RunState, slot: PowerUpSlot, clues?: ClueSettings): boolean {
   const play = run.current;
   if (!play || run.status !== 'playing') return false;
   switch (slot) {
     case REVEAL:
       return hiddenLetters(play).length > 0;
     case EXTRA_CLUE:
-      return visibleClues(run.difficulty, play.cluesRevealed).locked.length > 0;
+      return visibleClues(run.difficulty, play.cluesRevealed, clues).locked.length > 0;
     case UNDO:
       return run.livesLost > 0 && undoableGuess(play) !== undefined;
     case REMOVE:
@@ -51,8 +51,8 @@ export function canApply(run: RunState, slot: PowerUpSlot): boolean {
 }
 
 /** Whether the button is usable: has charges and would do something. */
-export function canUse(run: RunState, slot: PowerUpSlot): boolean {
-  return (run.powerUps[slot] ?? 0) > 0 && canApply(run, slot);
+export function canUse(run: RunState, slot: PowerUpSlot, clues?: ClueSettings): boolean {
+  return (run.powerUps[slot] ?? 0) > 0 && canApply(run, slot, clues);
 }
 
 export type PowerUpEffect =
@@ -67,8 +67,9 @@ export function applyPowerUp(
   rng: Rng,
   ladder: Ladder = defaultLadder,
   config: GameConfig = defaultGameConfig,
+  clues?: ClueSettings,
 ): { run: RunState; effect: PowerUpEffect | null } {
-  if (!canUse(run, slot)) return { run, effect: null };
+  if (!canUse(run, slot, clues)) return { run, effect: null };
   const play = run.current!;
   const powerUps = [...run.powerUps];
   powerUps[slot] -= 1;
@@ -84,7 +85,7 @@ export function applyPowerUp(
       return { run: settleIfSolved(next, ladder, config), effect: { slot: 0, letter } };
     }
     case EXTRA_CLUE: {
-      const unlocked = visibleClues(run.difficulty, play.cluesRevealed).locked[0];
+      const unlocked = visibleClues(run.difficulty, play.cluesRevealed, clues).locked[0];
       return {
         run: { ...spent, current: { ...play, cluesRevealed: play.cluesRevealed + 1 } },
         effect: { slot: 1, unlocked },

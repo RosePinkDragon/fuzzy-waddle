@@ -36,9 +36,12 @@ function playable(w: Word): boolean {
   return w.status === 'approved' || (INCLUDE_DRAFT_WORDS && w.status === 'draft');
 }
 
-/** Words a run of this theme and difficulty draws from. Masala Mix uses every category. */
-export function poolFor(theme: ThemeId, difficulty: Difficulty): Word[] {
-  const tiers = new Set(poolDifficulties(difficulty));
+/**
+ * Words a run of this theme and difficulty draws from. Masala Mix uses every category.
+ * A saved run passes the word tiers it was started with; everything else reads the live ones.
+ */
+export function poolFor(theme: ThemeId, difficulty: Difficulty, poolTiers: readonly Difficulty[] = poolDifficulties(difficulty)): Word[] {
+  const tiers = new Set(poolTiers);
   return ALL_WORDS.filter(
     (w) => (theme === 'masala' || w.category === theme) && tiers.has(w.difficulty) && playable(w),
   );
