@@ -23,7 +23,7 @@ Where things live and where a change goes. Read this before planning or building
 | `src/components/` | Shared UI: `Screen`, `Header`, `SceneBox`, `Tiles`, `Keyboard`, `PowerUpBar`, `CluePanel`, `LivesSign`, `Stamp`, `ShareCard`, `NamePrompt` and others | Theme comes from `ThemeContext` or props, never hard-coded per theme. |
 | `src/themes/` | `themes.ts` (six themes as config), `scenes/`, `icons.tsx`, `glyphs.tsx` | `scenes/ported/` is generated. Don't edit it by hand. |
 | `src/copy/strings.ts` | Every line of copy, including themed lines | No copy in components. |
-| `src/config/game.json` | Game name, web origin, bundle IDs (placeholders) | Read by `app.config.ts` and `strings.ts`. |
+| `src/config/game.json` | Game name, web origin (live Vercel address), bundle IDs (placeholders) | Read by `app.config.ts` and `strings.ts`. |
 
 ## Routes
 
