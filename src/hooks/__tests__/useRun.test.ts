@@ -4,8 +4,9 @@
  * They check the integration: no extra draw, no duplicate reward, no resurrected run, and that nothing but
  * `run:*` documents is written.
  */
-import { act, renderHook, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
+import { createElement } from 'react';
 import { AppState } from 'react-native';
 
 import { newRun, recovery, wordReplaced } from '@/copy/strings';
@@ -14,7 +15,8 @@ import { seededRng } from '@/game/rng';
 import { settleBest } from '@/game/runSnapshot';
 import { bankContent, BANK_WORDS } from '@/game/__tests__/helpers';
 import type { Difficulty, ThemeId } from '@/game/types';
-import { markRecoveryShown, pendingRecoveries, resetRecoveryRegistry, tapRecoveryCard } from '@/lib/runController';
+import DifficultyPicker from '@/app/play/[theme]/index';
+import { markRecoveryShown, noteRecovery, pendingRecoveries, resetRecoveryRegistry, tapRecoveryCard } from '@/lib/runController';
 import { createRunStore, type RawStorage, type RunStore } from '@/lib/runStore';
 import { keys, type RawRead } from '@/lib/storage';
 
@@ -23,6 +25,17 @@ import { useRun } from '../useRun';
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
+const mockRouter = { push: jest.fn(), replace: jest.fn() };
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react');
+  return {
+    useRouter: () => mockRouter,
+    useLocalSearchParams: () => ({ theme: 'cricket' }),
+    useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
+    Redirect: () => null,
+  };
+});
+jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),
   ImpactFeedbackStyle: { Medium: 'medium' },
@@ -370,5 +383,52 @@ describe('copy the picker and sheets are built from', () => {
   it('leaves the bests line out of the recovery notice when no best survived', () => {
     expect(recovery.body(true)).toContain('Your bests stay as they were.');
     expect(recovery.body(false)).not.toContain('bests');
+  });
+});
+
+describe('the difficulty picker', () => {
+  // The picker reads the shared run store, so these use a theme no other test touches.
+  const theme: ThemeId = 'cricket';
+  const AsyncStorage = jest.requireMock('@react-native-async-storage/async-storage');
+  const setRaw = (difficulty: Difficulty, raw: string) => AsyncStorage.setItem(`hangman:v1:${keys.run(theme, difficulty)}`, raw);
+  const route = (difficulty: Difficulty) => `/play/${theme}/${difficulty}`;
+
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+
+  it('with two slots needing recovery, shows one notice, then the second slot\'s when its card is tapped, then goes to the game', async () => {
+    await setRaw('medium', '{"schema":999}');
+    await setRaw('hard', '{"schema":999}');
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('recovery-notice')).toBeTruthy());
+    expect(screen.getByText(recovery.title('medium'))).toBeTruthy();
+
+    // Hard's notice hasn't been shown: the tap shows it instead of going to a game that would bounce back.
+    await fireEvent.press(screen.getByTestId('difficulty-hard'));
+    await waitFor(() => expect(screen.getByText(recovery.title('hard'))).toBeTruthy());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByTestId('difficulty-hard'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route('hard')));
+    // Medium's notice was shown first, so it opens straight away too.
+    await fireEvent.press(screen.getByTestId('difficulty-medium'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route('medium')));
+  });
+
+  it('sends a tap through the recovery notice when the slot is waiting even though its card is not a recovery card', async () => {
+    noteRecovery({ theme, difficulty: 'easy', reason: 'corrupt', best: { hits: 4, club: null } });
+    await render(createElement(DifficultyPicker));
+    // The waiting notice is shown (and marked shown) when the picker opens; a second notice for another slot waits.
+    await waitFor(() => expect(screen.getByTestId('recovery-notice')).toBeTruthy());
+    noteRecovery({ theme, difficulty: 'hard', reason: 'unsupported', best: null });
+    expect(pendingRecoveries(theme).map((e) => e.difficulty)).toEqual(['hard']);
+
+    await fireEvent.press(screen.getByTestId('difficulty-hard'));
+    await waitFor(() => expect(screen.getByText(recovery.title('hard'))).toBeTruthy());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(pendingRecoveries(theme)).toEqual([]);
+    await fireEvent.press(screen.getByTestId('difficulty-hard'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route('hard')));
   });
 });
