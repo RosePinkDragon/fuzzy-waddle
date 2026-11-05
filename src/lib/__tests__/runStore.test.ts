@@ -570,6 +570,68 @@ describe('a second store after a failed write', () => {
   });
 });
 
+describe('the last stored revision (base) is tracked on every path', () => {
+  /** A store that loaded a run it did not start, then loses one write (a power-up kept only in memory). */
+  async function loadedThenFailed() {
+    const storage = new FakeStorage();
+    const opened = docOf(await makeStore(storage, BANK_WORDS, 1).open('filmy', 'easy'));
+    const store = makeStore(storage, BANK_WORDS, 2);
+    expect(await store.open('filmy', 'easy')).toMatchObject({ kind: 'saved', source: 'resumed' });
+    storage.failWrites = true;
+    const ahead = docOf(await act(store, opened, { type: 'power', slot: 0 }));
+    storage.failWrites = false;
+    return { storage, store, opened, ahead };
+  }
+
+  it('a loaded run keeps working after a failed write: act saves', async () => {
+    const { storage, store, ahead } = await loadedThenFailed();
+    const out = await act(store, ahead, { type: 'abandon' });
+    expect(out).toMatchObject({ kind: 'saved' });
+    expect(stored(storage)).toEqual(docOf(out));
+  });
+
+  it('a loaded run keeps working after a failed write: open keeps the unsaved progress', async () => {
+    const { storage, store, ahead } = await loadedThenFailed();
+    expect(await store.open('filmy', 'easy')).toEqual({ kind: 'saved', doc: ahead, source: 'resumed' });
+    expect(stored(storage)).toEqual(ahead);
+  });
+
+  it('after open resumes another tab\'s finished run, a later failed write is still retried, not discarded', async () => {
+    const storage = new FakeStorage();
+    const x = makeStore(storage, BANK_WORDS, 1);
+    const y = makeStore(storage, BANK_WORDS, 2);
+    const opened = docOf(await x.open('filmy', 'easy'));
+    await y.open('filmy', 'easy');
+    storage.failWrites = true;
+    await act(x, opened, { type: 'power', slot: 0 }); // x is now unsaved (write-failed)
+    storage.failWrites = false;
+    const ended = docOf(await act(y, await solve(y, opened), { type: 'abandon' }));
+    expect(await x.open('filmy', 'easy')).toEqual({ kind: 'terminal', doc: ended, saved: true });
+
+    storage.failWrites = true;
+    const fresh = docOf(await act(x, ended, { type: 'newRun' }));
+    storage.failWrites = false;
+    expect(await x.open('filmy', 'easy')).toEqual({ kind: 'saved', doc: fresh, source: 'resumed' });
+    expect(stored(storage)).toEqual(fresh);
+  });
+
+  it('after a read-failed run is replaced by the stored one, a later failed write is still retried', async () => {
+    const storage = new FakeStorage();
+    const opened = docOf(await makeStore(storage, BANK_WORDS, 1).open('filmy', 'easy'));
+    const store = makeStore(storage, BANK_WORDS, 2);
+    storage.unreadable.add(key);
+    expect(await store.open('filmy', 'easy')).toMatchObject({ kind: 'unsaved', cause: 'read-failed' });
+    storage.unreadable.clear();
+    expect(await store.open('filmy', 'easy')).toEqual({ kind: 'saved', doc: opened, source: 'resumed' });
+
+    storage.failWrites = true;
+    const ahead = docOf(await act(store, opened, { type: 'power', slot: 0 }));
+    storage.failWrites = false;
+    expect(await store.open('filmy', 'easy')).toEqual({ kind: 'saved', doc: ahead, source: 'resumed' });
+    expect(stored(storage)).toEqual(ahead);
+  });
+});
+
 describe('storage that comes and goes', () => {
   it('keeps a saved run when a later open cannot read storage, and serves it again once storage recovers', async () => {
     const storage = new FakeStorage();

@@ -59,7 +59,10 @@ export type ActResult =
   | { kind: 'unsaved'; doc: SlotDoc; cause: UnsavedCause; guess?: GuessResult; effect?: PowerUpEffect }
   | { kind: 'ignored'; doc: SlotDoc }
   | { kind: 'empty'; doc: SlotDoc }
-  /** The caller acted on an old run or revision. `doc` is the current one, if any. */
+  /**
+   * The caller acted on an old run or revision. `doc` is the current one, if any.
+   * Call `open` after any `stale`; don't retry with the returned doc (the store hasn't adopted it).
+   */
   | { kind: 'stale'; doc: SlotDoc | null };
 
 export type SlotView =
@@ -185,7 +188,7 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
   }
 
   /** True when storage holds a run or revision other than `known`, the last one this store knew it held. */
-  function movedOn(known: Slot['base'], stored: SlotDoc | null): stored is SlotDoc {
+  function movedOn(known: Slot['base'], stored: SlotDoc | null): boolean {
     return stored !== null && (!known || stored.runId !== known.runId || stored.revision !== known.revision);
   }
 
@@ -248,7 +251,7 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
         // retry can't lower its best or bring back a run it finished.
         if (slot.doc && slot.unsaved === 'write-failed') {
           const stored = await readStored(theme, difficulty);
-          if (!movedOn(slot.base, stored)) return resume(slot, theme, difficulty, slot.doc, true);
+          if (!stored || !movedOn(slot.base, stored)) return resume(slot, theme, difficulty, slot.doc, true);
           slot.unsaved = null;
           slot.base = { runId: stored.runId, revision: stored.revision };
           return resume(slot, theme, difficulty, stored, false);
@@ -290,6 +293,7 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
         if (loaded.canonicalFailed && slot.doc && !slot.unsaved) return resume(slot, theme, difficulty, slot.doc, false);
 
         slot.blocked = loaded.blocked;
+        slot.base = null; // nothing stored is known to be ours; a failed first write must not keep an older base
         const fresh = startDoc(theme, difficulty, { bag: loaded.bag, best: loaded.best }, env);
         if (!fresh) return { kind: 'empty', best: loaded.best };
         const cause = await commit(slot, theme, difficulty, fresh);
