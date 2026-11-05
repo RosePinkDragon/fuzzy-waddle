@@ -57,7 +57,7 @@ src/
   config/game.json     game name, web domain and bundle IDs (placeholders)
   components/          shared UI
   screens/             game, milestone and run-over screens
-  hooks/useRun.ts      connects the game logic to the screens: bag and best-score storage, haptics
+  hooks/useRun.ts      connects a saved run (lib/runController) to the run screen: app lifecycle, haptics, the Masala Mix reel
 scripts/port-scenes.js converts the mockup SVG scenes into react-native-svg components
 ```
 
@@ -123,10 +123,9 @@ No new screens are needed.
 
 ## Flagged for design review
 
-These three screens have no mockups. They are built in the same visual language and need a designer's eye:
+These two screens have no mockups. They are built in the same visual language and need a designer's eye. (The difficulty picker is designed: `design/screens/Resume-*.png`, #57.)
 
 - **Home** (category picker): 2×3 grid of themed cards with each category's glyph and your best score.
-- **Difficulty picker**: the theme's scene, then three cards, each with its lives and clue rules, a preview of the lives sign (locked marks drawn faint) and your best.
 - **Challenge landing** (`/c/<wordId>?from=<name>`): "<name> ne challenge kiya!", then a one-word game, then a result screen with "Challenge back" and "Play a full run".
 
 ## Decisions made while building (please check)
