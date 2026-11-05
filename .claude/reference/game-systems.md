@@ -8,7 +8,7 @@ How a run works, and the rules that must keep holding. Read this before reviewin
 
 This sheet names the numbers' homes instead of copying them. If code and the brief disagree, list it under Disagreements below rather than picking one.
 
-*Last checked against `e91aeb0` plus #51 (2026-11-04).*
+*Last checked against `e91aeb0` plus #51 and #58 (2026-11-05).*
 
 ## The run loop
 
@@ -27,7 +27,7 @@ This sheet names the numbers' homes instead of copying them. If code and the bri
 | **Power-ups** | Four slots, the same in every theme (only names and icons change). Starting counts are in `START_POWER_UPS`. A slot is usable only when it would do something (`canApply`). | `powerUps.ts` | `powerUps.test.ts`, `gameConfigRules.test.ts` |
 | **Answers** | Uppercase, canonical spelling. Only A–Z can be guessed. Spaces split words, and digits and punctuation are revealed automatically. | `answer.ts` | `answer.test.ts` |
 | **Tiles** | Wrap at word breaks and shrink between the max and min size until the answer fits. | `tileLayout.ts` | `tileLayout.test.ts` |
-| **Bests** | One per theme and difficulty: hits and club, saved when a run ends or reaches a club. | `useRun.ts`, `storage.ts` `keys.best` | `storage.test.ts` (the wrapper only) |
+| **Bests** | One per theme and difficulty: hits and club. The saved-run core (below) settles them only when a run ends (loss or abandonment), never lowers a positive best, and reads zero-only as not played. The legacy `useRun` still saves them at clubs until #59. | `runSnapshot.ts` `settleBest`, `useRun.ts`, `storage.ts` `keys.best` | `runSession.test.ts`, `runStore.test.ts` |
 | **Challenges** | A link carries the word ID, never the answer. It plays one word with that word tier's rules, and lives don't matter beyond that word. | `src/app/c/[wordId].tsx`, `lib/share.ts` | `share.test.ts` (links) |
 
 ## Game config (simulation only)
@@ -51,11 +51,25 @@ This sheet names the numbers' homes instead of copying them. If code and the bri
 - Config is an optional last argument, like `ladder`: `maxLives`, `livesLeft`, `settleIfSolved`, `guess` and `applyPowerUp`. Where a function already takes the single value (`startRun`'s `powerUps`, `drawBoss`'s `candidates`), pass `config.startPowerUps` or `config.bossCandidates` to it.
 - Pass a matching ladder and config together: `ladderFor(config)`, then `config`. `Ladder` grows lazily and is built once, so the two can drift apart if built separately.
 - `rulesFor`, `lifeMarks`, `GameView`, `MilestoneView` and the hooks take no config. The UI only ever shows live values, and `lifeMarks` keeps using the live `locked` marks.
-- The config is never stored on `RunState`, so a saved run (#32) can't carry its own tuning.
+- The config is never stored on `RunState`. A saved run carries its own copy in the snapshot's `rules` (see Saved runs below).
 - `mergeGameConfig(base, override)` merges `lives`, `ladderExtension` and `milestoneReward` one level deep. Arrays and numbers replace.
 - `validateGameConfig(unknown)` takes parsed JSON and returns `{ ok: true, config }` or `{ ok: false, errors }` with every error and its path. It rejects: unknown keys, non-integers, negative counts, lives outside 1 to `LIVES_MARKS`, fewer than 2 rungs, hits or crore that don't strictly increase, a negative `gapGrowth` (the ladder would stop growing), `croreEvery` or `bossCandidates` or `removeWrongCount` below 1, `startPowerUps` not of length `POWER_UP_SLOTS`, and a reward slot outside the slots. A reward `amount` of 0 is allowed.
 - Tests: `gameConfig.test.ts` (validator and merge) and `gameConfigRules.test.ts` (defaults match the constants, seeded runs are identical with and without the default passed, and each setting changes what it controls).
 - When a new tuning value becomes injectable, add it to the type, the default, the validator and a test that shows it changes behaviour.
+
+## Saved runs (#32; core delivered in #58)
+
+The core is opt-in and pure: nothing in the app calls it until #59 replaces the legacy `useRun` saving. See [codebase-map.md](codebase-map.md) for the files.
+
+- **One document per theme + difficulty** (`SlotDoc`, key `run:<theme>:<difficulty>`): schema and rules versions, run identity (`runId`) and `revision`, the rules the run began under, the complete `RunState`, the matching bag, the positive best, the best at the start, and the terminal outcome. One completed write is one transition, so a restart sees either the old complete document or the new one.
+- **Original rules.** `SavedRules` freezes lives, ladder and extension, starting and reward power-ups, remove count, boss candidates, clue levels and word tiers. Every action runs through `reduce` under `doc.rules`, so a later change to `config.ts` doesn't reach a run in progress. `currentRules()` is what a new run captures. Changing what an action does with these rules means bumping `RULES_VERSION`; other versions recover visibly. #59 must read the saved rules for presentation and pool selection too.
+- **Never saved: `ready`.** A transition and its draw happen together (`continue`, `newRun`, the first word), so a saved run is `playing`, `solved`, `milestone` or `over`. A saved `ready` fails validation and is recovered.
+- **Exactly once.** A solve, boss reward, refill or loss changes the document once and bumps `revision`. The store rejects an action made on an old `runId` or `revision` (`stale`), and runs one operation per slot at a time. A loss or abandonment settles the best in the same write that sets `terminal`. Terminal runs never resume; only `newRun` leaves them. `newRun` settles any in-progress score, keeps the bag and best, and starts a fresh run in one write.
+- **Bests.** Updated only on loss or abandonment. A zero-hit ending changes nothing and a zero-only best is stored as `null`.
+- **Recovery outcomes** (`runStore.ts`): `saved` (resumed, started or migrated), `recovered` (corrupt or unsupported data replaced by a fresh run), `unsaved` (read or write failed: playable, never claimed as saved), `terminal`, and `empty` (no word to play). Writes are blocked whenever a read needed for recovery failed, so an unreadable legacy best or bag is never overwritten with a blank. Legacy bag and best keys seed a slot only when it has no document.
+- **Changed content.** Only a `playing` word is checked on open. If it's missing, out of the pool or has a new answer, one replacement is drawn (same boss status, saved bag and rules), word effects are cleared, and reveal, clue and remove uses are refunded (remove uses = removed letters divided by the remove count, rounded up, so a partial use counts). Undo stays spent. Hits, lives, club and other charges stay. Solved, milestone and finished stages are kept as earned history: no replay, no refund, and continuing draws the next word once.
+- **Challenges** never use this core. A killed process can lose an uncommitted write; there is no multi-device sync.
+- Tests: `runSession.test.ts` (document validation and transitions), `runStore.test.ts` (storage, restarts, deferred writes), `storage.test.ts` (raw reads and writes).
 
 ## Slot numbering
 
@@ -69,7 +83,7 @@ The brief numbers the power-up slots **1–4**, but the code indexes them **0–
 
 ## Invariants (a change that breaks one needs owner sign-off)
 
-1. Nothing carries from one run into the next except bests, shuffle bags and the player's name. `startRun` always resets hits, lives, power-ups and status.
+1. Nothing carries from one run into the next except bests, shuffle bags and the player's name. `startRun` always resets hits, lives, power-ups and status. Resume continues the same run; New run always resets.
 2. A word never repeats within a theme and difficulty until its pool is used up, even across sessions.
 3. Lives never go below 0 or above the difficulty's max. Pre-locked marks never become live.
 4. A boss round is the only way to enter a club, and entering a club always refills lives and grants the reward.
@@ -81,7 +95,7 @@ The brief numbers the power-up slots **1–4**, but the code indexes them **0–
 ## Not built yet (open issues)
 
 - **#31:** words get harder as a run goes on. Today every word in a run draws from the same pool, apart from bosses.
-- **#32:** resume a run after leaving it. Today only bests, bags and the name persist, so leaving a run loses it.
+- **#32:** resume a run after leaving it. The saved-run core is built (#58), but the app still uses the legacy `useRun`, which persists only bests, bags and the name, so leaving a run still loses it. The picker and hook integration is #59.
 - **#33:** rebalance survival between clubs.
 - **#46:** `npm run simulate:game` for comparing balance changes with numbers. It builds on the game config above.
 
