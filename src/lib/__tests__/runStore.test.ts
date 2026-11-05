@@ -507,6 +507,25 @@ describe('solve, boss and terminal transitions across restarts', () => {
     expect(stored(storage)).toEqual(ended);
     expect(stored(storage).best).toEqual({ hits: 1, club: null });
   });
+
+  it('a stale result leads back to open: it adopts the stored run and a New run saves (no loop)', async () => {
+    const storage = new FakeStorage();
+    const x = makeStore(storage, BANK_WORDS, 1);
+    const y = makeStore(storage, BANK_WORDS, 2);
+    const doc = await solve(x, docOf(await x.open('filmy', 'easy')));
+    const ended = docOf(await y.act('filmy', 'easy', docOf(await y.open('filmy', 'easy')), { type: 'abandon' }));
+
+    const late = await x.act('filmy', 'easy', doc, { type: 'continue' });
+    expect(late).toEqual({ kind: 'stale', doc: ended });
+    // Acting on the returned doc must not bounce back with X's old run.
+    expect(await x.act('filmy', 'easy', ended, { type: 'newRun' })).toEqual({ kind: 'stale', doc: null });
+
+    expect(await x.open('filmy', 'easy')).toEqual({ kind: 'terminal', doc: ended, saved: true });
+    const fresh = await x.act('filmy', 'easy', ended, { type: 'newRun' });
+    expect(fresh).toMatchObject({ kind: 'saved' });
+    expect(docOf(fresh).runId).not.toBe(ended.runId);
+    expect(stored(storage)).toEqual(docOf(fresh));
+  });
 });
 
 describe('a second store after a failed write', () => {
@@ -537,6 +556,16 @@ describe('a second store after a failed write', () => {
     expect(storage.writes).toHaveLength(writes);
     expect(stored(storage)).toEqual(ended);
     expect(stored(storage).best).toEqual({ hits: 1, club: null });
+  });
+
+  it('a stale act after a failed write leads back to open, then a New run saves', async () => {
+    const { storage, x, ended, ahead } = await setup();
+    expect(await act(x, ahead, { type: 'abandon' })).toEqual({ kind: 'stale', doc: ended });
+    expect(await act(x, ended, { type: 'newRun' })).toEqual({ kind: 'stale', doc: null });
+    expect(await x.open('filmy', 'easy')).toEqual({ kind: 'terminal', doc: ended, saved: true });
+    const fresh = await act(x, ended, { type: 'newRun' });
+    expect(fresh).toMatchObject({ kind: 'saved' });
+    expect(stored(storage)).toEqual(docOf(fresh));
   });
 
   it('open re-reads after a failed write: it resumes the stored run instead of reviving the finished one', async () => {

@@ -61,7 +61,9 @@ export type ActResult =
   | { kind: 'empty'; doc: SlotDoc }
   /**
    * The caller acted on an old run or revision. `doc` is the current one, if any.
-   * Call `open` after any `stale`; don't retry with the returned doc (the store hasn't adopted it).
+   * The caller must call `open` before acting again, after any `stale`: don't retry with the returned
+   * doc (the store hasn't adopted it). When the re-read before a write found a newer stored run, the
+   * store has forgotten its own, so every `act` is `stale` until `open` adopts the stored one.
    */
   | { kind: 'stale'; doc: SlotDoc | null };
 
@@ -316,7 +318,14 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
           // Another store on the same storage (a second tab) may have moved the run on. After a failed
           // write `current` is ahead of storage, so compare with what this store last knew was stored.
           const stored = await readStored(theme, difficulty);
-          if (movedOn(slot.unsaved ? slot.base : current, stored)) return { kind: 'stale', doc: stored };
+          if (movedOn(slot.unsaved ? slot.base : current, stored)) {
+            // Forget the run this store held, so the caller has to `open` (which adopts the stored one)
+            // before acting again. Keeping it would let the next action loop back to `stale`.
+            slot.doc = null;
+            slot.unsaved = null;
+            slot.base = null;
+            return { kind: 'stale', doc: stored };
+          }
         }
         const reduction = reduce(current, action, env);
         if (reduction.kind !== 'changed') return reduction;
