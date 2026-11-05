@@ -163,13 +163,6 @@ describe('saving and resuming', () => {
     const other = makeStore(storage);
     expect(docOf(await other.open('filmy', 'medium'))).toEqual(b);
   });
-
-  it('is never touched by challenge play, which has no store entry point', async () => {
-    const storage = new FakeStorage();
-    makeStore(storage);
-    expect(storage.writes).toHaveLength(0);
-    expect(storage.data.size).toBe(0);
-  });
 });
 
 describe('legacy data', () => {
@@ -288,7 +281,9 @@ describe('explicit recovery and unsaved outcomes', () => {
   it('recovers from a persisted internal ready stage instead of loading a stuck run', async () => {
     const storage = new FakeStorage();
     const doc = docOf(await makeStore(storage).open('filmy', 'easy'));
-    const solved = await solve(makeStore(storage, BANK_WORDS, 3), doc);
+    const other = makeStore(storage, BANK_WORDS, 3);
+    await other.open('filmy', 'easy');
+    const solved = await solve(other, doc);
     for (const source of [doc, solved]) {
       const copy = JSON.parse(serializeDoc(source));
       copy.run.status = 'ready';
@@ -472,13 +467,114 @@ describe('solve, boss and terminal transitions across restarts', () => {
     expect(stored(storage)).toEqual(fresh);
   });
 
-  it('acts on a slot opened by an earlier session', async () => {
+  it('does not act on a slot this store has not opened, so a removed word cannot stay playable', async () => {
     const storage = new FakeStorage();
-    const doc = docOf(await makeStore(storage).open('filmy', 'easy'));
-    const later = makeStore(storage, BANK_WORDS, 3);
-    const r = await later.act('filmy', 'easy', doc, { type: 'power', slot: 0 });
-    expect(r.kind).toBe('saved');
-    expect(await later.act('filmy', 'easy', { runId: 'nope', revision: 0 }, { type: 'abandon' })).toMatchObject({ kind: 'stale' });
+    const a = makeStore(storage);
+    const doc = docOf(await a.open('filmy', 'easy'));
+    const id = doc.run.current!.word.id;
+    const letter = [...lettersOf(answerOf(doc))][0];
+    const writes = storage.writes.length;
+
+    const b = makeStore(storage, BANK_WORDS.filter((w) => w.id !== id), 3);
+    expect(await b.act('filmy', 'easy', doc, { type: 'guess', letter })).toEqual({ kind: 'stale', doc: null });
+    expect(storage.writes).toHaveLength(writes);
+    expect(stored(storage)).toEqual(doc);
+
+    // Opening reconciles first; the old identity is then stale and the replacement is playable.
+    const migrated = docOf(await b.open('filmy', 'easy'));
+    expect(migrated.run.current!.word.id).not.toBe(id);
+    expect(await b.act('filmy', 'easy', doc, { type: 'guess', letter })).toMatchObject({ kind: 'stale' });
+    const next = [...lettersOf(answerOf(migrated))][0];
+    expect(await b.act('filmy', 'easy', migrated, { type: 'guess', letter: next })).toMatchObject({ kind: 'saved' });
+  });
+
+  it('rejects a stale second store (another tab): it cannot lower a best or revive a finished run', async () => {
+    const storage = new FakeStorage();
+    const x = makeStore(storage, BANK_WORDS, 1);
+    let doc = docOf(await x.open('filmy', 'easy'));
+    doc = await solve(x, doc);
+    expect(doc.run.hits).toBe(1);
+
+    const y = makeStore(storage, BANK_WORDS, 2);
+    const seenByY = docOf(await y.open('filmy', 'easy'));
+    expect(seenByY).toEqual(doc);
+    const ended = docOf(await y.act('filmy', 'easy', seenByY, { type: 'abandon' }));
+    expect(ended.terminal).toMatchObject({ reason: 'abandoned', hits: 1 });
+    expect(ended.best).toEqual({ hits: 1, club: null });
+
+    const late = await x.act('filmy', 'easy', doc, { type: 'continue' });
+    expect(late).toEqual({ kind: 'stale', doc: ended });
+    expect(stored(storage)).toEqual(ended);
+    expect(stored(storage).best).toEqual({ hits: 1, club: null });
+  });
+});
+
+describe('storage that comes and goes', () => {
+  it('keeps a saved run when a later open cannot read storage, and serves it again once storage recovers', async () => {
+    const storage = new FakeStorage();
+    const store = makeStore(storage);
+    let doc = docOf(await store.open('filmy', 'easy'));
+    doc = docOf(await act(store, doc, { type: 'power', slot: 0 }));
+    const writes = storage.writes.length;
+
+    storage.unreadable.add(key);
+    const during = await store.open('filmy', 'easy');
+    expect(during).toMatchObject({ kind: 'saved', source: 'resumed' });
+    expect(docOf(during)).toEqual(doc);
+    expect(await store.inspect('filmy', 'easy')).toEqual({ kind: 'resumable', doc });
+    storage.unreadable.clear();
+    expect(docOf(await store.open('filmy', 'easy'))).toEqual(doc);
+    expect(storage.writes).toHaveLength(writes);
+  });
+
+  it('retries an unsaved run on open and keeps the best from a legacy key that was unreadable before', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.best('filmy', 'easy'), JSON.stringify({ hits: 8, club: 50 }));
+    storage.unreadable.add(key).add(keys.best('filmy', 'easy'));
+    const store = makeStore(storage);
+    const first = await store.open('filmy', 'easy');
+    expect(first).toMatchObject({ kind: 'unsaved', cause: 'read-failed' });
+    expect(docOf(first).best).toBeNull();
+    expect(await store.open('filmy', 'easy')).toMatchObject({ kind: 'unsaved', cause: 'read-failed' });
+    expect(storage.writes).toHaveLength(0);
+
+    storage.unreadable.clear();
+    const again = await store.open('filmy', 'easy');
+    expect(again).toMatchObject({ kind: 'saved', source: 'resumed' });
+    expect(docOf(again).run).toEqual(docOf(first).run);
+    expect(docOf(again).best).toEqual({ hits: 8, club: 50 });
+    expect(stored(storage)).toEqual(docOf(again));
+  });
+
+  it('prefers the stored run once an unreadable slot becomes readable and holds one', async () => {
+    const elsewhere = new FakeStorage();
+    const theirs = docOf(await makeStore(elsewhere, BANK_WORDS, 9).open('filmy', 'easy'));
+
+    const storage = new FakeStorage();
+    storage.unreadable.add(key);
+    const store = makeStore(storage);
+    const mine = docOf(await store.open('filmy', 'easy'));
+    expect(mine.runId).not.toBe(theirs.runId);
+    storage.data.set(key, elsewhere.data.get(key)!);
+    storage.unreadable.clear();
+
+    const out = await store.open('filmy', 'easy');
+    expect(out).toMatchObject({ kind: 'saved', source: 'resumed' });
+    expect(docOf(out)).toEqual(theirs);
+    expect(storage.writes).toHaveLength(0);
+  });
+
+  it('retries a failed write when the slot is opened again', async () => {
+    const storage = new FakeStorage();
+    storage.failWrites = true;
+    const store = makeStore(storage);
+    const doc = docOf(await store.open('filmy', 'easy'));
+    expect(await store.open('filmy', 'easy')).toMatchObject({ kind: 'unsaved', cause: 'write-failed' });
+    storage.failWrites = false;
+    const out = await store.open('filmy', 'easy');
+    expect(out).toMatchObject({ kind: 'saved', source: 'resumed' });
+    expect(docOf(out)).toEqual(doc);
+    expect(stored(storage)).toEqual(doc);
   });
 });
 

@@ -108,6 +108,8 @@ type Loaded =
       bag: BagState;
       /** At least one read failed: don't write over data we couldn't see. */
       blocked: boolean;
+      /** The canonical run key itself couldn't be read (not merely absent or corrupt). */
+      canonicalFailed: boolean;
       recovery: RecoveryReason | null;
     };
 
@@ -165,7 +167,7 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
       const parsed = safeJson(legacyBag.raw);
       bag = parsed.ok ? readBag(parsed.value) : null;
     }
-    return { kind: 'nothing', best, bag: bag ?? emptyBag(), blocked, recovery };
+    return { kind: 'nothing', best, bag: bag ?? emptyBag(), blocked, canonicalFailed: !canonical.ok, recovery };
   }
 
   /** Writes a whole document. Records whether storage is ahead of or behind the in-memory one. */
@@ -178,11 +180,38 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
     return cause;
   }
 
+  /** Settles an opened document: reconciles content and, when asked, flushes it to storage. */
+  async function resume(slot: Slot, theme: ThemeId, difficulty: Difficulty, doc: SlotDoc, flush: boolean): Promise<OpenOutcome> {
+    if (doc.terminal) {
+      if (flush) await commit(slot, theme, difficulty, doc);
+      else slot.doc = doc;
+      return { kind: 'terminal', doc, saved: !slot.unsaved };
+    }
+    const rec = reconcileContent(doc, env);
+    if (rec.kind === 'empty') return { kind: 'empty', best: doc.best };
+    if (rec.kind === 'same') {
+      if (flush) await commit(slot, theme, difficulty, rec.doc);
+      else slot.doc = rec.doc;
+      return slot.unsaved
+        ? { kind: 'unsaved', doc: rec.doc, cause: slot.unsaved }
+        : { kind: 'saved', doc: rec.doc, source: 'resumed' };
+    }
+    const cause = await commit(slot, theme, difficulty, rec.doc);
+    return cause
+      ? { kind: 'unsaved', doc: rec.doc, cause, migration: rec.migration }
+      : { kind: 'saved', doc: rec.doc, source: 'migrated', migration: rec.migration };
+  }
+
   const store: RunStore = {
     inspect(theme, difficulty) {
       const slot = slotFor(theme, difficulty);
       return enqueue(slot, async (): Promise<SlotView> => {
-        const loaded = slot.unsaved && slot.doc ? ({ kind: 'doc', doc: slot.doc } as const) : await load(theme, difficulty);
+        let loaded: Loaded = { kind: 'doc', doc: slot.doc! };
+        if (!(slot.unsaved && slot.doc)) {
+          loaded = await load(theme, difficulty);
+          // A temporary read failure doesn't erase a run this store already saved.
+          if (loaded.kind === 'nothing' && loaded.canonicalFailed && slot.doc) loaded = { kind: 'doc', doc: slot.doc };
+        }
         if (loaded.kind === 'doc') {
           return loaded.doc.terminal ? { kind: 'terminal', doc: loaded.doc } : { kind: 'resumable', doc: loaded.doc };
         }
@@ -195,28 +224,35 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
       const slot = slotFor(theme, difficulty);
       return enqueue(slot, async (): Promise<OpenOutcome> => {
         // A document that never reached storage stays authoritative, so reopening can't reroll it.
-        const loaded = slot.unsaved && slot.doc ? ({ kind: 'doc', doc: slot.doc } as const) : await load(theme, difficulty);
+        if (slot.doc && slot.unsaved === 'write-failed') return resume(slot, theme, difficulty, slot.doc, true);
+
+        const loaded = await load(theme, difficulty);
+
+        if (slot.doc && slot.unsaved === 'read-failed') {
+          if (loaded.kind === 'doc') {
+            // Storage answers now and holds a run: it wins over the unsaved one.
+            slot.blocked = false;
+            slot.unsaved = null;
+            return resume(slot, theme, difficulty, loaded.doc, false);
+          }
+          if (loaded.blocked) {
+            return slot.doc.terminal
+              ? { kind: 'terminal', doc: slot.doc, saved: false }
+              : { kind: 'unsaved', doc: slot.doc, cause: 'read-failed' };
+          }
+          // Reads work again and nothing is stored: save the run we have, with the best now readable.
+          slot.blocked = false;
+          const merged: SlotDoc = { ...slot.doc, best: betterBest(slot.doc.best, loaded.best) };
+          const out = await resume(slot, theme, difficulty, merged, true);
+          return loaded.recovery && out.kind === 'saved' ? { kind: 'recovered', doc: out.doc, reason: loaded.recovery } : out;
+        }
 
         if (loaded.kind === 'doc') {
-          const { doc } = loaded;
           if (!slot.unsaved) slot.blocked = false;
-          if (doc.terminal) {
-            slot.doc = doc;
-            return { kind: 'terminal', doc, saved: !slot.unsaved };
-          }
-          const rec = reconcileContent(doc, env);
-          if (rec.kind === 'empty') return { kind: 'empty', best: doc.best };
-          if (rec.kind === 'same') {
-            slot.doc = rec.doc;
-            return slot.unsaved
-              ? { kind: 'unsaved', doc: rec.doc, cause: slot.unsaved }
-              : { kind: 'saved', doc: rec.doc, source: 'resumed' };
-          }
-          const cause = await commit(slot, theme, difficulty, rec.doc);
-          return cause
-            ? { kind: 'unsaved', doc: rec.doc, cause, migration: rec.migration }
-            : { kind: 'saved', doc: rec.doc, source: 'migrated', migration: rec.migration };
+          return resume(slot, theme, difficulty, loaded.doc, false);
         }
+        // A temporary read failure doesn't throw away a run this store already saved.
+        if (loaded.canonicalFailed && slot.doc && !slot.unsaved) return resume(slot, theme, difficulty, slot.doc, false);
 
         slot.blocked = loaded.blocked;
         const fresh = startDoc(theme, difficulty, { bag: loaded.bag, best: loaded.best }, env);
@@ -232,13 +268,20 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
     act(theme, difficulty, seen, action) {
       const slot = slotFor(theme, difficulty);
       return enqueue(slot, async (): Promise<ActResult> => {
-        let current = slot.doc;
-        if (!current) {
-          const loaded = await load(theme, difficulty);
-          if (loaded.kind === 'doc') current = loaded.doc;
-        }
+        const current = slot.doc;
+        // Only `open` loads a slot: it reconciles word content and recovers bad data first.
         if (!current || current.runId !== seen.runId || current.revision !== seen.revision) {
           return { kind: 'stale', doc: current };
+        }
+        if (!slot.unsaved && !slot.blocked) {
+          // Another store on the same storage (a second tab) may have moved the run on.
+          const stored = await storage.read(keys.run(theme, difficulty));
+          if (stored.ok && stored.raw !== null) {
+            const parsed = parseDoc(stored.raw, theme, difficulty);
+            if (parsed.ok && (parsed.doc.runId !== current.runId || parsed.doc.revision !== current.revision)) {
+              return { kind: 'stale', doc: parsed.doc };
+            }
+          }
         }
         const reduction = reduce(current, action, env);
         if (reduction.kind !== 'changed') return reduction;
@@ -250,6 +293,12 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
   };
   return store;
 }
+
+/**
+ * The store the app should use. Every screen must share it: two stores on one storage
+ * don't see each other's pending work (the stale re-read in `act` is only a safety net).
+ */
+export const runStore: RunStore = createRunStore();
 
 function safeJson(raw: string): { ok: true; value: unknown } | { ok: false } {
   try {
