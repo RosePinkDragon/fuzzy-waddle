@@ -59,7 +59,10 @@ export type ActResult =
   | { kind: 'unsaved'; doc: SlotDoc; cause: UnsavedCause; guess?: GuessResult; effect?: PowerUpEffect }
   | { kind: 'ignored'; doc: SlotDoc }
   | { kind: 'empty'; doc: SlotDoc }
-  /** The caller acted on an old run or revision. `doc` is the current one, if any. */
+  /**
+   * The caller acted on an old run or revision. `doc` is the current one, if any.
+   * Call `open` after any `stale`; don't retry with the returned doc (the store hasn't adopted it).
+   */
   | { kind: 'stale'; doc: SlotDoc | null };
 
 export type SlotView =
@@ -96,6 +99,12 @@ interface Slot {
   doc: SlotDoc | null;
   /** Set while `doc` is ahead of storage. */
   unsaved: UnsavedCause | null;
+  /**
+   * The last run id and revision this store knows storage held: what it loaded or last wrote
+   * successfully. It stays put while writes fail, so a later re-read can tell that another
+   * store changed the slot (a failed write moves `doc` ahead of it, never this).
+   */
+  base: Pick<SlotDoc, 'runId' | 'revision'> | null;
   /** A required read failed, so writing could overwrite what couldn't be read. */
   blocked: boolean;
 }
@@ -128,7 +137,7 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
     const id = `${theme}:${difficulty}`;
     let slot = slots.get(id);
     if (!slot) {
-      slot = { tail: Promise.resolve(), doc: null, unsaved: null, blocked: false };
+      slot = { tail: Promise.resolve(), doc: null, unsaved: null, base: null, blocked: false };
       slots.set(id, slot);
     }
     return slot;
@@ -170,6 +179,19 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
     return { kind: 'nothing', best, bag: bag ?? emptyBag(), blocked, canonicalFailed: !canonical.ok, recovery };
   }
 
+  /** The stored document, if storage answers and holds a valid one; otherwise null (nothing to compare). */
+  async function readStored(theme: ThemeId, difficulty: Difficulty): Promise<SlotDoc | null> {
+    const stored = await storage.read(keys.run(theme, difficulty));
+    if (!stored.ok || stored.raw === null) return null;
+    const parsed = parseDoc(stored.raw, theme, difficulty);
+    return parsed.ok ? parsed.doc : null;
+  }
+
+  /** True when storage holds a run or revision other than `known`, the last one this store knew it held. */
+  function movedOn(known: Slot['base'], stored: SlotDoc | null): boolean {
+    return stored !== null && (!known || stored.runId !== known.runId || stored.revision !== known.revision);
+  }
+
   /** Writes a whole document. Records whether storage is ahead of or behind the in-memory one. */
   async function commit(slot: Slot, theme: ThemeId, difficulty: Difficulty, doc: SlotDoc): Promise<UnsavedCause | null> {
     let cause: UnsavedCause | null = null;
@@ -177,6 +199,7 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
     else if (!(await storage.write(keys.run(theme, difficulty), serializeDoc(doc)))) cause = 'write-failed';
     slot.doc = doc;
     slot.unsaved = cause;
+    if (!cause) slot.base = { runId: doc.runId, revision: doc.revision };
     return cause;
   }
 
@@ -224,7 +247,15 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
       const slot = slotFor(theme, difficulty);
       return enqueue(slot, async (): Promise<OpenOutcome> => {
         // A document that never reached storage stays authoritative, so reopening can't reroll it.
-        if (slot.doc && slot.unsaved === 'write-failed') return resume(slot, theme, difficulty, slot.doc, true);
+        // Unless another store (a second tab) has moved the slot on: then the stored run wins, so a
+        // retry can't lower its best or bring back a run it finished.
+        if (slot.doc && slot.unsaved === 'write-failed') {
+          const stored = await readStored(theme, difficulty);
+          if (!stored || !movedOn(slot.base, stored)) return resume(slot, theme, difficulty, slot.doc, true);
+          slot.unsaved = null;
+          slot.base = { runId: stored.runId, revision: stored.revision };
+          return resume(slot, theme, difficulty, stored, false);
+        }
 
         const loaded = await load(theme, difficulty);
 
@@ -233,6 +264,7 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
             // Storage answers now and holds a run: it wins over the unsaved one.
             slot.blocked = false;
             slot.unsaved = null;
+            slot.base = { runId: loaded.doc.runId, revision: loaded.doc.revision };
             return resume(slot, theme, difficulty, loaded.doc, false);
           }
           if (loaded.blocked) {
@@ -254,12 +286,14 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
 
         if (loaded.kind === 'doc') {
           if (!slot.unsaved) slot.blocked = false;
+          slot.base = { runId: loaded.doc.runId, revision: loaded.doc.revision };
           return resume(slot, theme, difficulty, loaded.doc, false);
         }
         // A temporary read failure doesn't throw away a run this store already saved.
         if (loaded.canonicalFailed && slot.doc && !slot.unsaved) return resume(slot, theme, difficulty, slot.doc, false);
 
         slot.blocked = loaded.blocked;
+        slot.base = null; // nothing stored is known to be ours; a failed first write must not keep an older base
         const fresh = startDoc(theme, difficulty, { bag: loaded.bag, best: loaded.best }, env);
         if (!fresh) return { kind: 'empty', best: loaded.best };
         const cause = await commit(slot, theme, difficulty, fresh);
@@ -278,15 +312,11 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
         if (!current || current.runId !== seen.runId || current.revision !== seen.revision) {
           return { kind: 'stale', doc: current };
         }
-        if (!slot.unsaved && !slot.blocked) {
-          // Another store on the same storage (a second tab) may have moved the run on.
-          const stored = await storage.read(keys.run(theme, difficulty));
-          if (stored.ok && stored.raw !== null) {
-            const parsed = parseDoc(stored.raw, theme, difficulty);
-            if (parsed.ok && (parsed.doc.runId !== current.runId || parsed.doc.revision !== current.revision)) {
-              return { kind: 'stale', doc: parsed.doc };
-            }
-          }
+        if (!slot.blocked && (!slot.unsaved || slot.unsaved === 'write-failed')) {
+          // Another store on the same storage (a second tab) may have moved the run on. After a failed
+          // write `current` is ahead of storage, so compare with what this store last knew was stored.
+          const stored = await readStored(theme, difficulty);
+          if (movedOn(slot.unsaved ? slot.base : current, stored)) return { kind: 'stale', doc: stored };
         }
         const reduction = reduce(current, action, env);
         if (reduction.kind !== 'changed') return reduction;
