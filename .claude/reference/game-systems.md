@@ -28,7 +28,7 @@ This sheet names the numbers' homes instead of copying them. If code and the bri
 | **Answers** | Uppercase, canonical spelling. Only A–Z can be guessed. Spaces split words, and digits and punctuation are revealed automatically. | `answer.ts` | `answer.test.ts` |
 | **Tiles** | Wrap at word breaks and shrink between the max and min size until the answer fits. | `tileLayout.ts` | `tileLayout.test.ts` |
 | **Bests** | One per theme and difficulty: hits and club. The saved-run core (below) settles them only when a run ends (loss or abandonment), never lowers a positive best, and reads zero-only as not played. Home reads them through the store (`runController.ts` `bestForTheme`, which uses `runStore.inspect`). The legacy `useRun` still saves them at clubs until #94. | `runSnapshot.ts` `settleBest`, `runController.ts` `bestOf`, `useRun.ts`, `storage.ts` `keys.best` | `runSession.test.ts`, `runStore.test.ts` |
-| **Challenges** | A link carries the word ID, never the answer. It plays one word with that word tier's rules, and lives don't matter beyond that word. | `src/app/c/[wordId].tsx`, `hooks/useChallenge.ts`, `lib/share.ts` | `share.test.ts` (links), `challengeRunStoreGuard.test.ts` (nothing is written) |
+| **Challenges** | A link carries the word ID, never the answer. It plays one word with that word tier's rules, and lives don't matter beyond that word. | `src/app/c/[wordId].tsx`, `hooks/useChallenge.ts`, `lib/share.ts` | `share.test.ts` (links and `shareText`), `challengeRunStoreGuard.test.ts` (nothing is written) |
 
 ## Game config (simulation only)
 
