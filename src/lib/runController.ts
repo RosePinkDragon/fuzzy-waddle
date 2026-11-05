@@ -49,6 +49,11 @@ export function noteRecovery(entry: RecoveryEntry): void {
   if (!shown.has(key)) pending.set(key, entry);
 }
 
+/** True while a slot's recovery notice is waiting to be shown. */
+function recoveryPending(theme: ThemeId, difficulty: Difficulty): boolean {
+  return pending.has(slotKey(theme, difficulty));
+}
+
 /** True once the recovery notice for a slot has been shown this session. */
 export function recoveryShown(theme: ThemeId, difficulty: Difficulty): boolean {
   return shown.has(slotKey(theme, difficulty));
@@ -193,9 +198,16 @@ export function createRunController(
     } else saved = out.saved;
     if (recovery && !recoveryShown(theme, difficulty)) {
       noteRecovery({ theme, difficulty, reason: recovery, best: out.doc.best });
-      phase = 'recoveryPending';
     }
-    update({ phase, doc: out.doc, saved, ...(migration ? { notice: { kind: 'wordReplaced', migration } } : {}) });
+    // The notice comes first: a later open (a return, a stale) must not hide a notice nobody has seen.
+    if (recoveryPending(theme, difficulty)) phase = 'recoveryPending';
+    // A notice explains one run's word swap; it doesn't follow the player into a different run.
+    const notice: RunNotice | null = migration
+      ? { kind: 'wordReplaced', migration }
+      : snapshot.doc?.runId === out.doc.runId
+        ? snapshot.notice
+        : null;
+    update({ phase, doc: out.doc, saved, notice });
     armSolved();
   }
 
@@ -223,6 +235,12 @@ export function createRunController(
         update({ doc: result.doc, saved: result.kind === 'saved' });
         armSolved();
         return pick ? pick(result) : null;
+      }
+      if (result.kind === 'empty') {
+        // The pool has no word to draw (it emptied mid-run): nothing to play or wait for.
+        clearTimer();
+        update({ phase: 'empty', doc: null, saved: true });
+        return null;
       }
       if (result.kind === 'stale') {
         // Someone else moved the run on. Drop what was queued behind this and adopt the stored run, once.
@@ -271,19 +289,19 @@ export function createRunController(
     leave() {
       away = true;
       clearTimer();
+      // A return after this leave must open again, not share an open that may predate it.
+      returning = null;
     },
 
     return() {
       away = false;
       if (!startPromise) return Promise.resolve();
       if (snapshot.phase === 'loading') return startPromise;
-      // Bad data waits for its notice: re-opening here would replace it silently.
-      if (snapshot.phase === 'recoveryPending' && !snapshot.doc) return Promise.resolve();
+      // Bad data waits for its notice: re-opening here would replace it silently, or hide the notice.
+      if (snapshot.phase === 'recoveryPending') return Promise.resolve();
       if (returning) return returning;
-      const run = enqueue(async () => {
-        away = false;
-        await openAndAdopt();
-      }).finally(() => {
+      // The job must not touch `away`: a leave may have come after this return and before it runs.
+      const run = enqueue(openAndAdopt).finally(() => {
         if (returning === run) returning = null;
       });
       returning = run;
@@ -356,8 +374,10 @@ export async function bestForTheme(theme: ThemeId, store: RunStore = runStore): 
 
 /**
  * Starts a new run on a slot the player saw as `seenRunId` (the run they chose to end, or the finished
- * one). It acts only if the stored run is still that run, so a second tap, or a run another tab started,
- * never ends a run the player didn't confirm. `'changed'` means nothing was written: look again.
+ * one). It sends `newRun` only if the stored run is still that run, so a second tap, or a run another tab
+ * started, never ends a run the player didn't confirm. `'changed'` means no `newRun` was sent (opening the
+ * slot may still have started, migrated or recovered a run): look again. If opening replaced bad data, the
+ * recovery notice is recorded so the picker still shows it.
  */
 export async function startNewRun(
   theme: ThemeId,
@@ -366,7 +386,13 @@ export async function startNewRun(
   store: RunStore = runStore,
 ): Promise<'started' | 'changed'> {
   const out = await store.open(theme, difficulty);
-  if (out.kind === 'empty' || out.doc.runId !== seenRunId) return 'changed';
+  if (out.kind === 'empty') return 'changed';
+  const recovery = out.kind === 'recovered' ? out.reason : out.kind === 'unsaved' ? out.recovery : undefined;
+  if (recovery) {
+    noteRecovery({ theme, difficulty, reason: recovery, best: out.doc.best });
+    return 'changed';
+  }
+  if (out.doc.runId !== seenRunId) return 'changed';
   const result = await store.act(theme, difficulty, { runId: out.doc.runId, revision: out.doc.revision }, { type: 'newRun' });
   return result.kind === 'saved' || result.kind === 'unsaved' ? 'started' : 'changed';
 }

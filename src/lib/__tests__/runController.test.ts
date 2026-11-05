@@ -296,6 +296,34 @@ describe('leaving and returning', () => {
     expect(calls.open).toBe(2);
   });
 
+  it('a leave that comes right after a return keeps the solved timer stopped', async () => {
+    const { controller, calls } = make(new FakeStorage());
+    await controller.start();
+    await solve(controller);
+    controller.leave();
+    const back = controller.return();
+    controller.leave(); // hidden again before the re-open ran
+    await back;
+    await wait(5 * PAUSE);
+    expect(docOf(controller).run.status).toBe('solved');
+    expect(calls.act.filter((a) => a.startsWith('continue'))).toEqual([]);
+    await controller.return();
+    await wait(PAUSE);
+    expect(docOf(controller).run.status).toBe('playing');
+  });
+
+  it('a return after a fresh leave opens again instead of sharing an earlier open', async () => {
+    const { controller, calls } = make(new FakeStorage());
+    await controller.start();
+    controller.leave();
+    const first = controller.return();
+    controller.leave();
+    const second = controller.return();
+    expect(second).not.toBe(first);
+    await Promise.all([first, second]);
+    expect(calls.open).toBe(3);
+  });
+
   it('a return picks up a run another tab moved on', async () => {
     const storage = new FakeStorage();
     const a = make(storage);
@@ -458,6 +486,42 @@ describe('stale results', () => {
   });
 });
 
+describe('stale on the same run', () => {
+  it('another tab moving the same run on drops the queued presses instead of replaying them', async () => {
+    const storage = new FakeStorage();
+    const a = make(storage);
+    await a.controller.start();
+    const other = makeStore(storage, BANK_WORDS, 7);
+    const theirs = await other.open('filmy', 'easy');
+    if (theirs.kind === 'empty') throw new Error('empty');
+    const moved = await other.act('filmy', 'easy', theirs.doc, { type: 'power', slot: 0 });
+    if (moved.kind !== 'saved') throw new Error('not saved');
+
+    const letters = wrongLetters(a.controller).slice(0, 3);
+    const results = await Promise.all(letters.map((l) => a.controller.press(l)));
+    expect(results).toEqual([null, null, null]);
+    expect(a.calls.act).toEqual(['guess:stale']);
+    expect(a.calls.open).toBe(2);
+    expect(docOf(a.controller)).toEqual(moved.doc);
+    expect(docOf(a.controller).run.current!.wrong).toEqual([]);
+  });
+
+  it('maps an empty result (the pool emptied mid-run) to the empty phase and stops the timer', async () => {
+    const words = [...BANK_WORDS];
+    const storage = new FakeStorage();
+    const { store, calls } = spied(makeStore(storage, words));
+    const controller = createRunController('filmy', 'easy', { store, pauseMs: PAUSE });
+    await controller.start();
+    await solve(controller);
+    words.length = 0;
+    await wait(PAUSE);
+    expect(controller.getSnapshot()).toMatchObject({ phase: 'empty', doc: null });
+    expect(calls.act.filter((a) => a.startsWith('continue'))).toEqual(['continue:empty']);
+    await wait(5 * PAUSE);
+    expect(calls.act.filter((a) => a.startsWith('continue'))).toEqual(['continue:empty']);
+  });
+});
+
 describe('what is saved', () => {
   it('reports unsaved after a failed write and saved again after the next successful one', async () => {
     const storage = new FakeStorage();
@@ -526,6 +590,28 @@ describe('changed word content', () => {
     expect(b.controller.getSnapshot().phase).toBe('ready');
   });
 
+  it('drops the notice when the adopted run is a different one', async () => {
+    const storage = new FakeStorage();
+    const a = make(storage);
+    await a.controller.start();
+    await a.controller.usePower(0);
+    const id = docOf(a.controller).run.current!.word.id;
+    const b = make(storage, { words: BANK_WORDS.filter((w) => w.id !== id), seed: 2 });
+    await b.controller.start();
+    expect(b.controller.getSnapshot().notice).not.toBeNull();
+
+    // Another tab ends this run and starts a new one.
+    const other = makeStore(storage, BANK_WORDS.filter((w) => w.id !== id), 8);
+    const theirs = await other.open('filmy', 'easy');
+    if (theirs.kind === 'empty') throw new Error('empty');
+    const fresh = await other.act('filmy', 'easy', theirs.doc, { type: 'newRun' });
+    if (fresh.kind !== 'saved') throw new Error('not saved');
+    b.controller.leave();
+    await b.controller.return();
+    expect(docOf(b.controller).runId).toBe(fresh.doc.runId);
+    expect(b.controller.getSnapshot().notice).toBeNull();
+  });
+
   it('has an empty phase when the pool has no word', async () => {
     const { controller } = make(new FakeStorage(), { words: [] });
     await controller.start();
@@ -568,6 +654,39 @@ describe('recovery', () => {
     expect(controller.getSnapshot().phase).toBe('recoveryPending');
     expect(controller.getSnapshot().doc).not.toBeNull();
     expect(pendingRecoveries('filmy')).toHaveLength(1);
+  });
+
+  it('a return does not clear recoveryPending while the notice is waiting', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.run('filmy', 'easy'), unsupported);
+    const real = makeStore(storage);
+    const { store, calls } = spied({ ...real, inspect: async () => ({ kind: 'none', best: null }) });
+    const controller = createRunController('filmy', 'easy', { store, pauseMs: PAUSE });
+    await controller.start();
+    const doc = docOf(controller);
+    controller.leave();
+    await controller.return();
+    expect(controller.getSnapshot().phase).toBe('recoveryPending');
+    expect(docOf(controller)).toEqual(doc);
+    expect(calls.open).toBe(1);
+    expect(pendingRecoveries('filmy')).toHaveLength(1);
+  });
+
+  it('an open that adopts a slot with a waiting notice stays on recoveryPending', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.run('filmy', 'easy'), unsupported);
+    const first = make(storage);
+    await first.controller.start(); // records the notice; nothing opened
+    expect(pendingRecoveries('filmy')).toHaveLength(1);
+    // A later controller finds a fresh run (another route replaced the data), but the notice is still unseen.
+    await makeStore(storage, BANK_WORDS, 3).open('filmy', 'easy');
+    const second = make(storage, { seed: 4 });
+    await second.controller.start();
+    expect(second.controller.getSnapshot()).toMatchObject({ phase: 'recoveryPending' });
+    markRecoveryShown('filmy', 'easy');
+    const third = make(storage, { seed: 5 });
+    await third.controller.start();
+    expect(third.controller.getSnapshot().phase).toBe('ready');
   });
 
   it('does not hold back a slot that is only unavailable', async () => {
@@ -627,6 +746,16 @@ describe('picker helpers', () => {
     expect([first, second].sort()).toEqual(['changed', 'started']);
     expect(stored(storage).runId).not.toBe(end.runId);
     expect(stored(storage).revision).toBe(end.revision + 1);
+  });
+
+  it('startNewRun on a slot that turned out corrupt records the notice and sends no newRun', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.run('filmy', 'easy'), JSON.stringify({ schema: 999 }));
+    const { store, calls } = spied(makeStore(storage));
+    expect(await startNewRun('filmy', 'easy', 'seen-before', store)).toBe('changed');
+    expect(calls.act).toEqual([]);
+    expect(pendingRecoveries('filmy')).toEqual([{ theme: 'filmy', difficulty: 'easy', reason: 'unsupported', best: null }]);
+    expect(stored(storage).revision).toBe(0);
   });
 
   it('an empty pool is reported as changed', async () => {
