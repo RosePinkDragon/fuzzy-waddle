@@ -242,7 +242,12 @@ export function createRunStore(options: RunStoreOptions = {}): RunStore {
           }
           // Reads work again and nothing is stored: save the run we have, with the best now readable.
           slot.blocked = false;
-          const merged: SlotDoc = { ...slot.doc, best: betterBest(slot.doc.best, loaded.best) };
+          // The recovered best predates this run, so it is also the bar for "new best" (best >= bestAtStart).
+          const merged: SlotDoc = {
+            ...slot.doc,
+            best: betterBest(slot.doc.best, loaded.best),
+            bestAtStart: betterBest(slot.doc.bestAtStart, loaded.best),
+          };
           const out = await resume(slot, theme, difficulty, merged, true);
           return loaded.recovery && out.kind === 'saved' ? { kind: 'recovered', doc: out.doc, reason: loaded.recovery } : out;
         }
