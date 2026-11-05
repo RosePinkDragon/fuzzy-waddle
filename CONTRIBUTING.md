@@ -41,7 +41,7 @@ Every change goes through the same five steps. The **PR rules** check enforces t
    - A bug label does not approve a new mechanic, balance trade-off, changed flow or new layout choice. Those choices still come to you. Restoring an approved design goes through UX review without a new design approval gate.
    - Implementation children inherit the authorized parent scope. The coordinator records that scope, criteria and dependencies and may mark them `ready`; newly proposed scope still needs your decision.
 3. **Say "run issue #N",** or let the coordinator continue delegated routine bugs and implementation children. The `run-issue` skill picks a mode and says why on the issue:
-   - **Fast** for routine bugs restoring agreed behavior, tooling, words and copy fixes: the developer builds, the checks run, and the PR opens.
+   - **Fast** for routine bugs restoring agreed behavior, tooling, words and copy fixes: for word issues that need outside facts, a researcher saves sources first, then the developer builds, the checks run, and the PR opens.
    - **Standard** for game rules, saving and small layout tweaks: a plan first.
    - **Full** for a new design choice marked **Design: needed**: the UX designer's mockups come first and the label becomes `needs-design-approval`. Look at them, then:
      - to approve, swap the label to `ready`

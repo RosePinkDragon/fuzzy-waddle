@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Difficulty picker: Resume-NewRunConfirm</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&amp;family=Yatra+One&amp;display=swap">
+<style>
+/* Shared theme tokens: the values are the filmy colors in src/themes/themes.ts. Swap this block to re-theme. */
+body{margin:0;background:#2A0710}
+.t{--bg:#2A0710;--panel:#3A0B15;--border:#7A2633;--accent:#F2B33D;--text:#FFF4DC;--muted:#F7D9A0;--on-accent:#2A0710;--chip-bg:#F7D9A0;--chip-text:#5A1420;--badge-bg:#F28C28;--badge-text:#2A0710;--primary-bg:#F28C28;--primary-text:#2A0710;--scene-bg:#1A0409;--scene-border:3px dotted #F2B33D}
+.root{width:390px;box-sizing:border-box;padding:14px 12px 20px;display:flex;flex-direction:column;gap:12px;background:var(--bg);color:var(--text);font-family:'Mukta',system-ui,sans-serif;overflow:hidden;position:relative}
+.hdr{display:flex;align-items:center;justify-content:space-between;height:44px;flex:none}
+.round{width:44px;height:44px;border-radius:22px;border:1px solid var(--border);background:var(--panel);color:var(--text);display:flex;align-items:center;justify-content:center;padding:0;flex:none}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--accent)}
+.h1{margin:0;font-size:17px;font-weight:700;line-height:1.2}
+.scene{position:relative;flex:1 1 0;box-sizing:border-box;border:var(--scene-border);border-radius:14px;overflow:hidden;background:var(--scene-bg)}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:inherit;text-align:left;box-sizing:border-box}
+.cards{display:flex;flex-direction:column;gap:10px;flex:none}
+.opt{display:flex;flex-direction:column;gap:6px;padding:10px 14px;width:100%;min-height:44px;cursor:pointer}
+.row{display:flex;align-items:center;gap:10px}
+.dname{font-family:'Yatra One',serif;font-size:22px;line-height:1.2}
+.small{font-size:13px;line-height:1.3;color:var(--muted)}
+.best{font-size:11px;font-weight:700;line-height:1.3;color:var(--accent);text-align:right}
+.go{width:32px;height:32px;border-radius:16px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--on-accent)}
+.sign{display:flex;align-items:center;white-space:nowrap}
+.left{margin-left:6px;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--text)}
+.btn{height:48px;border-radius:12px;font-family:inherit;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 16px;cursor:pointer;box-sizing:border-box}
+.primary{background:var(--primary-bg);color:var(--primary-text);border:0}
+.secondary{background:transparent;color:var(--text);border:1.5px solid var(--accent)}
+.tag{font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:2px 8px;border-radius:8px;background:var(--chip-bg);color:var(--chip-text);white-space:nowrap}
+.tag-out{background:transparent;color:var(--text);border:1.5px dashed var(--accent);padding:1px 7px}
+.notice{display:flex;gap:10px;align-items:flex-start;padding:10px 6px 10px 12px;border:1.5px solid var(--accent);border-radius:14px;background:var(--panel);flex:none}
+.ntitle{font-size:14px;font-weight:800;line-height:1.25;color:var(--text)}
+.nbody{font-size:13px;line-height:1.3;color:var(--muted)}
+.foot{margin-top:auto;font-size:12px;line-height:1.35;color:var(--muted);text-align:center;flex:none}
+.sub{font-size:11px;font-weight:800;letter-spacing:.14em;line-height:1.3;color:var(--accent);flex:none}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.62)}
+.sheet{position:absolute;left:0;right:0;bottom:0;padding:18px 16px 20px;border-radius:20px 20px 0 0;background:var(--panel);border-top:1.5px solid var(--accent);display:flex;flex-direction:column;gap:12px}
+.sign-above{display:none}
+.cmp-only{display:none!important}
+@media (max-height:779px){
+ .root{gap:8px;padding:10px 12px 12px}
+ .cards{gap:8px}
+ .opt{padding:8px 14px;gap:4px}
+ .cmp-hide{display:none!important}
+ .sign-in{display:none!important}
+ .sign-above{display:flex}
+ .cmp-only{display:inline-flex!important}
+ .wide-only{display:none!important}
+ .btn{height:46px}
+ .notice{padding:8px 6px 8px 12px}
+ .tiles{gap:6px!important}
+ .clue{padding:8px 12px!important}
+}
+</style>
+</helmet>
+<div class="t root">
+
+<div class="hdr">
+<button type="button" class="round" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+<div style="display:flex;flex-direction:column;align-items:center">
+<span class="eyebrow">FILMY</span>
+<h1 class="h1">Kitna tough?</h1>
+</div>
+<span style="width:44px"></span>
+</div>
+
+<div class="scene" style="min-height:90px;max-height:200px">
+<svg width="100%" height="100%" viewBox="0 0 366 200" preserveAspectRatio="xMidYMax slice" style="display: block" role="img" data-scene aria-label="The hero dangles from a cliff edge while a crocodile waits in the water below">
+<g transform="translate(0 24)">
+<circle cx="322" cy="34" r="14" fill="#FFF4DC" opacity="0.9"></circle>
+<circle cx="240" cy="24" r="1.5" fill="#FFF4DC" opacity="0.7"></circle>
+<circle cx="282" cy="62" r="1.5" fill="#FFF4DC" opacity="0.7"></circle>
+<circle cx="214" cy="40" r="1.5" fill="#FFF4DC" opacity="0.7"></circle>
+<circle cx="348" cy="82" r="1.5" fill="#FFF4DC" opacity="0.7"></circle>
+<rect x="160" y="150" width="206" height="26" fill="#0E3B4A"></rect>
+<path d="M160 150 q10 -5 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0" fill="none" stroke="#2B6F85" stroke-width="3"></path>
+<ellipse cx="296" cy="152" rx="30" ry="6" fill="#3E7B45"></ellipse>
+<circle cx="310" cy="146" r="6" fill="#3E7B45"></circle>
+<circle cx="322" cy="146" r="6" fill="#3E7B45"></circle>
+<circle cx="310" cy="145" r="3" fill="#FFF4DC"></circle>
+<circle cx="322" cy="145" r="3" fill="#FFF4DC"></circle>
+<circle cx="309" cy="145" r="1.5" fill="#1A0409"></circle>
+<circle cx="321" cy="145" r="1.5" fill="#1A0409"></circle>
+<path d="M272 156 l3 3 l3 -3 l3 3 l3 -3 l3 3 l3 -3" fill="none" stroke="#FFF4DC" stroke-width="1.5" stroke-linejoin="round"></path>
+<polygon points="0,48 182,48 174,80 188,112 166,150 172,176 0,176" fill="#5C2A1C"></polygon>
+<path d="M0 48 H182" stroke="#8A4A2C" stroke-width="4"></path>
+<path d="M40 80 l30 10 M96 120 l24 -8 M30 142 l20 6 M120 70 l18 4" stroke="#43200F" stroke-width="3" stroke-linecap="round"></path>
+<path d="M162 42 l-4 -6 M170 40 l0 -7 M180 41 l4 -6" stroke="#F2B33D" stroke-width="2" stroke-linecap="round"></path>
+<path d="M186 84 Q 200 80 216 90 Q 207 93 201 97 Q 194 91 186 89 Z" fill="#E0343F"></path>
+<g fill="none" stroke="#FFF4DC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M170 50 L184 84"></path>
+<path d="M180 50 L196 84"></path>
+<path d="M190 82 L190 118"></path>
+<path d="M190 118 L180 140 L184 158"></path>
+<path d="M190 118 L202 136 L212 150"></path>
+</g>
+<circle cx="170" cy="50" r="4" fill="#FFF4DC"></circle>
+<circle cx="180" cy="50" r="4" fill="#FFF4DC"></circle>
+<circle cx="190" cy="71" r="9" fill="#FFF4DC"></circle>
+<circle cx="187" cy="70" r="1.3" fill="#1A0409"></circle>
+<circle cx="193" cy="70" r="1.3" fill="#1A0409"></circle>
+<path d="M186 77 q4 -3 8 0" fill="none" stroke="#1A0409" stroke-width="1.5" stroke-linecap="round"></path>
+<path d="M205 60 q3 5 0 7 q-3 -2 0 -7 Z" fill="#8FD3FF"></path>
+<path d="M176 62 q3 5 0 7 q-3 -2 0 -7 Z" fill="#8FD3FF"></path>
+</g>
+</svg>
+</div>
+
+<span class="sub">PICK A DIFFICULTY</span>
+
+<sc-if value="{{hasNotice}}" hint-placeholder-val="{{false}}">
+<div class="notice" role="status">
+<sc-if value="{{notice.alert}}" hint-placeholder-val="{{true}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:1px"><path d="M12 3l10 18H2z"></path><path d="M12 10v5M12 18v.5"></path></svg></sc-if>
+<sc-if value="{{notice.cloud}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:1px"><path d="M7 18h10a4 4 0 0 0 .8-7.9A6 6 0 0 0 6.2 9.6 4.2 4.2 0 0 0 7 18z"></path><path d="M3 3l18 18"></path></svg></sc-if>
+<div style="display:flex;flex-direction:column;gap:2px;flex:1 1 0">
+<span class="ntitle">{{notice.title}}</span>
+<span class="nbody">{{notice.body}}</span>
+</div>
+<sc-if value="{{notice.dismiss}}" hint-placeholder-val="{{true}}"><button type="button" aria-label="Dismiss" style="width:44px;height:44px;flex:none;margin:-6px 0 -6px auto;border:0;background:transparent;color:var(--text);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></sc-if>
+</div>
+</sc-if>
+
+<div class="cards">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="3">
+
+<sc-if value="{{c.plain}}" hint-placeholder-val="{{true}}">
+<button type="button" class="card opt" aria-label="{{c.a11yPlay}}">
+<span class="row" style="width:100%">
+<span style="flex:1 1 0;display:flex;flex-direction:column">
+<span class="dname">{{c.label}}</span>
+<span class="small">{{c.detail}}</span>
+</span>
+<span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<span class="best">{{c.bestText}}</span>
+<span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></span>
+</span>
+</span>
+<span class="cmp-hide"><span class="sign"><sc-for list="{{c.marks}}" as="m" hint-placeholder-count="9"><span style="{{m.style}}">{{m.ch}}</span></sc-for><span class="left">{{c.left}}</span></span></span>
+</button>
+</sc-if>
+
+<sc-if value="{{c.saved}}" hint-placeholder-val="{{false}}">
+<div class="card opt" style="border:1.5px solid var(--accent);cursor:default">
+<span class="row">
+<span class="dname">{{c.label}}</span>
+<span class="{{c.tagClass}}">{{c.tag}}</span>
+<span class="best" style="margin-left:auto">{{c.bestText}}</span>
+</span>
+<span class="row" style="justify-content:space-between">
+<span class="sign"><sc-for list="{{c.marks}}" as="m" hint-placeholder-count="9"><span style="{{m.style}}">{{m.ch}}</span></sc-for><span class="left">{{c.left}}</span></span>
+<span style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap">{{c.run}}</span>
+</span>
+<span class="row" style="gap:8px;margin-top:2px">
+<button type="button" class="btn primary" style="flex:1 1 0" aria-label="{{c.a11yResume}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"></path></svg>Resume</button>
+<button type="button" class="btn secondary" style="width:128px">New run</button>
+</span>
+</div>
+</sc-if>
+
+<sc-if value="{{c.savedB}}" hint-placeholder-val="{{false}}">
+<div class="card opt" style="border:1.5px solid var(--accent);cursor:default">
+<span class="row" style="width:100%">
+<span style="flex:1 1 0;display:flex;flex-direction:column">
+<span class="row" style="gap:8px"><span class="dname">{{c.label}}</span><span class="{{c.tagClass}}">{{c.tag}}</span></span>
+<span class="small">{{c.detail}}</span>
+</span>
+<span class="best">{{c.bestText}}</span>
+</span>
+<span class="cmp-hide"><span class="sign"><sc-for list="{{c.marks}}" as="m" hint-placeholder-count="9"><span style="{{m.style}}">{{m.ch}}</span></sc-for><span class="left">{{c.left}}</span></span></span>
+</div>
+</sc-if>
+
+</sc-for>
+</div>
+
+<sc-if value="{{showFoot}}" hint-placeholder-val="{{true}}">
+<span class="foot">Lives carry over from word to word. Every club is a boss round.</span>
+</sc-if>
+
+<sc-if value="{{hasBottom}}" hint-placeholder-val="{{false}}">
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font-size:13px;font-weight:700;text-align:center">{{bottom.line}}</span>
+<button type="button" class="btn primary" style="height:52px" aria-label="{{bottom.a11y}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"></path></svg>{{bottom.resume}}</button>
+<button type="button" class="btn secondary" style="height:44px">{{bottom.fresh}}</button>
+</div>
+</sc-if>
+
+<!-- Sheet lines (pick by run state; the mock shows hits > best):
+ 1. Always: newRun.ends "Your {difficulty} run ends here: {hits} hits, {lives} lives left."
+ 2. Hits best: hits > best  -> newRun.bestUp   "Your {difficulty} best goes up from {old} to {new} hits."
+               hits <= best -> newRun.bestStays "Your {difficulty} best stays at {best} hits."
+               hits == 0    -> newRun.noHits   "No hits yet, so nothing is recorded." (replaces lines 2 and 3)
+ 3. Club best: club > clubBest  -> newRun.clubUp    "Your {difficulty} club best goes up to {club} Cr Club."
+               club <= clubBest -> newRun.clubStays "Your {difficulty} club best stays at {clubBest} Cr Club."
+               no club reached and no club best -> line omitted
+ Buttons: Keep this run is the filled default; End it, start new run is outlined and set 12px lower. -->
+<sc-if value="{{hasSheet}}" hint-placeholder-val="{{false}}">
+<div class="scrim"></div>
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+<span id="sheet-title" style="font-family:'Yatra One',serif;font-size:24px;line-height:1.2">{{sheet.title}}</span>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{sheet.lines}}" as="ln" hint-placeholder-count="2">
+<span style="display:flex;gap:8px;font-size:15px;line-height:1.35"><span style="color:var(--accent);font-weight:800">•</span><span>{{ln}}</span></span>
+</sc-for>
+</div>
+<button type="button" class="btn primary" style="height:52px;margin-top:4px">{{sheet.cancel}}</button>
+<button type="button" class="btn secondary" style="margin-top:12px">{{sheet.confirm}}</button>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Mock state for this screen. Every theme and state uses the same markup above.
+    return { "notice": null, "hasNotice": false, "sheet": { "title": "Naya run shuru karna hai?", "lines": [ "Your Medium run ends here: 14 hits, 4 lives left.", "Your Medium best goes up from 9 to 14 hits.", "Your Medium club best goes up to 50 Cr Club." ], "confirm": "End it, start new run", "cancel": "Keep this run" }, "hasSheet": true, "bottom": null, "hasBottom": false, "showFoot": true, "cards": [ { "d": "easy", "label": "Easy", "detail": "9 lives · chips + clue", "bestText": "Best: 23 hits · 100 Cr Club", "saved": false, "savedB": false, "plain": true, "marks": [ { "ch": "B", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "L", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "L", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "Y", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "W", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "D", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" } ], "left": "9 LEFT", "run": "", "toGo": "", "tag": "", "tagClass": "tag", "a11yResume": "", "a11yPlay": "Easy: 9 lives · chips + clue. Best: 23 hits · 100 Cr Club" }, { "d": "medium", "label": "Medium", "detail": "7 lives · clue only", "bestText": "Best: 9 hits", "saved": true, "savedB": false, "plain": false, "marks": [ { "ch": "B", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#5A1F2B" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#5A1F2B" }, { "ch": "L", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#B07F86;text-decoration:line-through;text-decoration-color:#E0343F;text-decoration-thickness:2px" }, { "ch": "L", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#B07F86;text-decoration:line-through;text-decoration-color:#E0343F;text-decoration-thickness:2px" }, { "ch": "Y", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#B07F86;text-decoration:line-through;text-decoration-color:#E0343F;text-decoration-thickness:2px" }, { "ch": "W", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "D", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" } ], "left": "4 LEFT", "run": "14 hits · 50 Cr Club", "tag": "SAVED RUN", "tagClass": "tag", "a11yResume": "Resume Medium run: 14 hits, 4 lives left", "a11yPlay": "Medium: 7 lives · clue only. Best: 9 hits" }, { "d": "hard", "label": "Hard", "detail": "5 lives · category only", "bestText": "Not played yet", "saved": false, "savedB": false, "plain": true, "marks": [ { "ch": "B", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#5A1F2B" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#5A1F2B" }, { "ch": "L", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#5A1F2B" }, { "ch": "L", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#5A1F2B" }, { "ch": "Y", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "W", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "O", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" }, { "ch": "D", "style": "font-family:'Yatra One',serif;font-size:17px;line-height:1.4;color:#F28C28" } ], "left": "5 LEFT", "run": "", "toGo": "", "tag": "", "tagClass": "tag", "a11yResume": "", "a11yPlay": "Hard: 5 lives · category only. Not played yet" } ] };
+  }
+}
+</script>
+</body>
+</html>

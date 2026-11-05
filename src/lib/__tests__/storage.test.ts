@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { keys, load, save } from '../storage';
+import { keys, load, readRaw, save, writeRaw } from '../storage';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -40,6 +40,25 @@ describe('storage wrapper', () => {
   it('keeps the key format stable (it is a persistence contract)', () => {
     expect(keys.bag('filmy', 'easy')).toBe('bag:filmy:easy');
     expect(keys.best('masala', 'hard')).toBe('best:masala:hard');
+    expect(keys.run('filmy', 'medium')).toBe('run:filmy:medium');
     expect(keys.playerName).toBe('playerName');
+  });
+});
+
+describe('raw reads and writes', () => {
+  it('tells a missing key apart from a failed read', async () => {
+    expect(await readRaw('absent')).toEqual({ ok: true, raw: null });
+    await AsyncStorage.setItem('hangman:v1:there', 'text');
+    expect(await readRaw('there')).toEqual({ ok: true, raw: 'text' });
+    jest.spyOn(AsyncStorage, 'getItem').mockRejectedValueOnce(new Error('boom'));
+    expect(await readRaw('there')).toEqual({ ok: false });
+  });
+
+  it('reports whether a write completed', async () => {
+    expect(await writeRaw('k', 'v')).toBe(true);
+    expect(await AsyncStorage.getItem('hangman:v1:k')).toBe('v');
+    jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('full'));
+    expect(await writeRaw('k', 'w')).toBe(false);
+    expect(await AsyncStorage.getItem('hangman:v1:k')).toBe('v');
   });
 });

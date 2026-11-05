@@ -28,12 +28,14 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/node": "26.6.6",
     "@types/react": "~19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
     "globals": "^16.5.0",
     "jest": "^30.5.2",
     "jest-expo": "~58.0.13",
+    "tsx": "4.23.15",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -50,7 +52,9 @@
     "screenshots": "node scripts/screenshots.js",
     "words:check": "jest --ci src/data/words && node scripts/words-report.js",
     "port-scenes": "node scripts/port-scenes.js",
-    "issue:brief": "node scripts/issue-brief.js"
+    "issue:brief": "node scripts/issue-brief.js",
+    "words:sources": "node scripts/words-sources.js",
+    "simulate:game": "tsx scripts/simulate-game.ts"
   },
   "private": true,
   "jest": {
