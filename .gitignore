@@ -42,3 +42,6 @@ example
 /ios
 /android
 dist-test/
+
+# word research cache (npm run words:sources)
+.cache/word-sources/
