@@ -49,7 +49,7 @@ Two skills run the team from the owner's chat. Agents are called only when a cha
 | `ux-designer` | Opus / medium / 30 | Mockups in `design/` before anything is built | A new design decision marked **Design: needed** (Full mode); restoring an agreed layout needs no new owner design approval |
 | `ux-reviewer` | Sonnet / medium / 30 | Independent review of mockups, built screens and word content | Player-facing UI or copy, new mockups, or word changes |
 | `senior-developer` | Opus / high / 40 | Plans Standard and Full runs, and reviews code it didn't write | Every Standard and Full run, plus any change to game rules, persistence, sharing or security, the agent workflow or CI, or releases |
-| `word-researcher` | Sonnet / medium / 40 | Web-enabled, read-only fact-finding for words and content; its only write is `.claude/research/<issue>-sources.md`, citing fetched URLs only | Word or content issues that need outside facts, before the build |
+| `word-researcher` | Sonnet / medium / 40 | Web-enabled fact-finding for words and content, with no Edit or Write; it writes only `.claude/research/<issue>-sources.md`, citing fetched URLs only | Word or content issues that need outside facts, before the build in any mode |
 | `developer` | Sonnet / high / 80 | Builds the whole change: logic, UI, copy, words, tests and tooling | Every authorized issue or implementation child |
 
 **Modes** (`run-issue` picks one and logs why):
@@ -59,6 +59,8 @@ Two skills run the team from the owner's chat. Agents are called only when a cha
 | Fast | Routine bugs restoring agreed behavior, CI, tooling, workflow, logic-only work, word changes, copy fixes | [research for word or content issues →] developer → checks → reviews → PR |
 | Standard | Game rules, persistence, a layout tweak marked **Design: not needed** | plan → developer → checks → reviews → PR |
 | Full | A new design choice marked **Design: needed** | design gate → plan → developer → checks → reviews → PR |
+
+A word or content issue that needs outside facts runs `word-researcher` before the developer in any mode.
 
 Some reviews happen in every mode:
 - **Senior review:** whenever game rules, persistence, sharing or security, the workflow or CI, or releases change.

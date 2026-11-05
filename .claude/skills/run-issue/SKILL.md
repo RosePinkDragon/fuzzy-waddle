@@ -58,6 +58,8 @@ Outside standing delegation or another explicit owner authorization, only the ow
 | **Standard** | New or changed game rules, persistence, or a layout tweak to an existing screen marked **Design: not needed** | senior plan → developer → checks → reviews below → PR |
 | **Full** | A new design choice marked **Design: needed** (a new screen, a changed flow or layout) | design gate → senior plan → developer → checks (full sweep) → reviews below → PR |
 
+In any mode, a word or content issue that needs outside facts runs the research step in step 6 before the developer.
+
 Reviews, in any mode:
 - **`senior-developer` (Review mode)** for any change to:
   - game rules
@@ -139,8 +141,8 @@ Scope: <=15 counted files; return an oversized brief to the coordinator for chil
 Post: one **[<Role>] …** comment; don't change labels
 ```
 
-**Research first (word or content issues that need outside facts).** Run `word-researcher` before the developer, with the facts to find and the path `.claude/research/<n>-sources.md`. It has web tools and writes only that file (via `npm run words:sources` when available, otherwise WebFetch and a heredoc). Then:
-- Check `git status --porcelain` shows only that file. If anything else changed, discard it and re-run once.
+**Research first (word or content issues that need outside facts), in any mode.** Run `word-researcher` before the developer, with the facts to find and the path `.claude/research/<n>-sources.md`. It has web tools and writes only that file, with a quoted heredoc. The one exception is the ignored cache that `npm run words:sources` fills once that command is available (it isn't yet; WebFetch is the path today). Then:
+- Before the run, record `git rev-parse HEAD`. Afterwards require HEAD unchanged and `git status --porcelain --untracked-files=all` to list exactly `.claude/research/<n>-sources.md` (the `words:sources` cache is ignored and won't show). Remove only the extra files, and re-run once if the file itself is wrong. If HEAD moved, stop and ask the owner.
 - Skim the file: every cited URL has a fetch date, and unfetched claims are marked **unverified**. Send gaps back to the researcher once.
 - Commit it on the branch (`docs(research): …`) and push, so later agents read it from the branch. It counts toward the 15 files.
 - Give the `developer` and the `ux-reviewer` (Words mode) the sources path in their brief. The developer writes from the file and doesn't research the web itself; entries resting on **unverified** claims are flagged in the hand-off and stay `draft`.
