@@ -45,7 +45,11 @@ interface Listenable {
 export type LifecycleEnv =
   | {
       kind: 'native';
-      appState: { addEventListener(type: 'change', listener: (state: string) => void): { remove(): void } };
+      appState: {
+        /** What the app is doing right now. Read once when subscribing, so an already-hidden app counts as a leave. */
+        currentState?: string | null;
+        addEventListener(type: 'change', listener: (state: string) => void): { remove(): void };
+      };
     }
   | { kind: 'web'; document: Listenable & { visibilityState: string }; window: Listenable };
 
@@ -65,6 +69,10 @@ function defaultEnv(): LifecycleEnv {
  *   (a back-forward cache restore). It does not use `AppState`, so no event is counted twice.
  *
  * A return with no earlier leave is ignored, and a second leave while away is too.
+ *
+ * If the app is already hidden when this starts (`AppState.currentState` is `background`, or
+ * `document.visibilityState` is `hidden`), `onLeave()` is called at once, so a hook whose effect
+ * re-runs while hidden still has its timers stopped and its next return re-opens exactly once.
  */
 export function subscribeLifecycle({ onLeave, onReturn }: LifecycleHandlers, env: LifecycleEnv = defaultEnv()): () => void {
   let away = false;
@@ -84,6 +92,7 @@ export function subscribeLifecycle({ onLeave, onReturn }: LifecycleHandlers, env
       if (state === 'background') leave();
       else if (state === 'active') back();
     });
+    if (env.appState.currentState === 'background') leave();
     return () => sub.remove();
   }
 
@@ -95,6 +104,7 @@ export function subscribeLifecycle({ onLeave, onReturn }: LifecycleHandlers, env
   env.document.addEventListener('visibilitychange', onVisibility);
   env.window.addEventListener('pagehide', onPageHide);
   env.window.addEventListener('pageshow', onPageShow);
+  if (env.document.visibilityState === 'hidden') leave();
   return () => {
     env.document.removeEventListener('visibilitychange', onVisibility);
     env.window.removeEventListener('pagehide', onPageHide);
