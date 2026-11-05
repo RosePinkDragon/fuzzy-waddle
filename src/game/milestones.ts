@@ -15,7 +15,8 @@ export interface LadderExtension {
   readonly croreEvery: number;
 }
 
-function activeLadder(): readonly Rung[] {
+/** The rungs the live app plays: the test ladder only when the build-time switch is on. */
+export function activeLadder(): readonly Rung[] {
   return process.env.EXPO_PUBLIC_TEST_LADDER === '1' ? TEST_CLUB_LADDER : CLUB_LADDER;
 }
 

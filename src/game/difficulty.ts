@@ -29,16 +29,21 @@ export interface VisibleClues {
   locked: ClueLevel[];
 }
 
-/** Which clues show for a difficulty after `revealed` uses of the slot-2 power-up. */
-export function visibleClues(difficulty: Difficulty, revealed: number): VisibleClues {
-  const rules = rulesFor(difficulty);
-  const unlocked = rules.hiddenClues.slice(0, Math.max(0, revealed));
-  const shown = new Set<ClueLevel>([...rules.shownClues, ...unlocked]);
+/** The clue settings a saved run was started with (stored as `SavedRules.clues` in `runSnapshot.ts`). */
+export type ClueSettings = Pick<DifficultyRules, 'showChips' | 'shownClues' | 'hiddenClues'>;
+
+/**
+ * Which clues show for a difficulty after `revealed` uses of the slot-2 power-up.
+ * A saved run passes the clue settings it was started with; everything else reads the live ones.
+ */
+export function visibleClues(difficulty: Difficulty, revealed: number, clues: ClueSettings = rulesFor(difficulty)): VisibleClues {
+  const unlocked = clues.hiddenClues.slice(0, Math.max(0, revealed));
+  const shown = new Set<ClueLevel>([...clues.shownClues, ...unlocked]);
   return {
-    chips: rules.showChips,
+    chips: clues.showChips,
     clue: shown.has('clue'),
     extraClue: shown.has('extraClue'),
-    locked: rules.hiddenClues.slice(unlocked.length),
+    locked: clues.hiddenClues.slice(unlocked.length),
   };
 }
 
