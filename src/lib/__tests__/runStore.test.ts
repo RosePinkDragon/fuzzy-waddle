@@ -1,7 +1,7 @@
 import { ALPHABET, lettersOf } from '@/game/answer';
 import { seededRng } from '@/game/rng';
 import { parseDoc, serializeDoc, type SlotDoc } from '@/game/runSnapshot';
-import type { SessionAction } from '@/game/runSession';
+import { isNewBest, type SessionAction } from '@/game/runSession';
 import type { Difficulty, ThemeId, Word } from '@/game/types';
 import { bankContent, BANK_WORDS } from '@/game/__tests__/helpers';
 
@@ -544,6 +544,49 @@ describe('storage that comes and goes', () => {
     expect(docOf(again).run).toEqual(docOf(first).run);
     expect(docOf(again).best).toEqual({ hits: 8, club: 50 });
     expect(stored(storage)).toEqual(docOf(again));
+  });
+
+  it('does not call a run below a recovered best a new best (the recovered best is also the bar at the start)', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.best('filmy', 'easy'), JSON.stringify({ hits: 8, club: 50 }));
+    storage.unreadable.add(key).add(keys.best('filmy', 'easy'));
+    const store = makeStore(storage);
+    const first = await store.open('filmy', 'easy');
+    expect(docOf(first).bestAtStart).toBeNull();
+
+    storage.unreadable.clear();
+    let doc = docOf(await store.open('filmy', 'easy'));
+    expect(doc.best).toEqual({ hits: 8, club: 50 });
+    expect(doc.bestAtStart).toEqual({ hits: 8, club: 50 });
+    expect(stored(storage)).toEqual(doc); // the saved document validates (best >= bestAtStart)
+
+    doc = await solve(store, doc);
+    doc = docOf(await act(store, doc, { type: 'continue' }));
+    const ended = docOf(await act(store, doc, { type: 'abandon' }));
+    expect(ended.terminal).toMatchObject({ reason: 'abandoned', hits: 1 });
+    expect(ended.best).toEqual({ hits: 8, club: 50 });
+    expect(isNewBest(ended)).toBe(false);
+  });
+
+  it('keeps the start bar when the unsaved run already ended before the best became readable', async () => {
+    const storage = new FakeStorage();
+    storage.data.set(keys.best('filmy', 'easy'), JSON.stringify({ hits: 8, club: 50 }));
+    storage.unreadable.add(key).add(keys.best('filmy', 'easy'));
+    const store = makeStore(storage);
+    let doc = docOf(await store.open('filmy', 'easy'));
+    doc = await solve(store, doc);
+    doc = docOf(await act(store, doc, { type: 'continue' }));
+    const ended = docOf(await act(store, doc, { type: 'abandon' }));
+    expect(ended.terminal).toBeTruthy();
+    expect(isNewBest(ended)).toBe(true); // nothing better is known yet
+
+    storage.unreadable.clear();
+    const out = await store.open('filmy', 'easy');
+    expect(out).toMatchObject({ kind: 'terminal', saved: true });
+    expect(docOf(out).best).toEqual({ hits: 8, club: 50 });
+    expect(docOf(out).bestAtStart).toEqual({ hits: 8, club: 50 });
+    expect(isNewBest(docOf(out))).toBe(false);
+    expect(stored(storage)).toEqual(docOf(out));
   });
 
   it('prefers the stored run once an unreadable slot becomes readable and holds one', async () => {
