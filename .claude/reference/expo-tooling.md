@@ -24,7 +24,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 |---|---|---|
 | `npm run verify` | Lint, typecheck, unit tests (`--ci`), then the web export. Stops at the first failure. | Before every push that opens or updates a PR |
 | `npm run verify:quick` | The same without the web export | While iterating |
-| `npm run screenshots` | Builds into `dist-test/` with the test ladder and test hooks, then screenshots each screen at 390×700 and 390×844 into `design/build-screenshots/`. Lists overflow, clipped text and scrolling. Exits 1 on problems. | After UI changes |
+| `npm run screenshots` | Builds into `dist-test/` with the test ladder and test hooks, then screenshots each screen at 390×700 and 390×844 into `design/build-screenshots/`. Lists overflow, clipped text and scrolling. Exits 1 on problems. | After UI changes. `--screens prompt` opens the first-share name prompt over win, flop and challenge result (`<theme>-prompt-win`, `-flop`, `-challenge`). |
 | `npm run screenshots -- --screens game,win --themes filmy` | Only the screens and themes affected | Everyday UI PRs |
 | `npm run screenshots -- --skip-build` | Reuses the last `dist-test/` build | When re-running quickly |
 | `npm run words:check` | The word-bank tests, then a report: tier counts per category (flags any under 5), answers repeated across categories, and the `draft` list. Exits 1 on problems. | When words change, and before a release |
@@ -44,7 +44,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 - The simulator's tests (`scripts/simulate/__tests__/`) run in the same Jest run. They cover the run loop, players, report and CLI through a fake `Io`.
 - `words:sources` keeps its parsing, backoff, batching and cache logic in `scripts/lib/wordSources.js`, tested in `scripts/__tests__/wordSources.test.ts` with a fake `fetch`, `sleep` and clock (no live network, no waiting). `scripts/words-sources.js` is the only file with file and network I/O.
 - Game logic gets unit tests through public functions. Every bug fix adds a regression test.
-- Screens have no snapshot tests. Use `npm run screenshots`.
+- Screens have no snapshot tests. Use `npm run screenshots`. The only component-level test is `useChallengeShare.test.tsx`, which uses `react-test-renderer` (dev dependency) and mocks storage and sharing.
 
 ## Test switches (build time only)
 
