@@ -509,6 +509,67 @@ describe('solve, boss and terminal transitions across restarts', () => {
   });
 });
 
+describe('a second store after a failed write', () => {
+  /** X and Y hold one run. X's write fails (a power-up, unsaved); then Y solves and abandons it. */
+  async function setup() {
+    const storage = new FakeStorage();
+    const x = makeStore(storage, BANK_WORDS, 1);
+    const y = makeStore(storage, BANK_WORDS, 2);
+    const opened = docOf(await x.open('filmy', 'easy'));
+    expect(docOf(await y.open('filmy', 'easy'))).toEqual(opened);
+
+    storage.failWrites = true;
+    const unsaved = await act(x, opened, { type: 'power', slot: 0 });
+    expect(unsaved).toMatchObject({ kind: 'unsaved', cause: 'write-failed' });
+    storage.failWrites = false;
+
+    const solved = await solve(y, opened);
+    const ended = docOf(await act(y, solved, { type: 'abandon' }));
+    expect(ended.terminal).toMatchObject({ reason: 'abandoned', hits: 1 });
+    expect(ended.best).toEqual({ hits: 1, club: null });
+    return { storage, x, ended, ahead: docOf(unsaved) };
+  }
+
+  it('act re-reads after a failed write: the other tab\'s best and finished run are kept', async () => {
+    const { storage, x, ended, ahead } = await setup();
+    const writes = storage.writes.length;
+    expect(await act(x, ahead, { type: 'abandon' })).toEqual({ kind: 'stale', doc: ended });
+    expect(storage.writes).toHaveLength(writes);
+    expect(stored(storage)).toEqual(ended);
+    expect(stored(storage).best).toEqual({ hits: 1, club: null });
+  });
+
+  it('open re-reads after a failed write: it resumes the stored run instead of reviving the finished one', async () => {
+    const { storage, x, ended } = await setup();
+    const writes = storage.writes.length;
+    expect(await x.open('filmy', 'easy')).toEqual({ kind: 'terminal', doc: ended, saved: true });
+    expect(storage.writes).toHaveLength(writes);
+    expect(stored(storage)).toEqual(ended);
+    expect(stored(storage).terminal).not.toBeNull();
+    expect(await x.inspect('filmy', 'easy')).toEqual({ kind: 'terminal', doc: ended });
+  });
+
+  it('still retries the unsaved run when nobody else changed storage', async () => {
+    const storage = new FakeStorage();
+    const store = makeStore(storage);
+    const opened = docOf(await store.open('filmy', 'easy'));
+    storage.failWrites = true;
+    const ahead = docOf(await act(store, opened, { type: 'power', slot: 0 }));
+    storage.failWrites = false;
+
+    // The first retry still compares with the revision that is stored, not the unsaved one.
+    expect(await store.open('filmy', 'easy')).toMatchObject({ kind: 'saved', source: 'resumed' });
+    expect(stored(storage)).toEqual(ahead);
+
+    storage.failWrites = true;
+    const again = docOf(await act(store, ahead, { type: 'abandon' }));
+    storage.failWrites = false;
+    const ended = await act(store, again, { type: 'newRun' }); // `again` is unsaved, nothing else wrote
+    expect(ended).toMatchObject({ kind: 'saved' });
+    expect(stored(storage)).toEqual(docOf(ended));
+  });
+});
+
 describe('storage that comes and goes', () => {
   it('keeps a saved run when a later open cannot read storage, and serves it again once storage recovers', async () => {
     const storage = new FakeStorage();
