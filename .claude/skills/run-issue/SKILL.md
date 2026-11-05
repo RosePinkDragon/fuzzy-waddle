@@ -4,6 +4,10 @@ description: Delivers an authorized GitHub issue or implementation child. Checks
 argument-hint: <issue number> [--dry-run]
 ---
 
+# Mandatory entry point and PR ownership
+
+Every request to implement, fix or work on a GitHub issue—whether phrased naturally or as `/run-issue`—must route through this skill before code changes, developer delegation, branch creation or PR creation. The invoking chat is the coordinator. Do not ask the `developer` to open a PR, and do not allow a direct-developer workflow to substitute for this skill. Only the coordinator creates the PR after the gate, checks and required independent reviews. If the skill is unavailable, stop and report the routing blocker rather than bypassing it. Review-only and issue-triage requests belong to `review-issue`, not this skill.
+
 # Run an authorized issue
 
 Input: $ARGUMENTS
