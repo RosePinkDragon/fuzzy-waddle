@@ -86,9 +86,9 @@ export interface DrawnWord {
 }
 
 /**
- * Draws the next word the way `useRun.drawInto` does: a boss word when the next
- * hit would enter a club, otherwise the next word in the bag, then `beginWord`.
- * Keep this in step with `src/hooks/useRun.ts` (a hook can't be imported).
+ * Draws the next word the way `drawInto` in `src/game/runSession.ts` does (the one draw the
+ * saved-run core uses): a boss word when the next hit would enter a club, otherwise the next
+ * word in the bag, then `beginWord`. Keep this in step with it; a test fails when it drifts.
  */
 export function drawWord(rules: BoundRules, run: RunState, bag: BagState, pool: PoolInfo, rng: Rng): DrawnWord {
   const boss = rules.nextIsBoss(run);
