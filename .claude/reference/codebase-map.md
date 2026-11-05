@@ -60,7 +60,7 @@ The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), 
 - Jest with the `jest-expo` preset. Tests sit in `__tests__/` folders next to the code (`testMatch` in `package.json`).
 - `src/game/__tests__/helpers.ts` builds runs and words for tests.
 - `src/data/words/__tests__/wordBank.test.ts` validates every word: format, IDs, duplicates, giveaways and phone fit.
-- `src/lib/__tests__/` covers challenge links (`share`), the storage wrapper, the saved-run store (`runStore`, with an in-memory storage that can fail or hold writes) and the release guard and its wiring into `app.config.ts`.
+- `src/lib/__tests__/` covers challenge links (`share`), the storage wrapper, the saved-run store (`runStore`, with an in-memory storage that can fail or hold writes), the release guard and its wiring into `app.config.ts`, and `challengeRunStoreGuard` (the challenge route's import graph never reaches `runStore`).
 - `src/game/__tests__/runSession.test.ts` covers the saved-run document and reducer. `helpers.ts` also holds a small fixed word bank (`bankContent`, `testEnv`).
 - `scripts/simulate/__tests__/` covers the simulator: run loop and golden runs, players and policies, the report, and the CLI through a fake `Io`. They run in Jest; the CLI itself runs under `tsx`.
 - There are no component or snapshot tests. Screens are checked with `npm run screenshots`.
