@@ -429,7 +429,7 @@ export function newRunLines(difficulty: Difficulty, doc: SlotDoc): string[] {
 }
 
 const styles = StyleSheet.create({
-  scene: { minHeight: 90, maxHeight: 170 },
+  scene: { minHeight: 90, maxHeight: 200 },
   options: { gap: 10 },
   option: { borderRadius: 14, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, gap: 6 },
   optionCompact: { paddingVertical: 8, gap: 4 },

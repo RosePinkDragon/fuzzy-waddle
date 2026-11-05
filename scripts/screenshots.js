@@ -10,9 +10,14 @@
  *   npm run screenshots -- --skip-build                   # reuse the last build in dist-test/
  *   npm run screenshots -- --out /tmp/shots               # save somewhere else
  *
- * Screens: home, difficulty, game, win, flop, challenge. "win" is the milestone
- * screen, which shows the theme's win scene (design/screens/*Win.png). "challenge"
- * covers its landing, game, solved and failed states, plus the bad-link screen.
+ * Screens: home, difficulty, game, win, flop, challenge, resume, recovery, unsaved,
+ * replaced. "win" is the milestone screen, which shows the theme's win scene
+ * (design/screens/*Win.png). "challenge" covers its landing, game, solved and failed
+ * states, plus the bad-link screen. The saved-run states (#94, design/screens/Resume-*.png):
+ * "resume" is the picker with bests, a saved run, the New run sheets (best goes up, best
+ * stays, zero hits) and three saved runs at once; "recovery" is the recovery notice;
+ * "unsaved" is the game and picker with storage blocked; "replaced" is the replaced-word
+ * sheet. Every scenario starts from empty storage, because a run is resumed on reload.
  * It builds the web export into dist-test/ with the two test switches from the
  * README: EXPO_PUBLIC_TEST_LADDER=1, so the first milestone comes after two words
  * (progress copy shows that test ladder), and EXPO_PUBLIC_TEST_HOOKS=1, so it can
@@ -32,7 +37,7 @@ const ROOT = path.resolve(__dirname, '..');
 const BUILD = path.join(ROOT, 'dist-test');
 const WIDTH = 390;
 const HEIGHTS = [844, 700];
-const SCREENS = ['home', 'difficulty', 'game', 'win', 'flop', 'challenge'];
+const SCREENS = ['home', 'difficulty', 'game', 'win', 'flop', 'challenge', 'resume', 'recovery', 'unsaved', 'replaced'];
 const SETTLE_MS = 700;
 /** Per-wait timeout, so a broken build fails in seconds rather than minutes. */
 const WAIT_MS = 10000;
@@ -234,12 +239,51 @@ class Shooter {
     await this.settle();
   }
 
+  /** Clears saved runs (they are resumed on reload), then leaves the page on a fresh load. */
+  async freshStorage() {
+    await this.page.goto(this.origin + '/');
+    await this.page.evaluate(() => localStorage.clear());
+  }
+
+  async tap(testId) {
+    await this.page.click(byTestId(testId));
+  }
+
+  /** Taps a card or button and waits for the screen it leads to. */
+  async tapTo(testId, screenTestId) {
+    await this.tap(testId);
+    await this.page.waitForSelector(byTestId(screenTestId));
+    await this.settle();
+  }
+
+  /** Solves the current word, waits for the next one (past the milestone screen if it shows) and returns its answer. */
+  async solveAndNext(answer) {
+    await this.solve(answer);
+    const milestone = await this.page
+      .waitForSelector(`${byTestId('milestone-screen')}, ${byTestId('key-A')}`, { timeout: 3000 })
+      .catch(() => null);
+    if (milestone && (await this.page.locator(byTestId('milestone-screen')).count()) > 0) {
+      await this.tap('keep-playing');
+      await this.page.waitForSelector(byTestId('game-screen'));
+    }
+    return this.currentAnswer(answer);
+  }
+
+  /** One wrong letter, so the run has lost a life. */
+  async wrongOnce(answer) {
+    const letter = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].find((l) => !answer.includes(l));
+    await this.page.locator(byTestId(`key-${letter}`)).click();
+    await this.settle();
+  }
+
   async run(theme, want) {
     if (want.has('difficulty')) {
+      await this.freshStorage();
       await this.open(`/play/${theme}`, 'difficulty-screen');
       await this.shot(`difficulty-${theme}`);
     }
     if (want.has('game') || want.has('win')) {
+      await this.freshStorage();
       await this.open(`/play/${theme}/easy`, 'game-screen');
       const first = await this.currentAnswer();
       await this.settle();
@@ -254,11 +298,109 @@ class Shooter {
       }
     }
     if (want.has('flop')) {
+      await this.freshStorage();
       await this.open(`/play/${theme}/easy`, 'game-screen');
       await this.lose(await this.currentAnswer(), 'flop-screen');
       await this.shot(`${theme}-flop`);
     }
     if (want.has('challenge')) await this.challenge(theme);
+    if (want.has('resume')) await this.resume(theme);
+    if (want.has('recovery')) await this.recovery(theme);
+    if (want.has('replaced')) await this.replaced(theme);
+  }
+
+  /** The picker with bests, a saved run, the New run sheets and three saved runs at once. */
+  async resume(theme) {
+    const picker = `/play/${theme}`;
+    await this.freshStorage();
+    // Medium ends at 1 hit and Hard at 2 hits (a club on the test ladder), so both have a best and no saved run.
+    await this.open(`/play/${theme}/medium`, 'game-screen');
+    await this.lose(await this.solveAndNext(await this.currentAnswer()), 'flop-screen');
+    await this.open(`/play/${theme}/hard`, 'game-screen');
+    const first = await this.currentAnswer();
+    const second = await this.solveAndNext(first);
+    await this.lose(await this.solveAndNext(second), 'flop-screen');
+    await this.open(picker, 'difficulty-screen');
+    await this.shot(`${theme}-resume-bests`);
+
+    // A finished run's card starts a new one. Two hits and a wrong guess leave a saved run on Medium.
+    await this.tapTo('difficulty-medium', 'game-screen');
+    const word = await this.solveAndNext(await this.currentAnswer());
+    await this.solve(word);
+    await this.page.waitForSelector(byTestId('milestone-screen'));
+    await this.tap('keep-playing');
+    await this.page.waitForSelector(byTestId('game-screen'));
+    await this.wrongOnce(await this.currentAnswer());
+    await this.open(picker, 'difficulty-screen');
+    await this.shot(`${theme}-resume-saved`);
+    await this.tap('new-run-medium');
+    await this.page.waitForSelector(byTestId('new-run-sheet'));
+    await this.settle();
+    await this.shot(`${theme}-newrun-up`);
+    await this.tap('new-run-keep');
+    await this.settle();
+
+    // Hard restarts, and one hit is below its best: the sheet says the best stays.
+    await this.tapTo('difficulty-hard', 'game-screen');
+    await this.solveAndNext(await this.currentAnswer());
+    await this.open(picker, 'difficulty-screen');
+    await this.tap('new-run-hard');
+    await this.page.waitForSelector(byTestId('new-run-sheet'));
+    await this.settle();
+    await this.shot(`${theme}-newrun-stays`);
+    await this.tap('new-run-keep');
+    await this.settle();
+
+    // Easy with one wrong guess: all three saved. Its New run has no hits to record.
+    await this.tapTo('difficulty-easy', 'game-screen');
+    await this.wrongOnce(await this.currentAnswer());
+    await this.open(picker, 'difficulty-screen');
+    await this.shot(`${theme}-resume-multi`);
+    await this.tap('new-run-easy');
+    await this.page.waitForSelector(byTestId('new-run-sheet'));
+    await this.settle();
+    await this.shot(`${theme}-newrun-nohits`);
+  }
+
+  /** A saved run that can't be read: the picker shows the recovery notice. */
+  async recovery(theme) {
+    await this.freshStorage();
+    await this.page.evaluate((key) => localStorage.setItem(key, '{"schema":999}'), `hangman:v1:run:${theme}:medium`);
+    await this.open(`/play/${theme}`, 'difficulty-screen');
+    await this.page.waitForSelector(byTestId('recovery-notice'));
+    await this.shot(`${theme}-recovery`);
+  }
+
+  /** A saved word that left the word bank: the game opens with the replaced-word sheet. */
+  async replaced(theme) {
+    await this.freshStorage();
+    await this.open(`/play/${theme}/medium`, 'game-screen');
+    await this.currentAnswer();
+    await this.tap('powerup-0');
+    await this.settle();
+    await this.page.evaluate((t) => {
+      const key = `hangman:v1:run:${t}:medium`;
+      const doc = JSON.parse(localStorage.getItem(key));
+      const id = doc.run.current.word.id;
+      doc.run.current.word.id = `${t}-gone`;
+      if (doc.bag.last === id) doc.bag.last = `${t}-gone`;
+      localStorage.setItem(key, JSON.stringify(doc));
+    }, theme);
+    await this.page.goto(this.origin + `/play/${theme}/medium`);
+    await this.page.waitForSelector(byTestId('word-replaced'));
+    await this.settle();
+    await this.shot(`${theme}-word-replaced`);
+  }
+
+  /** Storage that throws, so runs are playable but never saved. The context is made by the caller. */
+  async unsaved(theme) {
+    await this.open(`/play/${theme}/medium`, 'game-screen');
+    await this.wrongOnce(await this.currentAnswer());
+    await this.shot(`${theme}-unsaved-game`);
+    // Client-side navigation keeps the in-memory run, which the picker then shows as NOT SAVED.
+    await this.tapTo('header-back', 'home-screen');
+    await this.tapTo(`category-${theme}`, 'difficulty-screen');
+    await this.shot(`${theme}-unsaved-picker`);
   }
 
   async challenge(theme) {
@@ -286,6 +428,32 @@ class Shooter {
     await this.lose(word.answer, 'challenge-result');
     await this.shot(`${theme}-challenge-failed`);
   }
+}
+
+/** The unsaved states need storage that throws, so they get their own browser context. */
+async function runUnsaved(browser, height, opts, origin, words) {
+  const context = await browser.newContext({ viewport: { width: WIDTH, height }, deviceScaleFactor: 1 });
+  await context.addInitScript(() => {
+    const blocked = (key) => String(key).startsWith('hangman:v1:');
+    const { getItem, setItem } = Storage.prototype;
+    Storage.prototype.getItem = function (key) {
+      if (blocked(key)) throw new Error('storage blocked');
+      return getItem.call(this, key);
+    };
+    Storage.prototype.setItem = function (key, value) {
+      if (blocked(key)) throw new Error('storage blocked');
+      return setItem.call(this, key, value);
+    };
+  });
+  const page = await context.newPage();
+  page.setDefaultTimeout(WAIT_MS);
+  const shooter = new Shooter(page, height, opts, origin, words);
+  try {
+    for (const theme of opts.themes) await shooter.attempt(`${theme}-unsaved`, () => shooter.unsaved(theme));
+  } finally {
+    await context.close();
+  }
+  return shooter.failed;
 }
 
 async function main() {
@@ -327,6 +495,7 @@ async function main() {
         failed += shooter.failed;
         await context.close();
       }
+      if (want.has('unsaved')) failed += await runUnsaved(browser, height, opts, origin, words);
     }
   } finally {
     await browser.close();
