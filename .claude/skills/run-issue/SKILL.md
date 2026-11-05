@@ -54,7 +54,7 @@ Outside standing delegation or another explicit owner authorization, only the ow
 
 | Mode | When | Steps |
 |---|---|---|
-| **Fast** | Routine bugs restoring agreed behavior, CI, tooling, agent workflow, logic-only work, word bank changes, copy or label fixes marked **Design: not needed**, and sharing, security or release work with no layout change | developer → checks → reviews below → PR |
+| **Fast** | Routine bugs restoring agreed behavior, CI, tooling, agent workflow, logic-only work, word bank changes, copy or label fixes marked **Design: not needed**, and sharing, security or release work with no layout change | [research, for word or content issues that need outside facts] → developer → checks → reviews below → PR |
 | **Standard** | New or changed game rules, persistence, or a layout tweak to an existing screen marked **Design: not needed** | senior plan → developer → checks → reviews below → PR |
 | **Full** | A new design choice marked **Design: needed** (a new screen, a changed flow or layout) | design gate → senior plan → developer → checks (full sweep) → reviews below → PR |
 
@@ -69,7 +69,7 @@ Reviews, in any mode:
 
   Also in every Standard and Full run.
 - **`ux-reviewer` (Build mode)** whenever player-facing UI or copy changes.
-- **`ux-reviewer` (Words mode)** whenever words change.
+- **`ux-reviewer` (Words mode)** whenever words change. Its brief includes the sources file when research ran.
 
 If you're unsure between two modes, take the heavier one and say why.
 
@@ -129,15 +129,23 @@ Every agent gets a brief like this one, filled in for its job:
 
 ```
 Issue #<n>: <title> · branch <branch> · mode <Fast | Standard | Full>
-Your job: <developer: build it | senior-developer: Plan | Review | ux-reviewer: Mockups | Build | Words | ux-designer: mockups>
+Your job: <developer: build it | senior-developer: Plan | Review | ux-reviewer: Mockups | Build | Words | ux-designer: mockups | word-researcher: research>
 Criteria: <all, or the ones listed>
 Plan: <link or "none"> · Mockups: <link or "none"> · PR: <number or "none yet">
 Authority: <owner approval or recorded delegation> · Parent/dependencies: <links or "none">
-Read: .claude/reference/<sheets> and the files they point to for this change
+Read: .claude/reference/<sheets> and the files they point to for this change[; sources: .claude/research/<n>-sources.md]
 Checks (developer): npm run verify[, npm run screenshots -- --screens … --themes …][, npm run words:check]
 Scope: <=15 counted files; return an oversized brief to the coordinator for child splitting
 Post: one **[<Role>] …** comment; don't change labels
 ```
+
+**Research first (word or content issues that need outside facts).** Run `word-researcher` before the developer, with the facts to find and the path `.claude/research/<n>-sources.md`. It has web tools and writes only that file (via `npm run words:sources` when available, otherwise WebFetch and a heredoc). Then:
+- Check `git status --porcelain` shows only that file. If anything else changed, discard it and re-run once.
+- Skim the file: every cited URL has a fetch date, and unfetched claims are marked **unverified**. Send gaps back to the researcher once.
+- Commit it on the branch (`docs(research): …`) and push, so later agents read it from the branch. It counts toward the 15 files.
+- Give the `developer` and the `ux-reviewer` (Words mode) the sources path in their brief. The developer writes from the file and doesn't research the web itself; entries resting on **unverified** claims are flagged in the hand-off and stay `draft`.
+
+Skip this step when the issue needs no outside facts (for example a typo or a tier move) and say so in **[Run] Routing**.
 
 Run `developer` with its brief. Never let two agents edit the same files at the same time.
 
@@ -182,7 +190,7 @@ Post **[Run] Report** on the issue, and summarise it in chat:
 - blockers
 - the PR link
 - **Run stats:**
-  - agents started, by role
+  - agents started, by role (including `word-researcher`)
   - review and fix rounds
   - owner interruptions
   - elapsed time

@@ -26,7 +26,7 @@ You are the developer. You own the whole change: `src/`, tests, `scripts/`, and 
   - an exhausted pool
   - answers with spaces, digits or punctuation
   - Hard mode's locked clue
-- New or edited words stay `draft`.
+- New or edited words stay `draft`. For word and content issues, read the sources file in your brief (`.claude/research/<issue>-sources.md`) and don't research the web yourself. Flag any entry that rests on an **unverified** claim in your hand-off.
 - If your change makes a reference sheet wrong (a rule, file, token or command it describes), update that sheet in the same PR.
 - Touch only what the change needs. The PR must stay within 15 counted files; if it won't fit, stop and say so.
 
