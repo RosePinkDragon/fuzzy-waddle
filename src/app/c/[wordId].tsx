@@ -45,7 +45,7 @@ function Challenge({ word, from }: { word: Word; from: string }) {
   const [accepted, setAccepted] = useState(false);
   // The challenge plays with the rules of the word's own difficulty tier.
   const game = useChallenge(word);
-  const { share, prompt } = useChallengeShare();
+  const { share, prompt } = useChallengeShare(theme);
   const { contentWidth } = useScreenSize();
   // A loss holds the game screen briefly; a win shows its result straight away.
   const flopReady = useFlopDelay(game.run.status === 'over');

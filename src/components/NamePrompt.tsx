@@ -21,7 +21,7 @@ export function NamePrompt({ visible, initial, onSubmit, onCancel }: NamePromptP
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.backdrop}>
-        <View style={[styles.sheet, { backgroundColor: colors.panel, borderColor: colors.border }]}>
+        <View testID="name-prompt" style={[styles.sheet, { backgroundColor: colors.panel, borderColor: colors.border }]}>
           <Txt size={18} weight={800} lh={1.2} color={colors.text}>
             {namePrompt.title}
           </Txt>
@@ -32,7 +32,7 @@ export function NamePrompt({ visible, initial, onSubmit, onCancel }: NamePromptP
             value={name}
             onChangeText={setName}
             placeholder={namePrompt.placeholder}
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.card.foot}
             autoFocus
             maxLength={24}
             returnKeyType="send"
