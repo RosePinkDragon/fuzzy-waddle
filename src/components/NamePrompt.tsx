@@ -32,7 +32,7 @@ export function NamePrompt({ visible, initial, onSubmit, onCancel }: NamePromptP
             value={name}
             onChangeText={setName}
             placeholder={namePrompt.placeholder}
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colors.card.foot}
             autoFocus
             maxLength={24}
             returnKeyType="send"

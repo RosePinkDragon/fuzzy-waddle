@@ -44,7 +44,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 - The simulator's tests (`scripts/simulate/__tests__/`) run in the same Jest run. They cover the run loop, players, report and CLI through a fake `Io`.
 - `words:sources` keeps its parsing, backoff, batching and cache logic in `scripts/lib/wordSources.js`, tested in `scripts/__tests__/wordSources.test.ts` with a fake `fetch`, `sleep` and clock (no live network, no waiting). `scripts/words-sources.js` is the only file with file and network I/O.
 - Game logic gets unit tests through public functions. Every bug fix adds a regression test.
-- Screens have no snapshot tests. Use `npm run screenshots`. The only component-level test is `useChallengeShare.test.tsx`, which uses `react-test-renderer` (dev dependency) and mocks storage and sharing.
+- Screens have no snapshot tests. Use `npm run screenshots`. The only component-level test is `useChallengeShare.test.tsx`, which uses `@testing-library/react-native` (dev dependency) and mocks storage and sharing.
 
 ## Test switches (build time only)
 

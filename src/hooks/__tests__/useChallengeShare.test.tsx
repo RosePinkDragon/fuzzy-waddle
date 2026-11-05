@@ -1,13 +1,12 @@
-import { useEffect } from 'react';
-import { StyleSheet, TextInput } from 'react-native';
-import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
+import { StyleSheet, Pressable } from 'react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { ThemeProvider } from '@/components/ThemeContext';
 import { namePrompt } from '@/copy/strings';
-import { save } from '@/lib/storage';
-import { shareText } from '@/lib/share';
-import { THEMES } from '@/themes/themes';
 import type { ThemeId } from '@/game/types';
+import { shareText } from '@/lib/share';
+import { save } from '@/lib/storage';
+import { THEMES } from '@/themes/themes';
 
 import { useChallengeShare } from '../useChallengeShare';
 
@@ -18,108 +17,93 @@ jest.mock('@/lib/storage', () => ({
 }));
 jest.mock('@/lib/share', () => ({ shareText: jest.fn(() => Promise.resolve('shared')) }));
 
-// The first render of a cold cache loads the whole component graph.
+// The first render on a cold cache loads the whole component graph.
 jest.setTimeout(30000);
 
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+const THEME_IDS: ThemeId[] = ['filmy', 'khana', 'safar', 'cricket', 'tyohar', 'masala'];
 
-type Share = ReturnType<typeof useChallengeShare>['share'];
-const handle: { share?: Share } = {};
-
-/** Mounts the hook the way the run route does: prompt beside the screen, no theme above it. */
-function Harness({ themeId }: { themeId: ThemeId }) {
-  const hook = useChallengeShare(THEMES[themeId]);
-  useEffect(() => {
-    handle.share = hook.share;
-  });
-  return hook.prompt;
+/** Mounts the hook the way the run route does: a share button, with the prompt beside it. */
+function Harness({ themeId, build }: { themeId: ThemeId; build: (name: string) => string }) {
+  const { share, prompt } = useChallengeShare(THEMES[themeId]);
+  return (
+    <>
+      <Pressable testID="open" onPress={() => share(build)} />
+      {prompt}
+    </>
+  );
 }
 
-async function mount(themeId: ThemeId, wrap?: ThemeId): Promise<ReactTestRenderer> {
-  let tree!: ReactTestRenderer;
-  await act(async () => {
-    const harness = <Harness themeId={themeId} />;
-    tree = create(wrap ? <ThemeProvider value={THEMES[wrap]}>{harness}</ThemeProvider> : harness);
-  });
-  return tree;
+const defaultBuild = (n: string) => `msg:${n}`;
+
+/** Renders the harness (optionally inside another theme) and opens the prompt. */
+async function openPrompt(themeId: ThemeId, opts: { around?: ThemeId; build?: (name: string) => string } = {}) {
+  const harness = <Harness themeId={themeId} build={opts.build ?? defaultBuild} />;
+  await render(opts.around ? <ThemeProvider value={THEMES[opts.around]}>{harness}</ThemeProvider> : harness);
+  await fireEvent.press(screen.getByTestId('open'));
+  expect(screen.getByTestId('name-prompt')).toBeTruthy();
 }
 
-const style = (n: ReactTestInstance) => StyleSheet.flatten(n.props.style) ?? {};
-const buttons = (t: ReactTestRenderer) => t.root.findAll((n) => n.props.accessibilityRole === 'button' && typeof n.type === 'function' && n.props.onPress);
-const find = (t: ReactTestRenderer, pred: (s: ReturnType<typeof style>) => boolean) =>
-  t.root.findAll((n) => typeof n.type === 'string' && pred(style(n)));
-
-async function openPrompt(tree: ReactTestRenderer, build = (n: string) => `msg:${n}`) {
-  await act(async () => handle.share?.(build));
-  expect(tree.root.findAllByType(TextInput)).toHaveLength(1);
-}
+const input = () => screen.getByPlaceholderText(namePrompt.placeholder);
+const shareButton = () => screen.getByRole('button', { name: namePrompt.share });
+const flat = (el: { props: { style?: unknown } }) => StyleSheet.flatten(el.props.style as never) ?? {};
 
 beforeEach(() => jest.clearAllMocks());
 
-describe.each<ThemeId>(['filmy', 'khana', 'safar', 'cricket', 'tyohar', 'masala'])('name prompt in %s', (id) => {
+describe.each(THEME_IDS)('name prompt in %s', (id) => {
   const { colors } = THEMES[id];
 
-  it('uses the active theme with no ThemeProvider above it', async () => {
-    const tree = await mount(id);
-    await openPrompt(tree);
+  const expectThemed = () => {
+    expect(flat(screen.getByTestId('name-prompt'))).toMatchObject({ backgroundColor: colors.panel, borderColor: colors.border });
+    expect(flat(input())).toMatchObject({ backgroundColor: colors.text, color: colors.bg });
+    expect(input().props.placeholderTextColor).toBe(colors.card.foot);
+    expect(flat(shareButton())).toMatchObject({ backgroundColor: colors.primary.bg });
+  };
 
-    expect(find(tree, (s) => s.backgroundColor === colors.panel && s.borderColor === colors.border)).toHaveLength(1);
-    const input = style(tree.root.findByType(TextInput));
-    expect(input.backgroundColor).toBe(colors.text);
-    expect(input.color).toBe(colors.bg);
-    expect(tree.root.findByType(TextInput).props.placeholderTextColor).toBe(colors.muted);
-    expect(find(tree, (s) => s.backgroundColor === colors.primary.bg)).not.toHaveLength(0);
+  it('uses the active theme with no ThemeProvider above it', async () => {
+    await openPrompt(id);
+    expectThemed();
   });
 
   it('ignores a different theme around it', async () => {
-    const other: ThemeId = id === 'filmy' ? 'khana' : 'filmy';
-    const tree = await mount(id, other);
-    await openPrompt(tree);
-
-    expect(find(tree, (s) => s.backgroundColor === colors.panel && s.borderColor === colors.border)).toHaveLength(1);
+    await openPrompt(id, { around: id === 'filmy' ? 'khana' : 'filmy' });
+    expectThemed();
   });
 });
 
 describe('submit and cancel', () => {
   it('submitting a trimmed name saves it and shares exactly the built message', async () => {
-    const tree = await mount('khana');
     const build = jest.fn((n: string) => `challenge from ${n}`);
-    await openPrompt(tree, build);
+    await openPrompt('khana', { build });
 
-    await act(async () => tree.root.findByType(TextInput).props.onChangeText('  Ravi  '));
-    const [, submit] = buttons(tree);
-    await act(async () => submit.props.onPress());
+    await fireEvent.changeText(input(), '  Ravi  ');
+    await fireEvent.press(shareButton());
 
     expect(save).toHaveBeenCalledWith('playerName', 'Ravi');
     expect(build).toHaveBeenCalledTimes(1);
     expect(build).toHaveBeenCalledWith('Ravi');
     expect(shareText).toHaveBeenCalledTimes(1);
     expect(shareText).toHaveBeenCalledWith('challenge from Ravi');
-    expect(tree.root.findAllByType(TextInput)).toHaveLength(0);
+    expect(screen.queryByTestId('name-prompt')).toBeNull();
   });
 
   it('cancelling never shares or saves', async () => {
-    const tree = await mount('safar');
-    await openPrompt(tree);
+    await openPrompt('safar');
 
-    const [cancel] = buttons(tree);
-    expect(cancel.findAll((n) => n.children.includes(namePrompt.cancel)).length).toBeGreaterThan(0);
-    await act(async () => cancel.props.onPress());
+    await fireEvent.press(screen.getByRole('button', { name: namePrompt.cancel }));
 
     expect(shareText).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
-    expect(tree.root.findAllByType(TextInput)).toHaveLength(0);
+    expect(screen.queryByTestId('name-prompt')).toBeNull();
   });
 
   it('a blank name cannot be submitted', async () => {
-    const tree = await mount('cricket');
-    await openPrompt(tree);
+    await openPrompt('cricket');
 
-    await act(async () => tree.root.findByType(TextInput).props.onChangeText('   '));
-    const [, submit] = buttons(tree);
-    await act(async () => submit.props.onPress());
+    await fireEvent.changeText(input(), '   ');
+    await fireEvent.press(shareButton());
 
     expect(shareText).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
+    expect(screen.getByTestId('name-prompt')).toBeTruthy();
   });
 });
