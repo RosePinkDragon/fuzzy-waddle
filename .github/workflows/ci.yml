@@ -89,6 +89,11 @@ jobs:
       - name: Unit tests
         if: steps.scope.outputs.checks == 'true'
         run: npm test -- --ci
+      - name: Simulator smoke
+        if: steps.scope.outputs.checks == 'true'
+        run: |
+          npm run simulate:game -- --runs 50 --seed 7
+          npm run simulate:game -- --runs 20 --seed 7 --json
       - name: Web export
         if: steps.scope.outputs.export == 'true'
         run: npx expo export --platform web
