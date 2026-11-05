@@ -22,7 +22,7 @@ function Run({ themeId, difficulty }: { themeId: ThemeId; difficulty: Difficulty
   const router = useRouter();
   const theme = themeFor(themeId);
   const game = useRun(themeId, difficulty);
-  const { share, prompt } = useChallengeShare();
+  const { share, prompt } = useChallengeShare(theme);
   const { run } = game;
 
   // Hold the game screen briefly when the last life goes, then show the flop.
