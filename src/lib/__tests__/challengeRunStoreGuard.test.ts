@@ -4,19 +4,30 @@
  * reach the saved-run store (`src/lib/runStore.ts`), so a challenge can't
  * overwrite a real run or best.
  *
- * It's structural. The scanner walks every module the challenge route imports,
- * transitively, and fails if one imports `runStore` (by any alias or relative
- * path) or touches a `run:*` storage key. If `useRun` (or anything else the
- * route reaches) starts using `runStore`, this fails. #59 must then give the
- * challenge route a hook that doesn't import it.
- *
- * It is not a runtime test: the legacy `useRun` can't be rendered without a
- * test renderer, which isn't a direct dependency. The behavioural check (play
- * a challenge to a win and a loss, assert no `run:*` write) belongs with the
- * #59 hook.
+ * Two checks:
+ * - Structural. The scanner walks every module the challenge route imports,
+ *   transitively, and fails if one imports `runStore` (by any alias or relative
+ *   path) or touches a `run:*` storage key. The route plays through
+ *   `useChallenge`, so it must not reach `useRun` or `runController` either.
+ * - Behavioural. `useChallenge` is rendered with a test renderer and played to a
+ *   win and to a loss against a mocked AsyncStorage: nothing is written at all.
  */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { act, renderHook } from '@testing-library/react-native';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { challengePool } from '@/data/words';
+import { ALPHABET, lettersOf } from '@/game/answer';
+import { useChallenge } from '@/hooks/useChallenge';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+jest.mock('expo-haptics', () => ({
+  impactAsync: jest.fn(() => Promise.resolve()),
+  ImpactFeedbackStyle: { Medium: 'medium' },
+}));
 
 const ROOT = path.resolve(__dirname, '../../..');
 const SRC = path.join(ROOT, 'src');
@@ -129,8 +140,8 @@ describe('challenge play never reaches the saved-run store', () => {
       const reached = [...graph.keys()].map((f) => path.relative(ROOT, f));
       for (const expected of [
         'src/app/c/[wordId].tsx',
-        'src/hooks/useRun.ts',
-        'src/lib/storage.ts',
+        'src/hooks/useChallenge.ts',
+        'src/lib/device.ts',
         'src/game/run.ts',
         'src/screens/GameView.tsx',
         'src/lib/share.ts',
@@ -138,15 +149,17 @@ describe('challenge play never reaches the saved-run store', () => {
         expect(reached).toContain(expected);
       }
       expect(reached).not.toContain('src/lib/runStore.ts');
+      expect(reached).not.toContain('src/lib/runController.ts');
+      expect(reached).not.toContain('src/hooks/useRun.ts');
       expect(graph.size).toBeGreaterThan(30);
     });
 
     it('fails when a module the route reaches imports runStore (alias form)', () => {
       const changed = overlay({
-        'src/hooks/useRun.ts': `import { runStore } from '@/lib/runStore';\n${disk.read(path.join(SRC, 'hooks', 'useRun.ts'))}`,
+        'src/hooks/useChallenge.ts': `import { runStore } from '@/lib/runStore';\n${disk.read(path.join(SRC, 'hooks', 'useChallenge.ts'))}`,
       });
       expect(runStoreProblems(reachableFrom(ROUTE, changed), changed)).toContain(
-        "src/hooks/useRun.ts imports runStore ('@/lib/runStore')",
+        "src/hooks/useChallenge.ts imports runStore ('@/lib/runStore')",
       );
     });
 
@@ -259,5 +272,48 @@ describe('challenge play never reaches the saved-run store', () => {
     it('throws on a computed require, which could hide runStore', () => {
       expect(() => run({ [entry]: 'const m = require(path);' })).toThrow("can't be followed");
     });
+  });
+});
+
+describe('a challenge played through useChallenge writes nothing', () => {
+  const storage = AsyncStorage as unknown as Record<'setItem' | 'removeItem' | 'multiSet' | 'mergeItem', jest.Mock>;
+  const word = challengePool('filmy')[0];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // RNTL 14 renders and acts asynchronously.
+  async function play(letters: string[]) {
+    const hook = await renderHook(() => useChallenge(word));
+    for (const letter of letters) await act(async () => hook.result.current.press(letter));
+    return hook;
+  }
+
+  const expectNoWrites = () => {
+    for (const method of [storage.setItem, storage.removeItem, storage.multiSet, storage.mergeItem]) {
+      expect(method).not.toHaveBeenCalled();
+    }
+  };
+
+  it('a win', async () => {
+    const hook = await play([...lettersOf(word.answer)]);
+    expect(hook.result.current.run.status).toBe('solved');
+    expectNoWrites();
+  });
+
+  it('a loss', async () => {
+    const wrong = ALPHABET.filter((l) => !lettersOf(word.answer).has(l));
+    const hook = await play(wrong);
+    expect(hook.result.current.run.status).toBe('over');
+    expectNoWrites();
+  });
+
+  it('power-ups included, and it starts with the word it was given', async () => {
+    const hook = await renderHook(() => useChallenge(word));
+    expect(hook.result.current.run.current?.word.id).toBe(word.id);
+    await act(async () => hook.result.current.usePower(0));
+    expect(hook.result.current.run.current?.revealed.length).toBe(1);
+    expectNoWrites();
   });
 });
