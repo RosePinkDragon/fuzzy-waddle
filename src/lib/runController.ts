@@ -70,18 +70,10 @@ export function markRecoveryShown(theme: ThemeId, difficulty: Difficulty): void 
 export type RecoveryTap = 'show notice' | 'navigate';
 
 /**
- * A tap on a picker card for a slot whose data was replaced. Route a tap through this when the card is
- * `recovery` **or** the slot is in `pendingRecoveries(theme)`: a slot can have a pending notice while its
- * card shows `fresh` or `saved` (for example after `startNewRun` returned `'changed'` on bad data). Every
- * other tap navigates directly.
- *
- * The first tap on a notice nobody has seen marks it shown, takes it out of the registry and says
- * `'show notice'` (show it, don't navigate). Every later tap, and any tap on a card whose notice was
- * already shown, says `'navigate'`: the route then opens the slot as `recovered` and goes straight to the
- * game, with no redirect back to the picker.
- *
- * The registry entry is gone after the first tap, so build the notice from the card's `reason` and `best`,
- * or from an entry read from `pendingRecoveries` before the tap. Don't read the registry again afterwards.
+ * A tap on a picker card for a slot whose data was replaced. The first tap on a notice nobody has seen
+ * marks it shown and says `'show notice'` (show it, don't navigate). Every later tap, and any tap on a
+ * card whose notice was already shown, says `'navigate'`: the route then opens the slot as `recovered`
+ * and goes straight to the game, with no redirect back to the picker.
  */
 export function tapRecoveryCard(theme: ThemeId, difficulty: Difficulty): RecoveryTap {
   if (recoveryShown(theme, difficulty)) return 'navigate';
