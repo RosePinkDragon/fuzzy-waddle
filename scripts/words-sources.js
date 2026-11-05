@@ -4,8 +4,8 @@
  * titles per request) and Wikidata labels, aliases and sitelinks (50 IDs per
  * request), one request at a time with a delay, backing off on 429 and 5xx.
  *
- *   npm run words:sources -- Diwali "Holi" Q10434
- *   npm run words:sources -- titles.txt --show
+ *   npm run words:sources -- Diwali 'Holi' Q10434
+ *   npm run words:sources -- --file titles.txt --show
  *   npm run words:sources -- Diwali --refresh
  *
  * Each source is saved to .cache/word-sources/ (git-ignored) with its URL,
@@ -42,12 +42,17 @@ const cache = {
   },
 };
 
-/** An input that is a readable file contributes its lines; anything else is a title or Q-id. */
-function readInputs(inputs) {
-  const lines = [];
-  for (const input of inputs) {
-    if (fs.existsSync(input) && fs.statSync(input).isFile()) lines.push(...fs.readFileSync(input, 'utf8').split(/\r?\n/));
-    else lines.push(input);
+/** Positional arguments are always titles or Q-ids. Only a --file is read as a list. */
+function readInputs(inputs, files) {
+  const lines = [...inputs];
+  for (const file of files) {
+    let text;
+    try {
+      text = fs.readFileSync(file, 'utf8');
+    } catch (err) {
+      throw new Error(`Can't read --file ${file}: ${err.message}`);
+    }
+    lines.push(...text.split(/\r?\n/));
   }
   return lines;
 }
@@ -58,7 +63,7 @@ async function main(argv) {
     console.log(USAGE);
     return 0;
   }
-  const { titles, ids } = parseTitles(readInputs(opts.inputs));
+  const { titles, ids } = parseTitles(readInputs(opts.inputs, opts.files));
   if (titles.length === 0 && ids.length === 0) throw new Error(`No titles found.\n${USAGE}`);
   const outcome = await collectSources(
     { titles, ids, refresh: opts.refresh, wikidata: opts.wikidata },

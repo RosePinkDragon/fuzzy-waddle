@@ -88,7 +88,7 @@ function parseTitles(lines) {
 /** A reason a title can't be sent in a batch, or null when it's fine. */
 function titleProblem(title) {
   if (/[|\n\r]/.test(title)) return "title contains '|' or a line break, which the API can't take";
-  if (title.length > 255) return 'title is longer than 255 characters';
+  if (Buffer.byteLength(title, 'utf8') > 255) return 'title is longer than 255 bytes in UTF-8';
   return null;
 }
 
@@ -178,6 +178,8 @@ async function requestJson(url, deps) {
       retryAfterMs = parseRetryAfter(res.headers && res.headers.get ? res.headers.get('retry-after') : null, now());
       if (isRetryableStatus(res.status)) {
         reason = `HTTP ${res.status}`;
+        // Free the connection before waiting; the body isn't needed.
+        if (res.body && typeof res.body.cancel === 'function') await res.body.cancel().catch(() => {});
       } else if (!res.ok) {
         throw new SourceFetchError(`HTTP ${res.status}`);
       } else {
@@ -405,6 +407,8 @@ async function collectSources(request, deps) {
     if (refresh) return false;
     const hit = cache.read(kind, key);
     if (!isUsableCacheEntry(hit)) return false;
+    // The file name can match another key on a case-insensitive file system (Don and DON).
+    if ((kind === 'wikipedia' ? hit.requestedTitle : hit.id) !== key) return false;
     results.push({ kind, key, from: 'cache', entry: hit });
     return true;
   };
@@ -414,14 +418,14 @@ async function collectSources(request, deps) {
       const url = buildUrl(batch);
       log(`Fetching ${batch.length} ${kind} ${batch.length === 1 ? 'item' : 'items'}...`);
       try {
-        const merged = { json: null };
-        let next = url;
-        for (let i = 0; i <= MAX_CONTINUATIONS && next; i += 1) {
-          const part = await client.get(next);
-          merged.json = i === 0 ? part : mergeContinuation(merged.json, part);
-          next = part && part.continue && kind === 'wikipedia' && i < MAX_CONTINUATIONS ? `${url}&${new URLSearchParams(part.continue).toString()}` : null;
+        let part = await client.get(url);
+        let json = part;
+        for (let followUps = 0; kind === 'wikipedia' && part && part.continue; followUps += 1) {
+          if (followUps >= MAX_CONTINUATIONS) throw new SourceFetchError(`reply was cut short: still continuing after ${MAX_CONTINUATIONS} follow-up requests`);
+          part = await client.get(`${url}&${new URLSearchParams(part.continue).toString()}`);
+          json = mergeContinuation(json, part);
         }
-        const parsed = parse(merged.json, batch, { apiUrl: url, fetchedAt: new Date(now()).toISOString() });
+        const parsed = parse(json, batch, { apiUrl: url, fetchedAt: new Date(now()).toISOString() });
         for (const entry of parsed.entries) {
           const key = entry.kind === 'wikipedia' ? entry.requestedTitle : entry.id;
           cache.write(kind, key, entry);
@@ -470,9 +474,10 @@ function mergeContinuation(first, more) {
 // ---- Command line ----
 
 const USAGE = [
-  'Usage: npm run words:sources -- <title | Q-id | file> [...] [--refresh] [--no-wikidata] [--show] [--delay <ms>]',
+  'Usage: npm run words:sources -- <title | Q-id> [...] [--file <list>] [--refresh] [--no-wikidata] [--show] [--delay <ms>]',
   '  A title is an English Wikipedia page (Diwali, "Dilwale Dulhania Le Jayenge"). A Q-id (Q10434) goes to Wikidata.',
-  '  A file holds one title or Q-id per line (blank lines and lines starting with # are skipped).',
+  '  --file <list>   read titles and Q-ids from a file, one per line (blank lines and lines starting with # are skipped); repeatable',
+  '  Quote each title in single quotes (\'Holi (festival)\'), never double quotes, so the shell leaves $ and backticks alone.',
   '  --refresh       fetch again even when the source is cached',
   '  --no-wikidata   skip the Wikidata lookups (labels, Hindi aliases, sitelinks)',
   '  --show          print each source\'s text and aliases, not just where it was saved',
@@ -481,15 +486,20 @@ const USAGE = [
 
 /**
  * @param {string[]} argv
- * @returns {{ inputs: string[], refresh: boolean, wikidata: boolean, show: boolean, delayMs: number, help: boolean }}
+ * @returns {{ inputs: string[], files: string[], refresh: boolean, wikidata: boolean, show: boolean, delayMs: number, help: boolean }}
  */
 function parseArgs(argv) {
-  const opts = { inputs: [], refresh: false, wikidata: true, show: false, delayMs: DEFAULT_DELAY_MS, help: false };
+  const opts = { inputs: [], files: [], refresh: false, wikidata: true, show: false, delayMs: DEFAULT_DELAY_MS, help: false };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === '--refresh') opts.refresh = true;
     else if (a === '--no-wikidata') opts.wikidata = false;
     else if (a === '--show') opts.show = true;
+    else if (a === '--file') {
+      i += 1;
+      if (argv[i] === undefined || argv[i] === '' || argv[i].startsWith('--')) throw new Error(`--file needs a file path\n${USAGE}`);
+      opts.files.push(argv[i]);
+    }
     else if (a === '--delay') {
       i += 1;
       const n = Number(argv[i]);
@@ -499,8 +509,15 @@ function parseArgs(argv) {
     else if (a.startsWith('--')) throw new Error(`Unknown option: ${a}\n${USAGE}`);
     else opts.inputs.push(a);
   }
-  if (!opts.help && opts.inputs.length === 0) throw new Error(`Give at least one title, Q-id or file.\n${USAGE}`);
+  if (!opts.help && opts.inputs.length === 0 && opts.files.length === 0) throw new Error(`Give at least one title, Q-id or --file.\n${USAGE}`);
   return opts;
+}
+
+/** Says where a redirect came from. A redirect to a section is flagged, because the text is the page intro. */
+function redirectNote(e) {
+  if (!e.redirectedFrom) return '';
+  if (!e.redirectFragment) return ` (redirect from ${e.redirectedFrom})`;
+  return ` (redirect from ${e.redirectedFrom} to section #${e.redirectFragment}; text is the page intro, not that section)`;
 }
 
 /**
@@ -516,7 +533,7 @@ function formatReport(outcome, options) {
   for (const r of results) {
     const e = r.entry;
     const rev = e.revisionId === null || e.revisionId === undefined ? 'no revision ID' : `revision ${e.revisionId}`;
-    const name = r.kind === 'wikipedia' ? `${e.title}${e.redirectedFrom ? ` (redirect from ${e.redirectedFrom})` : ''}` : `${e.id}${e.labels && e.labels.en ? ` ${e.labels.en}` : ''}`;
+    const name = r.kind === 'wikipedia' ? `${e.title}${redirectNote(e)}` : `${e.id}${e.labels && e.labels.en ? ` ${e.labels.en}` : ''}`;
     lines.push('');
     lines.push(`- [${r.kind}] ${name} - ${r.from === 'cache' ? 'cached' : 'fetched'}, ${rev}, fetched ${e.fetchedAt}`);
     lines.push(`  URL: ${e.url}`);

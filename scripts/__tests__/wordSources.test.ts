@@ -206,6 +206,18 @@ describe('requestJson', () => {
     expect(t.waits).toEqual([2000, 4000, 8000]);
   });
 
+  it('cancels the body of a retryable reply before waiting', async () => {
+    const cancel = jest.fn(async () => {});
+    const t = fakeTime();
+    const replies = [
+      { status: 503, ok: false, headers: { get: () => null }, body: { cancel }, json: async () => ({}) },
+      reply({ body: { ok: 1 } }),
+    ];
+    const fn = (async () => replies.shift()) as unknown as typeof fetch;
+    await expect(requestJson('https://x.test/', { fetch: fn, sleep: t.sleep, now: t.now })).resolves.toEqual({ ok: 1 });
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
   it('retries after a network error', async () => {
     const f = scripted([{ throws: 'socket hang up' }, { body: { ok: 1 } }]);
     const t = fakeTime();
@@ -467,6 +479,17 @@ describe('collectSources', () => {
     expect(refreshed.results.map((r) => r.from)).toEqual(['network', 'network']);
   });
 
+  it('does not serve an entry that belongs to another key (case-insensitive file systems)', async () => {
+    const wrongTitle = { kind: 'wikipedia', requestedTitle: 'Don', title: 'Don', url: 'u', fetchedAt: 't', extract: 'Other page' };
+    const wrongId = { kind: 'wikidata', id: 'Q1', url: 'u', fetchedAt: 't' };
+    const cache = memoryCache({ 'wikipedia/DON': wrongTitle, 'wikidata/Q2': wrongId });
+    const server = wikiServer();
+    const out = await collectSources({ titles: ['DON'], ids: ['Q2'], wikidata: true }, deps(server.fn, cache));
+    expect(out.results.every((r) => r.from === 'network')).toBe(true);
+    expect(cache.store.get('wikipedia/DON')).toMatchObject({ requestedTitle: 'DON' });
+    expect(out.results.find((r) => r.kind === 'wikipedia')!.entry.extract).toBe('DON intro text.');
+  });
+
   it('fetches again when a cache entry is damaged', async () => {
     const cache = memoryCache({ 'wikipedia/Diwali': { oops: true } });
     const server = wikiServer();
@@ -509,6 +532,22 @@ describe('collectSources', () => {
     expect(t.waits.filter((w) => w >= 2000)).toEqual([2000, 4000, 8000, 16000, 32000]);
   });
 
+  it('counts the title limit in UTF-8 bytes, so long Devanagari titles are refused', async () => {
+    const long = 'द'.repeat(90); // 90 characters, 270 bytes
+    const server = wikiServer();
+    const out = await collectSources({ titles: [long], ids: [], wikidata: false }, deps(server.fn));
+    expect(out.notFetched[0].reason).toBe('title is longer than 255 bytes in UTF-8');
+    expect(server.urls).toEqual([]);
+  });
+
+  it('reports a reply that keeps continuing as cut short, not as a page with no text', async () => {
+    const more = { continue: { excontinue: '1', continue: '||' }, query: { pages: [{ pageid: 1, title: 'Diwali' }] } };
+    const f = scripted(Array.from({ length: 6 }, () => ({ body: more })));
+    const out = await collectSources({ titles: ['Diwali'], ids: [], wikidata: false }, deps(f.fn));
+    expect(out.notFetched[0].reason).toContain('reply was cut short');
+    expect(f.calls).toHaveLength(6);
+  });
+
   it('refuses titles the API cannot take, without sending them', async () => {
     const server = wikiServer();
     const out = await collectSources({ titles: ['A|B', 'Diwali'], ids: [], wikidata: false }, deps(server.fn));
@@ -536,8 +575,9 @@ describe('collectSources', () => {
 
 describe('parseArgs', () => {
   it('collects titles and flags', () => {
-    expect(parseArgs(['Diwali', 'list.txt', '--refresh', '--show', '--no-wikidata', '--delay', '250'])).toMatchObject({
-      inputs: ['Diwali', 'list.txt'],
+    expect(parseArgs(['Diwali', 'LICENSE', '--file', 'list.txt', '--refresh', '--show', '--no-wikidata', '--delay', '250'])).toMatchObject({
+      inputs: ['Diwali', 'LICENSE'], // a positional argument is always a title, even if a file has that name
+      files: ['list.txt'],
       refresh: true,
       show: true,
       wikidata: false,
@@ -547,6 +587,9 @@ describe('parseArgs', () => {
 
   it('rejects no input, unknown options and a bad delay', () => {
     expect(() => parseArgs([])).toThrow('Give at least one');
+    expect(() => parseArgs(['--file'])).toThrow('--file needs');
+    expect(() => parseArgs(['--file', '--show'])).toThrow('--file needs');
+    expect(parseArgs(['--file', 'a.txt']).inputs).toEqual([]);
     expect(() => parseArgs(['A', '--nope'])).toThrow('Unknown option');
     expect(() => parseArgs(['A', '--delay', 'x'])).toThrow('--delay needs');
     expect(() => parseArgs(['A', '--delay'])).toThrow('--delay needs');
@@ -564,5 +607,25 @@ describe('formatReport', () => {
     expect(text).toContain('revision 1006');
     expect(text).toContain('Text: Diwali intro text.');
     expect(text).toContain('Not fetched:\n- [wikipedia] Ghost Page: page does not exist on English Wikipedia');
+  });
+
+  it('flags a redirect to a section, and says the text is the page intro', async () => {
+    const f = scripted([
+      {
+        body: {
+          query: {
+            redirects: [
+              { from: 'Holi', to: 'Holi (festival)', tofragment: 'Origins' },
+              { from: 'Deepavali', to: 'Diwali' },
+            ],
+            pages: [wikiPage('Holi (festival)'), wikiPage('Diwali')],
+          },
+        },
+      },
+    ]);
+    const out = await collectSources({ titles: ['Holi', 'Deepavali'], ids: [], wikidata: false }, { fetch: f.fn, sleep: async () => {}, now: () => 1_000_000, cache: memoryCache(), delayMs: 0 });
+    const text = formatReport(out, { pathOf: (k, key) => `${k}/${key}` });
+    expect(text).toContain('Holi (festival) (redirect from Holi to section #Origins; text is the page intro, not that section)');
+    expect(text).toContain('Diwali (redirect from Deepavali) -');
   });
 });
