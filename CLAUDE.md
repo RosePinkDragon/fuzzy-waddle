@@ -8,7 +8,9 @@ Expo-specific rules: @AGENTS.md
 
 **All issue implementation requests must invoke the `run-issue` skill. Never delegate directly to the developer or create a PR outside this workflow.** This applies equally to natural-language instructions such as "work on issue #N", "implement #N", "fix #N", and the explicit `/run-issue N` command. Before any code edits, developer delegation, branch creation or PR creation, the coordinating chat must load and follow `.claude/skills/run-issue/SKILL.md`, including its authorization gate, agent routing, verification and review steps. The coordinator alone opens the PR after those steps. The developer only implements, tests, commits, pushes and hands off.
 
-Review-only, triage and discussion requests are not implementation requests; use `review-issue` when appropriate. This instruction does not authorize bypassing approval gates, independent reviews, or the owner's merge decision. If the skill cannot be loaded or invoked, stop implementation and report that blocker rather than working around it.
+A request to work on an issue is not itself approval. The `run-issue` gate decides from labels, standing delegation or an explicit owner authorization of that issue's scope, and stops as documented otherwise. A request with no issue number gets one through `review-issue` first, then goes through `run-issue`.
+
+Issue review, triage and discussion use `review-issue`. Reviewing an existing PR needs neither skill, but any code change it leads to goes through `run-issue`. This instruction does not authorize bypassing approval gates, independent reviews, or the owner's merge decision. If the skill cannot be loaded or invoked, stop implementation and report that blocker rather than working around it.
 
 ## Workflow (required; the PR rules check enforces it)
 
