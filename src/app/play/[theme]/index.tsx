@@ -361,7 +361,7 @@ function SavedCard({
       </View>
       <View style={[styles.optionTop, styles.between]}>
         <LivesSign marks={lifeMarks(difficulty, doc.run.livesLost)} left={lives} boxed={false} />
-        <Txt size={13} weight={700} lh={1.3} color={colors.text} numberOfLines={1}>
+        <Txt size={13} weight={700} lh={1.3} color={colors.text} align="right" style={styles.run}>
           {picker.runProgress(doc.run.hits, club?.crore ?? null)}
         </Txt>
       </View>
@@ -435,7 +435,9 @@ const styles = StyleSheet.create({
   optionCompact: { paddingVertical: 8, gap: 4 },
   saved: { borderWidth: 1.5 },
   optionTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  between: { justifyContent: 'space-between' },
+  // Safar's sign (a COACHES label and nine marks) leaves little room: a tighter gap, and the text wraps rather than clips.
+  between: { justifyContent: 'space-between', gap: 6 },
+  run: { flexShrink: 1 },
   flex: { flex: 1 },
   right: { alignItems: 'flex-end', gap: 6 },
   go: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
