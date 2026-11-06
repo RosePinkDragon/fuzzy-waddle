@@ -10,7 +10,8 @@
  *   npm run screenshots -- --skip-build                   # reuse the last build in dist-test/
  *   npm run screenshots -- --out /tmp/shots               # save somewhere else
  *
- * Screens: home, difficulty, game, win, flop, challenge. "win" is the milestone
+ * Screens: home, difficulty, game, win, flop, challenge. "game" shoots the first word
+ * (<theme>-game) and the boss round that follows it (<theme>-game-boss). "win" is the milestone
  * screen, which shows the theme's win scene (design/screens/*Win.png). "challenge"
  * covers its landing, game, solved and failed states, plus the bad-link screen.
  * "prompt" opens the first-share name prompt over the win, flop and challenge
@@ -247,10 +248,14 @@ class Shooter {
       const first = await this.currentAnswer();
       await this.settle();
       if (want.has('game')) await this.shot(`${theme}-game`);
+      // With the test ladder the second word is the first boss round.
+      await this.solve(first);
+      const boss = await this.currentAnswer(first);
+      await this.settle();
+      if (want.has('game')) await this.shot(`${theme}-game-boss`);
       if (want.has('win')) {
         // The win screen is the milestone screen; the test ladder puts it after two words.
-        await this.solve(first);
-        await this.solve(await this.currentAnswer(first));
+        await this.solve(boss);
         await this.page.waitForSelector(byTestId('milestone-screen'));
         await this.settle();
         await this.shot(`${theme}-win`);
