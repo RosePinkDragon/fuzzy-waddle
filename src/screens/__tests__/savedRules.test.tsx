@@ -91,6 +91,16 @@ describe('the game screen under saved rules', () => {
     expect(screen.getByLabelText(ui.clueLocked(theme.copy.powerUps[1]))).toBeTruthy();
   });
 
+  it('names the boss round and the club it enters from the saved ladder', async () => {
+    const doc = savedDoc({ hits: 2 });
+    const run = { ...doc.run, current: { ...doc.run.current!, isBoss: true } };
+    await ui2(game({ ...doc, run }, doc.rules));
+    // Hit 3 is the saved ladder's first club (25 Cr); the live ladder would say 50 Cr.
+    expect(screen.getByText(new RegExp(ui.bossWinFor))).toBeTruthy();
+    expect(screen.getByText(clubShort(savedClub(3)))).toBeTruthy();
+    expect(screen.queryByText(clubShort(liveClub(10)))).toBeNull();
+  });
+
   it('shows the live rules when no saved rules are passed (a challenge)', async () => {
     const doc = savedDoc();
     await ui2(game(doc));

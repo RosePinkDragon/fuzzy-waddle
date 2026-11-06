@@ -11,7 +11,8 @@
  *   npm run screenshots -- --out /tmp/shots               # save somewhere else
  *
  * Screens: home, difficulty, game, win, flop, challenge, prompt, resume, recovery, unsaved,
- * replaced. "win" is the milestone screen, which shows the theme's win scene
+ * replaced. "game" shoots the first word (<theme>-game) and the boss round that follows it
+ * (<theme>-game-boss). "win" is the milestone screen, which shows the theme's win scene
  * (design/screens/*Win.png). "challenge" covers its landing, game, solved and failed
  * states, plus the bad-link screen. The saved-run states (#94, design/screens/Resume-*.png):
  * "resume" is the picker with bests, a saved run, the New run sheets (best goes up, best
@@ -55,6 +56,14 @@ function themeIds() {
   const m = src.match(/THEME_ORDER: ThemeId\[\] = \[([^\]]+)\]/);
   if (!m) fail('could not find THEME_ORDER in src/themes/themes.ts');
   return m[1].split(',').map((s) => s.trim().replace(/'/g, '')).filter(Boolean);
+}
+
+/** The boss round text the game screen shows, read from src/copy/strings.ts. */
+function bossLabel() {
+  const src = fs.readFileSync(path.join(ROOT, 'src/copy/strings.ts'), 'utf8');
+  const m = src.match(/bossWinFor: '([^']+)'/);
+  if (!m) fail('could not find bossWinFor in src/copy/strings.ts');
+  return m[1].trim();
 }
 
 /** Every word in the bank. */
@@ -291,10 +300,18 @@ class Shooter {
       const first = await this.currentAnswer();
       await this.settle();
       if (want.has('game')) await this.shot(`${theme}-game`);
+      // With the test ladder the second word is the first boss round.
+      await this.solve(first);
+      const boss = await this.currentAnswer(first);
+      await this.settle();
+      if (want.has('game')) {
+        const seen = await this.page.locator(byTestId('game-screen')).innerText();
+        const label = bossLabel();
+        await this.shot(`${theme}-game-boss`, seen.includes(label) ? [] : [`not a boss round: no "${label}" on screen`]);
+      }
       if (want.has('win')) {
         // The win screen is the milestone screen; the test ladder puts it after two words.
-        await this.solve(first);
-        await this.solve(await this.currentAnswer(first));
+        await this.solve(boss);
         await this.page.waitForSelector(byTestId('milestone-screen'));
         await this.settle();
         await this.shot(`${theme}-win`);

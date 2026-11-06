@@ -4,6 +4,7 @@ import {
   MAX_PROGRESS_SEGMENTS,
   TEST_CLUB_LADDER,
 } from './config';
+import type { RunState } from './run';
 import type { Club } from './types';
 
 export type Rung = { crore: number; hits: number };
@@ -97,6 +98,28 @@ export interface Progress {
 }
 
 export const ladder = new Ladder();
+
+/** What the game screen's progress row says about the run. */
+export type ProgressLabel =
+  /** The word in play is a boss round; solving it enters `club`. */
+  | { kind: 'boss'; club: Club }
+  /** `remaining` more hits to `club`. */
+  | { kind: 'countdown'; remaining: number; club: Club };
+
+/**
+ * The progress row's state. Only a boss word still being played is a boss label:
+ * once it is solved or lost, or while a normal word waits for its boss, the row
+ * counts down to the next club. `hits` already includes a word just solved, so
+ * `remaining === 1` alone does not mean the word in play is the boss.
+ */
+export function progressLabel(
+  run: Pick<RunState, 'hits' | 'status' | 'current'>,
+  l: Ladder = ladder,
+): ProgressLabel {
+  const to = l.next(run.hits);
+  if (run.status === 'playing' && run.current?.isBoss) return { kind: 'boss', club: to };
+  return { kind: 'countdown', remaining: to.hits - run.hits, club: to };
+}
 
 /** "100 Cr Club" — for badges and the progress row. */
 export function clubShort(club: Club): string {
