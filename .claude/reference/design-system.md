@@ -27,12 +27,14 @@ This sheet points at values rather than copying them. List conflicts under Disag
 | Game (×6) | `Main`, `Khana`, `Safar`, `Cricket`, `Tyohar`, `MasalaMix` | `src/screens/GameView.tsx` |
 | Win, the milestone screen (×6) | `Win`, `KhanaWin`, … | `src/screens/MilestoneView.tsx` |
 | Flop (×6) | `Lose`, `KhanaLose`, … | `src/screens/FlopView.tsx` |
-| Home, difficulty picker, challenge | **None.** Built in the same style and flagged for review ([README](../../README.md#flagged-for-design-review)). | `src/app/` |
+| Difficulty picker, saved-run states (×6 themes) | `Resume-Picker-A` (and `-Cricket`, `-Khana`, `-Masala`, `-Safar`, `-Tyohar`), `Resume-Picker-A-MultiSaved`, `-FirstVisit`, `-Bests`, `-Unsaved`, `Resume-NewRunConfirm`, `Resume-RecoveryNotice`, `Resume-GameUnsaved`, `Resume-WordReplaced` (`Resume-Picker-B` was not chosen) | `src/app/play/[theme]/index.tsx`, `src/components/Notice.tsx`, `GameView` (the unsaved strip) |
+| Home, challenge | **None.** Built in the same style and flagged for review ([README](../../README.md#flagged-for-design-review)). | `src/app/` |
 
 ## Layout and fit
 
 - **Fit:** everything fits from 390×700 to 390×844 with no scrolling. Content width is capped by `MAX_WIDTH` in `src/components/Screen.tsx`.
-- **Short screens:** below `COMPACT_HEIGHT` (`Screen.tsx`), each screen tightens its gaps. See the `compact` gap in `GameView`, `MilestoneView` and `FlopView`.
+- **Short screens:** below `COMPACT_HEIGHT` (`Screen.tsx`), each screen tightens its gaps. See the `compact` gap in `GameView`, `MilestoneView` and `FlopView`. On the picker, plain cards also drop their lives sign, and the footnote goes when two or more runs are saved.
+- **Notices and sheets** (`src/components/Notice.tsx`): feedback never goes inside a scene. `Notice` is an inline banner (a title, a body and an optional 44×44 dismiss) or the one-line dashed game strip, with `role="status"`. `NoticeSheet` is a bottom sheet in a native `Modal` with the platform slide, a scrim and a header title; it is used for New run (Keep is the default and sits first) and the replaced-word notice. `ChoiceButton` is the 12px-radius button the picker cards and sheets share. NOT SAVED is an outlined, dashed chip on the picker card; on the game it is the strip at 844px and a `Header` `status` chip on compact screens.
 - **Scenes:** art is drawn at the sizes in BRIEF section 4 (`artHeight` in `SceneBox`). It's capped at that height and crops from the top on short phones. There's no writing inside scenes except the lives sign.
 - **Lives sign:** top-centre in the scene, always worded "X LEFT". It moves above the scene when the scene is shorter than `SIGN_INSIDE_MIN` in `GameView.tsx`.
 - **Tiles:** sized between the `maxSize` and `minSize` defaults in `tileLayout.ts`. They wrap only at word breaks. `MilestoneView` passes its own `maxSize`.
@@ -77,4 +79,4 @@ This sheet points at values rather than copying them. List conflicts under Disag
 ## Disagreements
 
 - **Keyboard key width vs the 44px touch-target rule.** At 390px wide, a 10-key QWERTY row makes keys about 33px wide (`keyWidth` in `Keyboard.tsx`). Since #44, each key's touch area is its full cell (key plus half of each gap, about 37px), so there are no dead gaps, but it's still under 44px wide. Height meets 44px. The brief sets only the 46px height; the 44px rule comes from the review agents. **Owner decision needed:** are keyboard keys exempt from the 44px width?
-- **Mockups for home, difficulty and challenge.** BRIEF section 2 lists them as not designed, and #40 is reconciling mockups with the built screens. Until then, the built screens are the reference for these three.
+- **Mockups for home and challenge.** BRIEF section 2 lists them (and the difficulty picker) as not designed, and #40 is reconciling mockups with the built screens. The picker is now designed (#57); until #40 lands, the built screens are the reference for home and challenge.

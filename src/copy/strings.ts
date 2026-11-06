@@ -9,6 +9,12 @@ import type { CategoryId, Difficulty, ThemeId } from '@/game/types';
 /** The game name is undecided (see README "Open decisions"); change it in src/config/game.json. */
 export const GAME_NAME: string = game.name;
 
+/** A best as copy needs it. Structural, so this file never imports the saved-run modules (challenges use it). */
+interface BestLike {
+  hits: number;
+  club: number | null;
+}
+
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
@@ -192,6 +198,100 @@ export const difficultyPicker = {
     hard: '5 lives · category only',
   } satisfies Record<Difficulty, string>,
   footnote: 'Lives carry over from word to word. Every club is a boss round.',
+};
+
+/** "50 Cr Club", from a stored club's crore. */
+export const clubText = (crore: number) => `${crore} Cr Club`;
+
+/** The Resume and New run choices on the difficulty picker (Picker layout A, #57). */
+export const picker = {
+  resume: 'Resume',
+  newRun: 'New run',
+  runProgress: (hits: number, club: number | null) => `${plural(hits, 'hit', 'hits')}${club ? ` · ${clubText(club)}` : ''}`,
+  best: (best: BestLike) => home.best(best.hits, best.club ? clubText(best.club) : null),
+  notPlayed: home.noBest,
+  noBestYet: 'No best yet',
+  bestUnavailable: 'Best: unavailable',
+  chip: { saved: 'SAVED RUN', notSaved: 'NOT SAVED' },
+};
+
+/** What a New run costs, shown before a saved run is ended. */
+export const newRun = {
+  title: 'Naya run shuru karna hai?',
+  ends: (difficulty: Difficulty, hits: number, lives: number) =>
+    `Your ${DIFFICULTY_LABEL[difficulty]} run ends here: ${plural(hits, 'hit', 'hits')}, ${plural(lives, 'life', 'lives')} left.`,
+  bestUp: (difficulty: Difficulty, from: number, to: number) =>
+    `Your ${DIFFICULTY_LABEL[difficulty]} best goes up from ${from} to ${plural(to, 'hit', 'hits')}.`,
+  bestStays: (difficulty: Difficulty, best: number) => `Your ${DIFFICULTY_LABEL[difficulty]} best stays at ${plural(best, 'hit', 'hits')}.`,
+  noHits: 'No hits yet, so nothing is recorded.',
+  clubUp: (difficulty: Difficulty, crore: number) => `Your ${DIFFICULTY_LABEL[difficulty]} club best goes up to ${clubText(crore)}.`,
+  clubStays: (difficulty: Difficulty, crore: number) => `Your ${DIFFICULTY_LABEL[difficulty]} club best stays at ${clubText(crore)}.`,
+  keep: 'Keep this run',
+  confirm: 'End it, start new run',
+  /**
+   * The lines under the title: where the run ends, then what happens to the best. `settled` is the best
+   * after the run is folded in (`settleBest` in the caller), so the sheet says exactly what will be saved.
+   * No hits replaces both best lines. The club line is left out when there's no club, and says "goes up"
+   * only when the club best actually changes.
+   */
+  lines: (difficulty: Difficulty, hits: number, lives: number, best: BestLike | null, settled: BestLike | null): string[] => {
+    const lines = [newRun.ends(difficulty, hits, lives)];
+    if (hits <= 0) return [...lines, newRun.noHits];
+    if (!settled) return lines;
+    lines.push(
+      hits > (best?.hits ?? 0) ? newRun.bestUp(difficulty, best?.hits ?? 0, settled.hits) : newRun.bestStays(difficulty, settled.hits),
+    );
+    if (settled.club) {
+      lines.push(settled.club !== (best?.club ?? null) ? newRun.clubUp(difficulty, settled.club) : newRun.clubStays(difficulty, settled.club));
+    }
+    return lines;
+  },
+};
+
+export const recovery = {
+  title: (difficulty: Difficulty) => `Last ${DIFFICULTY_LABEL[difficulty]} run khul nahi paaya`,
+  /** The bests line is left out when no best survived, so it never promises something that isn't there. */
+  body: (hasBest: boolean) =>
+    `It couldn't be restored safely, so it has ended.${hasBest ? ' Your bests stay as they were.' : ''}`,
+};
+
+export const unsaved = {
+  pickerTitle: 'Saving is off on this device',
+  pickerBody: "Play on, but closing the app loses your run. Bests won't be kept.",
+  gameStripTitle: 'Not saved:',
+  gameStripBody: 'closing the app ends this run.',
+  /** The strip's full text, and the compact chip's accessibility label. */
+  gameStrip: 'Not saved: closing the app ends this run.',
+  gameChip: 'NOT SAVED',
+};
+
+export const wordReplaced = {
+  title: 'Naya word aa gaya',
+  body1: 'Purana word gaya, yeh lo naya.',
+  body2: (hits: number, lives: number, club: number | null) => {
+    const h = plural(hits, 'hit', 'hits');
+    const l = plural(lives, 'life', 'lives');
+    return club ? `Your ${h}, ${l} and ${clubText(club)} are kept.` : `Your ${h} and ${l} are kept.`;
+  },
+  refund: (count: number, powerUp: string) => `GOT BACK: ${count} ${powerUp.toUpperCase()}`,
+  cta: 'Play on',
+  /** One "GOT BACK" chip per refunded power-up (reveal is slot 0, clue slot 1, remove slot 3). */
+  refunds: (refunds: { reveal: number; clue: number; remove: number }, names: readonly string[]): string[] =>
+    ([
+      [refunds.reveal, names[0]],
+      [refunds.clue, names[1]],
+      [refunds.remove, names[3]],
+    ] as const)
+      .filter(([count]) => count > 0)
+      .map(([count, name]) => wordReplaced.refund(count, name)),
+};
+
+export const a11y = {
+  resume: (difficulty: Difficulty, hits: number, lives: number) =>
+    `Resume ${DIFFICULTY_LABEL[difficulty]} run: ${plural(hits, 'hit', 'hits')}, ${lives} ${lives === 1 ? 'life' : 'lives'} left`,
+  newRun: (difficulty: Difficulty) => `New ${DIFFICULTY_LABEL[difficulty]} run`,
+  difficultyCard: (difficulty: Difficulty, meta: string, best: string) => `${DIFFICULTY_LABEL[difficulty]}: ${meta}. ${best}`,
+  dismiss: 'Dismiss',
 };
 
 export const challenge = {

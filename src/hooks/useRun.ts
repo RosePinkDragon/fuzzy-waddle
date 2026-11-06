@@ -1,149 +1,100 @@
 /**
- * Glue between the pure run logic (src/game) and the screens: draws words
- * from the saved shuffle bag, saves best scores, paces the solved pause and
- * fires the wrong-guess haptic.
+ * Glue between a saved run (`lib/runController`) and the run route. Everything about the run
+ * (words, bags, bests, the solved pause, saving, recovery) lives in the controller; this hook
+ * wraps it with `useSyncExternalStore`, wires the app lifecycle, plays the wrong-guess haptic
+ * and decides when the Masala Mix reel has landed.
+ *
+ * The controller lives for the route's lifetime, so a StrictMode remount can't open (draw or
+ * migrate) twice. A new one is made once a recovery notice has been shown, because a controller
+ * that found bad data stays in `recoveryPending` for good.
  */
-import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-import { poolFor, wordById } from '@/data/words';
-import { SOLVED_PAUSE_MS } from '@/game/config';
-import { ladder } from '@/game/milestones';
-import { applyPowerUp, canUse, type PowerUpSlot } from '@/game/powerUps';
-import { defaultRng } from '@/game/rng';
-import { beginWord, continueRun, guess, nextIsBoss, startRun, type RunState } from '@/game/run';
-import { drawBoss, drawNext, emptyBag, type BagState } from '@/game/shuffleBag';
-import type { Difficulty, ThemeId, Word } from '@/game/types';
-import { keys, load, save, type Best } from '@/lib/storage';
+import type { PowerUpSlot } from '@/game/powerUps';
+import { canUse } from '@/game/powerUps';
+import type { Difficulty, ThemeId } from '@/game/types';
+import { exposeRunForTests, subscribeLifecycle, wrongHaptic } from '@/lib/device';
+import { createRunController, recoveryShown, type RunControllerOptions } from '@/lib/runController';
 
-function wrongHaptic() {
-  if (Platform.OS === 'web') return;
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-}
+const SLOTS: PowerUpSlot[] = [0, 1, 2, 3];
 
-interface Options {
-  /** Challenge links play exactly this one word, with no bag and no best score. */
-  challengeWord?: Word;
-}
+export function useRun(theme: ThemeId, difficulty: Difficulty, options: RunControllerOptions = {}) {
+  const [controller, setController] = useState(() => createRunController(theme, difficulty, options));
+  const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
 
-export function useRun(theme: ThemeId, difficulty: Difficulty, { challengeWord }: Options = {}) {
-  const [run, setRun] = useState<RunState>(() =>
-    challengeWord ? beginWord(startRun(theme, difficulty), challengeWord, false) : startRun(theme, difficulty),
-  );
-  const [best, setBest] = useState<Best | null>(null);
-  const [bestAtStart, setBestAtStart] = useState<Best | null>(null);
-  const [reelLanded, setReelLanded] = useState(theme !== 'masala' || !!challengeWord);
-  const bag = useRef<BagState>(emptyBag());
-  const latest = useRef(run);
+  // A controller that stopped for a recovery notice never leaves that phase. Once the notice has
+  // been shown the slot can be opened (and replaced), which only a new controller does.
+  if (snapshot.phase === 'recoveryPending' && recoveryShown(theme, difficulty)) {
+    setController(createRunController(theme, difficulty, options));
+  }
+
+  // One effect for the lifecycle and the first open, so the lifecycle's starting state (an app that
+  // is already hidden) is seen before the open arms any timer. Cleanup stops listening, then stops timers.
   useEffect(() => {
-    latest.current = run;
-  }, [run]);
-
-  /** Draws the next word (a boss word when the next hit reaches a club) and starts it. */
-  const drawInto = useCallback(
-    (r: RunState): RunState => {
-      const pool = poolFor(theme, difficulty);
-      const boss = nextIsBoss(r, ladder);
-      const drawn = boss ? drawBoss(bag.current, pool, defaultRng) : drawNext(bag.current, pool.map((w) => w.id), defaultRng);
-      bag.current = drawn.bag;
-      void save(keys.bag(theme, difficulty), drawn.bag);
-      const word = wordById(drawn.id);
-      if (!word) return r;
-      if (theme === 'masala') setReelLanded(false);
-      return beginWord(r, word, boss);
-    },
-    [theme, difficulty],
-  );
-
-  // Load the saved bag and best score, then start the first word.
-  useEffect(() => {
-    if (challengeWord) return;
-    let alive = true;
-    Promise.all([load(keys.bag(theme, difficulty), emptyBag()), load<Best | null>(keys.best(theme, difficulty), null)]).then(
-      ([savedBag, savedBest]) => {
-        if (!alive) return;
-        bag.current = savedBag;
-        setBest(savedBest);
-        setBestAtStart(savedBest);
-        setRun(drawInto(startRun(theme, difficulty)));
-      },
-    );
+    const off = subscribeLifecycle({
+      onLeave: () => controller.leave(),
+      onReturn: () => void controller.return(),
+    });
+    void controller.start();
     return () => {
-      alive = false;
+      off();
+      controller.dispose();
     };
-  }, [theme, difficulty, challengeWord, drawInto]);
+  }, [controller]);
 
-  // Short pause on a solved word, then the next one.
+  const { doc } = snapshot;
+  const run = doc?.run ?? null;
   useEffect(() => {
-    if (run.status !== 'solved' || challengeWord) return;
-    const t = setTimeout(() => setRun(drawInto(continueRun(latest.current))), SOLVED_PAUSE_MS);
-    return () => clearTimeout(t);
-  }, [run.status, challengeWord, drawInto]);
-
-  // Test builds expose the current answer so browser tests can play a run.
-  useEffect(() => {
-    if (process.env.EXPO_PUBLIC_TEST_HOOKS !== '1') return;
-    (globalThis as Record<string, unknown>).__HANGMAN__ = {
-      answer: run.current?.word.answer,
-      status: run.status,
-      hits: run.hits,
-      livesLost: run.livesLost,
-      isBoss: run.current?.isBoss,
-    };
+    if (run) exposeRunForTests(run);
   }, [run]);
 
-  /** Saves the best score when a run ends or reaches a club. */
-  const recordBest = useCallback(
-    (r: RunState) => {
-      if (challengeWord || (r.status !== 'over' && r.status !== 'milestone')) return;
-      if (best && best.hits >= r.hits) return;
-      const next = { hits: r.hits, club: ladder.reached(r.hits)?.crore ?? null };
-      setBest(next);
-      void save(keys.best(theme, difficulty), next);
-    },
-    [best, challengeWord, theme, difficulty],
-  );
+  // Masala Mix spins a reel for each word and takes no input until it lands. A reel is identified by the
+  // key the scene spins on (the word and the hits when it was drawn); a run that is not being played
+  // (solved, milestone, over) has nothing to wait for.
+  const spinKey = run?.current ? `${run.current.word.id}:${run.hits}` : null;
+  const spinKeyRef = useRef(spinKey);
+  useEffect(() => {
+    spinKeyRef.current = spinKey;
+  }, [spinKey]);
+  const [landedKey, setLandedKey] = useState<string | null>(null);
+  const onReelLanded = useCallback(() => setLandedKey(spinKeyRef.current), []);
+  const reelLanded = theme !== 'masala' || !run || run.status !== 'playing' || landedKey === spinKey;
 
   const press = useCallback(
-    (letter: string) => {
+    async (letter: string) => {
       if (!reelLanded) return;
-      const r = guess(run, letter, ladder);
-      if (r.result === 'ignored') return;
-      if (r.result === 'wrong') wrongHaptic();
-      setRun(r.run);
-      recordBest(r.run);
+      const result = await controller.press(letter);
+      if (result === 'wrong') wrongHaptic();
     },
-    [run, reelLanded, recordBest],
+    [controller, reelLanded],
   );
 
   const usePower = useCallback(
-    (slot: PowerUpSlot) => {
+    async (slot: PowerUpSlot) => {
       if (!reelLanded) return;
-      const r = applyPowerUp(run, slot, defaultRng, ladder);
-      if (!r.effect) return;
-      setRun(r.run);
-      recordBest(r.run);
+      await controller.usePower(slot);
     },
-    [run, reelLanded, recordBest],
+    [controller, reelLanded],
   );
 
-  const keepPlaying = useCallback(() => setRun(drawInto(continueRun(run))), [run, drawInto]);
+  const keepPlaying = useCallback(() => controller.keepPlaying(), [controller]);
+  const restart = useCallback(() => controller.restart(), [controller]);
+  const dismissNotice = useCallback(() => controller.dismissNotice(), [controller]);
 
-  const restart = useCallback(() => {
-    setBestAtStart(best);
-    setRun(drawInto(startRun(theme, difficulty)));
-  }, [best, theme, difficulty, drawInto]);
-
-  const onReelLanded = useCallback(() => setReelLanded(true), []);
-
-  const powerEnabled = ([0, 1, 2, 3] as PowerUpSlot[]).map((s) => reelLanded && canUse(run, s));
+  const powerEnabled = SLOTS.map((s) => reelLanded && !!run && canUse(run, s));
 
   return {
+    phase: snapshot.phase,
+    doc,
     run,
-    best,
-    /** True when this run beat the best score saved before it started. */
-    isNewBest: run.hits > 0 && run.hits > (bestAtStart?.hits ?? 0),
+    /** The best for this slot (already settled when a run ends). */
+    best: doc?.best ?? null,
+    /** False when the run only exists in memory. */
+    saved: snapshot.saved,
+    /** Set when opening replaced the saved word; cleared by `dismissNotice`. */
+    notice: snapshot.notice,
+    /** True when this run beat the best it started with. */
+    isNewBest: snapshot.isNewBest,
     reelLanded,
     onReelLanded,
     press,
@@ -151,5 +102,6 @@ export function useRun(theme: ThemeId, difficulty: Difficulty, { challengeWord }
     powerEnabled,
     keepPlaying,
     restart,
+    dismissNotice,
   };
 }

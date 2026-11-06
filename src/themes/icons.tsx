@@ -20,6 +20,11 @@ export const ICONS = {
   ticket: [p('M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z'), p('M14 7v10', '2 2.5')],
   share: [p('M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7'), p('M16 6l-4-4-4 4'), p('M12 2v13')],
   lock: [{ t: 'rect', x: 4, y: 11, w: 16, h: 10, rx: 2 }, p('M8 11V7a4 4 0 0 1 8 0v4')],
+  warning: [p('M12 3l10 18H2z'), p('M12 10v5M12 18v.5')],
+  cloudOff: [p('M7 18h10a4 4 0 0 0 .8-7.9A6 6 0 0 0 6.2 9.6 4.2 4.2 0 0 0 7 18z'), p('M3 3l18 18')],
+  swap: [p('M4 8h13l-3-3M20 16H7l3 3')],
+  close: [p('M6 6l12 12M18 6L6 18')],
+  play: [p('M7 4.5v15l12-7.5z')],
 
   // Filmy
   clapper: [
@@ -81,9 +86,11 @@ interface IconProps {
   size?: number;
   color: string;
   strokeWidth?: number;
+  /** Fills the shapes with `color` as well (the Resume play triangle). */
+  filled?: boolean;
 }
 
-export function Icon({ name, size = 22, color, strokeWidth = 2 }: IconProps) {
+export function Icon({ name, size = 22, color, strokeWidth = 2, filled = false }: IconProps) {
   const spec: IconSpec = ICONS[name];
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -93,7 +100,7 @@ export function Icon({ name, size = 22, color, strokeWidth = 2 }: IconProps) {
           strokeWidth,
           strokeLinecap: 'round' as const,
           strokeLinejoin: 'round' as const,
-          fill: 'none',
+          fill: filled ? color : 'none',
         };
         switch (part.t) {
           case 'path':
