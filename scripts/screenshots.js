@@ -10,7 +10,7 @@
  *   npm run screenshots -- --skip-build                   # reuse the last build in dist-test/
  *   npm run screenshots -- --out /tmp/shots               # save somewhere else
  *
- * Screens: home, difficulty, game, win, flop, challenge, resume, recovery, unsaved,
+ * Screens: home, difficulty, game, win, flop, challenge, prompt, resume, recovery, unsaved,
  * replaced. "win" is the milestone screen, which shows the theme's win scene
  * (design/screens/*Win.png). "challenge" covers its landing, game, solved and failed
  * states, plus the bad-link screen. The saved-run states (#94, design/screens/Resume-*.png):
@@ -18,6 +18,8 @@
  * stays, zero hits) and three saved runs at once; "recovery" is the recovery notice;
  * "unsaved" is the game and picker with storage blocked; "replaced" is the replaced-word
  * sheet. Every scenario starts from empty storage, because a run is resumed on reload.
+ * "prompt" opens the first-share name prompt over the win, flop and challenge
+ * result screens (no saved name) and checks the sheet sits inside the viewport.
  * It builds the web export into dist-test/ with the two test switches from the
  * README: EXPO_PUBLIC_TEST_LADDER=1, so the first milestone comes after two words
  * (progress copy shows that test ladder), and EXPO_PUBLIC_TEST_HOOKS=1, so it can
@@ -37,7 +39,7 @@ const ROOT = path.resolve(__dirname, '..');
 const BUILD = path.join(ROOT, 'dist-test');
 const WIDTH = 390;
 const HEIGHTS = [844, 700];
-const SCREENS = ['home', 'difficulty', 'game', 'win', 'flop', 'challenge', 'resume', 'recovery', 'unsaved', 'replaced'];
+const SCREENS = ['home', 'difficulty', 'game', 'win', 'flop', 'challenge', 'prompt', 'resume', 'recovery', 'unsaved', 'replaced'];
 const SETTLE_MS = 700;
 /** Per-wait timeout, so a broken build fails in seconds rather than minutes. */
 const WAIT_MS = 10000;
@@ -168,12 +170,13 @@ class Shooter {
     await sleep(SETTLE_MS);
   }
 
-  async shot(name) {
+  async shot(name, extra = []) {
     const png = path.join(this.opts.out, `${name}-${this.height}.png`);
     const shown = png.startsWith(ROOT + path.sep) ? path.relative(ROOT, png) : png;
     const problems = [
       ...(await this.page.evaluate(findProblems, '#root')),
       ...(await this.page.evaluate(findScrollers)),
+      ...extra,
     ];
     await this.page.screenshot({ path: png });
     if (problems.length) this.failed++;
@@ -307,6 +310,7 @@ class Shooter {
     if (want.has('resume')) await this.resume(theme);
     if (want.has('recovery')) await this.recovery(theme);
     if (want.has('replaced')) await this.replaced(theme);
+    if (want.has('prompt')) await this.prompts(theme);
   }
 
   /** The picker with bests, a saved run, the New run sheets and three saved runs at once. */
@@ -401,6 +405,54 @@ class Shooter {
     await this.tapTo('header-back', 'home-screen');
     await this.tapTo(`category-${theme}`, 'difficulty-screen');
     await this.shot(`${theme}-unsaved-picker`);
+  }
+
+  /** Taps a share button, then screenshots the name prompt that opens over the screen. */
+  async promptShot(name, shareTestId) {
+    await this.page.click(byTestId(shareTestId));
+    await this.page.waitForSelector(byTestId('name-prompt'));
+    await this.settle();
+    const fits = await this.page.evaluate(() => {
+      const r = document.querySelector('[data-testid="name-prompt"]').getBoundingClientRect();
+      return r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight;
+    });
+    await this.shot(name, fits ? [] : ['name prompt is clipped by the viewport']);
+  }
+
+  /** The first-share name prompt over the win, flop and challenge result screens. */
+  async prompts(theme) {
+    await this.attempt(`${theme}-prompt-win`, async () => {
+      await this.freshStorage();
+      await this.open(`/play/${theme}/easy`, 'game-screen');
+      const first = await this.currentAnswer();
+      await this.solve(first);
+      await this.solve(await this.currentAnswer(first));
+      await this.page.waitForSelector(byTestId('milestone-screen'));
+      await this.settle();
+      await this.promptShot(`${theme}-prompt-win`, 'share-win');
+    });
+    await this.attempt(`${theme}-prompt-flop`, async () => {
+      await this.freshStorage();
+      await this.open(`/play/${theme}/easy`, 'game-screen');
+      await this.lose(await this.currentAnswer(), 'flop-screen');
+      await this.promptShot(`${theme}-prompt-flop`, 'share-flop');
+    });
+    const word = this.words.find((w) => w.id.startsWith(`${theme}-`) && w.difficulty === 'easy');
+    if (!word) {
+      this.report('skipped', `${theme}-prompt-challenge`, `(${theme} has no words of its own, so no challenge links)`);
+      return;
+    }
+    await this.attempt(`${theme}-prompt-challenge`, async () => {
+      await this.freshStorage();
+      await this.open(`/c/${word.id}`, 'challenge-landing');
+      await this.page.click(byTestId('accept-challenge'));
+      await this.page.waitForSelector(byTestId('game-screen'));
+      await this.currentAnswer();
+      await this.solve(word.answer);
+      await this.page.waitForSelector(byTestId('challenge-result'));
+      await this.settle();
+      await this.promptShot(`${theme}-prompt-challenge`, 'challenge-back');
+    });
   }
 
   async challenge(theme) {
