@@ -144,19 +144,31 @@ function Picker({ themeId }: { themeId: ThemeId }) {
     }
   };
 
+  /**
+   * Bad data the player hasn't been told about gets its notice first. The entry is read before the tap
+   * (the helper takes the slot out of the registry), from the registry or from a `recovery` card. True
+   * means the notice was shown and nothing should start: the next tap goes on to the game.
+   */
+  const showWaitingNotice = (d: Difficulty, card: SlotCard | undefined): boolean => {
+    const waiting = pendingRecoveries(themeId).find((e) => e.difficulty === d);
+    const entry: RecoveryEntry | null =
+      waiting ?? (card?.kind === 'recovery' ? { theme: themeId, difficulty: d, reason: card.reason, best: card.best } : null);
+    if (!entry || tapRecoveryCard(themeId, d) !== 'show notice') return false;
+    showNotice(entry);
+    return true;
+  };
+
+  /** New run on a saved card: a waiting recovery notice comes first, or the run would start and bounce back. */
+  const askNewRun = (d: Difficulty, doc: SlotDoc) => {
+    if (showWaitingNotice(d, cards?.[d])) return;
+    setSheet({ difficulty: d, doc });
+  };
+
   /** A card was chosen: Resume, or the whole card of a slot with nothing to resume. */
   const choose = (d: Difficulty) =>
     exclusive(async () => {
       const card = cards?.[d];
-      // Bad data the player hasn't been told about gets its notice first, read before the tap
-      // (the helper takes the slot out of the registry); the next tap goes on to the game.
-      const waiting = pendingRecoveries(themeId).find((e) => e.difficulty === d);
-      const entry: RecoveryEntry | null =
-        waiting ?? (card?.kind === 'recovery' ? { theme: themeId, difficulty: d, reason: card.reason, best: card.best } : null);
-      if (entry && tapRecoveryCard(themeId, d) === 'show notice') {
-        showNotice(entry);
-        return;
-      }
+      if (showWaitingNotice(d, card)) return;
       // A finished run never resumes: the tap starts a new one, of the run the player saw.
       if (card?.kind === 'fresh' && card.terminalRunId) {
         const out = await startNewRun(themeId, d, card.terminalRunId);
@@ -171,6 +183,11 @@ function Picker({ themeId }: { themeId: ThemeId }) {
     exclusive(async () => {
       if (!sheet) return;
       const { difficulty, doc } = sheet;
+      // A notice that turned up while the sheet was open still comes first.
+      if (showWaitingNotice(difficulty, cards?.[difficulty])) {
+        setSheet(null);
+        return;
+      }
       const out = await startNewRun(themeId, difficulty, doc.runId);
       setSheet(null);
       if (out === 'started') open(difficulty);
@@ -219,7 +236,7 @@ function Picker({ themeId }: { themeId: ThemeId }) {
               compact={compact}
               busy={busy}
               onResume={() => void choose(d)}
-              onNewRun={() => setSheet({ difficulty: d, doc: card.doc })}
+              onNewRun={() => askNewRun(d, card.doc)}
             />
           ) : (
             <PlainCard
@@ -422,7 +439,7 @@ function NewRunSheet({
 }
 
 /** The lines on the New run sheet for a saved run. */
-export function newRunLines(difficulty: Difficulty, doc: SlotDoc): string[] {
+function newRunLines(difficulty: Difficulty, doc: SlotDoc): string[] {
   const { hits } = doc.run;
   const club = ladderOf(doc.rules).reached(hits)?.crore ?? null;
   return newRun.lines(difficulty, hits, livesLeft(doc.run, doc.rules.config), doc.best, settleBest(doc.best, hits, club));

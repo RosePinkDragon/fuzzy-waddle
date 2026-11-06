@@ -6,7 +6,7 @@
  */
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
-import { createElement } from 'react';
+import { StrictMode, createElement } from 'react';
 import { AppState } from 'react-native';
 
 import { newRun, recovery, wordReplaced } from '@/copy/strings';
@@ -17,7 +17,7 @@ import { bankContent, BANK_WORDS } from '@/game/__tests__/helpers';
 import type { Difficulty, ThemeId } from '@/game/types';
 import DifficultyPicker from '@/app/play/[theme]/index';
 import { markRecoveryShown, noteRecovery, pendingRecoveries, resetRecoveryRegistry, tapRecoveryCard } from '@/lib/runController';
-import { createRunStore, type RawStorage, type RunStore } from '@/lib/runStore';
+import { createRunStore, runStore, type RawStorage, type RunStore } from '@/lib/runStore';
 import { keys, type RawRead } from '@/lib/storage';
 
 import { useRun } from '../useRun';
@@ -26,11 +26,12 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 const mockRouter = { push: jest.fn(), replace: jest.fn() };
+let mockTheme = 'cricket';
 jest.mock('expo-router', () => {
   const { useEffect } = jest.requireActual('react');
   return {
     useRouter: () => mockRouter,
-    useLocalSearchParams: () => ({ theme: 'cricket' }),
+    useLocalSearchParams: () => ({ theme: mockTheme }),
     useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
     Redirect: () => null,
   };
@@ -137,6 +138,19 @@ describe('a run through the hook', () => {
     expect(storage.writes.length).toBeGreaterThan(0);
     expect(new Set(storage.writes)).toEqual(new Set([keys.run('filmy', 'easy')]));
     expect([...storage.data.keys()].every((k) => k.startsWith('run:'))).toBe(true);
+  });
+
+  it('opens once and draws once when mounted under StrictMode, whose effects run twice', async () => {
+    const adds = jest.spyOn(AppState, 'addEventListener');
+    const storage = new FakeStorage();
+    const { store, calls } = makeStore(storage);
+    const hook = await renderHook(() => useRun('filmy', 'easy', { store, pauseMs: PAUSE }), { wrapper: StrictMode });
+    await waitFor(() => expect(hook.result.current.phase).toBe('ready'));
+    expect(adds).toHaveBeenCalledTimes(2); // StrictMode really did mount, clean up and mount again
+    expect(calls.open).toBe(1);
+    expect(hook.result.current.doc!.revision).toBe(0);
+    expect(hook.result.current.doc!.bag.remaining).toHaveLength(9);
+    expect(storage.writes).toHaveLength(1);
   });
 
   it('plays the wrong-guess haptic once for a wrong letter and not for a right one', async () => {
@@ -430,5 +444,130 @@ describe('the difficulty picker', () => {
     expect(pendingRecoveries(theme)).toEqual([]);
     await fireEvent.press(screen.getByTestId('difficulty-hard'));
     await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route('hard')));
+  });
+});
+
+describe('the difficulty picker: New run and finished runs', () => {
+  const AsyncStorage = jest.requireMock('@react-native-async-storage/async-storage');
+  const route = (theme: ThemeId, difficulty: Difficulty) => `/play/${theme}/${difficulty}`;
+
+  /** Each test uses its own theme: the picker reads the shared `runStore`, which remembers its slots. */
+  const use = (theme: ThemeId) => {
+    mockTheme = theme;
+    return theme;
+  };
+  const stored = async (theme: ThemeId, difficulty: Difficulty) => {
+    const view = await runStore.inspect(theme, difficulty);
+    if (view.kind !== 'resumable' && view.kind !== 'terminal') throw new Error(`no run: ${view.kind}`);
+    return view.doc;
+  };
+  const tap = (testId: string) => fireEvent.press(screen.getByTestId(testId));
+
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+  afterEach(() => {
+    mockTheme = 'cricket';
+  });
+
+  it('with a notice waiting for a saved slot, New run shows the notice first and the next tap opens the sheet', async () => {
+    const theme = use('khana');
+    await AsyncStorage.setItem(`hangman:v1:${keys.run(theme, 'easy')}`, '{"schema":999}');
+    await runStore.open(theme, 'hard');
+    noteRecovery({ theme, difficulty: 'hard', reason: 'corrupt', best: null });
+    await render(createElement(DifficultyPicker));
+    // Easy's notice shows first. Hard's is still waiting, though its card is a saved run.
+    await waitFor(() => expect(screen.getByText(recovery.title('easy'))).toBeTruthy());
+    expect(pendingRecoveries(theme).map((e) => e.difficulty)).toEqual(['hard']);
+
+    await tap('new-run-hard');
+    await waitFor(() => expect(screen.getByText(recovery.title('hard'))).toBeTruthy());
+    expect(screen.queryByText(newRun.title)).toBeNull();
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(pendingRecoveries(theme)).toEqual([]);
+
+    await tap('new-run-hard');
+    await waitFor(() => expect(screen.getByText(newRun.title)).toBeTruthy());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+  });
+
+  it('confirming ends the run the sheet showed, goes to the game once, and sends one new run for two quick taps', async () => {
+    const theme = use('safar');
+    const before = (await runStore.open(theme, 'medium')).kind === 'saved' ? await stored(theme, 'medium') : null;
+    expect(before).not.toBeNull();
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('new-run-medium')).toBeTruthy());
+    await tap('new-run-medium');
+    await waitFor(() => expect(screen.getByTestId('new-run-confirm')).toBeTruthy());
+
+    // The open takes a moment, so the second tap lands while the first is still working.
+    const realOpen = runStore.open.bind(runStore);
+    const open = jest.spyOn(runStore, 'open').mockImplementation(async (t, d) => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return realOpen(t, d);
+    });
+    await fireEvent.press(screen.getByTestId('new-run-confirm'));
+    await fireEvent.press(screen.getByTestId('new-run-confirm'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route(theme, 'medium')));
+    expect(mockRouter.push).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledTimes(1);
+    const after = await stored(theme, 'medium');
+    expect(after.runId).not.toBe(before!.runId);
+    expect(after.revision).toBe(before!.revision + 1);
+    expect(after.terminal).toBeNull();
+  });
+
+  it('keeping the run changes nothing', async () => {
+    const theme = use('tyohar');
+    await runStore.open(theme, 'easy');
+    const before = await stored(theme, 'easy');
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('new-run-easy')).toBeTruthy());
+    await tap('new-run-easy');
+    await waitFor(() => expect(screen.getByTestId('new-run-keep')).toBeTruthy());
+    await tap('new-run-keep');
+    await waitFor(() => expect(screen.queryByText(newRun.title)).toBeNull());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(await stored(theme, 'easy')).toEqual(before);
+  });
+
+  it('when the run changed since the sheet opened, it sends no new run, closes the sheet and looks again', async () => {
+    const theme = use('masala');
+    await runStore.open(theme, 'medium');
+    const seen = await stored(theme, 'medium');
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('new-run-medium')).toBeTruthy());
+    await tap('new-run-medium');
+    await waitFor(() => expect(screen.getByTestId('new-run-confirm')).toBeTruthy());
+    // Another tab started a new run in the meantime.
+    const other = await runStore.act(theme, 'medium', { runId: seen.runId, revision: seen.revision }, { type: 'newRun' });
+    expect(other.kind).toBe('saved');
+    const inspect = jest.spyOn(runStore, 'inspect');
+
+    await tap('new-run-confirm');
+    await waitFor(() => expect(screen.queryByText(newRun.title)).toBeNull());
+    await waitFor(() => expect(inspect).toHaveBeenCalled());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    const now = await stored(theme, 'medium');
+    expect(now.runId).not.toBe(seen.runId);
+    expect(now.revision).toBe(seen.revision + 1); // the other tab's new run only: nothing was ended on the player's behalf
+  });
+
+  it('tapping a finished run starts a new one of that run, then opens the game', async () => {
+    const theme = use('filmy');
+    await runStore.open(theme, 'easy');
+    const seen = await stored(theme, 'easy');
+    await runStore.act(theme, 'easy', { runId: seen.runId, revision: seen.revision }, { type: 'abandon' });
+    const finished = await stored(theme, 'easy');
+    expect(finished.terminal).not.toBeNull();
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getAllByText('Not played yet')).toHaveLength(3));
+
+    await tap('difficulty-easy');
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route(theme, 'easy')));
+    const fresh = await stored(theme, 'easy');
+    expect(fresh.terminal).toBeNull();
+    expect(fresh.runId).not.toBe(finished.runId);
+    expect(fresh.revision).toBe(finished.revision + 1);
   });
 });
