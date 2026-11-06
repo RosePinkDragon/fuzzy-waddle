@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Loading: saved run (Filmy)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&amp;family=Yatra+One&amp;display=swap">
+<style>
+/* Theme tokens come from renderVals (the filmy colors in src/themes/themes.ts). Same markup for every theme. */
+body{margin:0;background:#2A0710}
+.root{width:390px;box-sizing:border-box;padding:14px 12px 20px;display:flex;flex-direction:column;gap:12px;background:var(--bg);color:var(--text);font-family:'Mukta',system-ui,sans-serif;overflow:hidden;position:relative}
+.hdr{display:flex;align-items:center;justify-content:space-between;height:44px;flex:none}
+.round{width:44px;height:44px;border-radius:22px;border:1px solid var(--border);background:var(--panel);color:var(--text);display:flex;align-items:center;justify-content:center;padding:0;flex:none}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--accent)}
+.bar{border-radius:6px;background:var(--panel);border:1px solid var(--border);box-sizing:border-box}
+.scene{position:relative;flex:1 1 0;min-height:90px;max-height:200px;box-sizing:border-box;border:var(--scene-border);border-radius:14px;overflow:hidden;background:var(--scene-bg);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.status{display:flex;flex-direction:column;align-items:center;gap:6px;flex:none}
+.line{font-size:16px;font-weight:700;line-height:1.3;text-align:center}
+.dots{display:flex;gap:8px}
+.dot{width:8px;height:8px;border-radius:4px;background:var(--accent)}
+.tiles{display:flex;gap:8px;justify-content:center;flex:none}
+.tile{width:34px;height:38px;border-radius:6px;background:var(--panel);border-bottom:3px solid var(--border)}
+.keys{display:flex;flex-direction:column;gap:6px;flex:none}
+.krow{display:flex;gap:4px;justify-content:center}
+.key{width:33px;height:46px;border-radius:6px;background:var(--panel);border:1px solid var(--border);box-sizing:border-box}
+.pups{display:flex;gap:8px;margin-top:auto;flex:none}
+.pup{flex:1 1 0;height:52px;border-radius:12px;background:var(--panel);border:1px solid var(--border)}
+@media (max-height:779px){.root{gap:8px;padding:10px 12px 12px}.tile{height:34px}.key{height:42px}.pup{height:44px}.clue{height:48px!important}}
+</style>
+</helmet>
+<div class="root" style="{{tokens}}" role="progressbar" aria-busy="true" aria-label="{{a11y}}">
+<div class="hdr">
+<button type="button" class="round" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+<div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+<sc-if value="{{eyebrow}}" hint-placeholder-val="{{true}}"><span class="eyebrow">{{eyebrow}}</span></sc-if>
+<span class="bar" style="width:116px;height:16px"></span>
+</div>
+<span class="bar" style="width:96px;height:34px;border-radius:17px"></span>
+</div>
+<span style="height:6px;border-radius:3px;background:var(--panel);flex:none"></span>
+<div class="scene" aria-hidden="true"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:{{iconOpacity}}"><rect x="3" y="9.5" width="18" height="11" rx="1.5"></rect><path d="M3.2 9.2L19.8 4.6l.8 3L4 12.2z"></path><path d="M8.3 7.8l2.4 2.9M13.4 6.4l2.4 2.9"></path></svg></div>
+<div class="status" role="status">
+<span class="line">{{line}}</span>
+<span class="dots" aria-hidden="true"><sc-for list="{{dots}}" as="d" hint-placeholder-count="3"><span class="dot" style="opacity:{{d}}"></span></sc-for></span>
+</div>
+<div class="tiles" aria-hidden="true"><sc-for list="{{tiles}}" as="t" hint-placeholder-count="8"><span class="tile"></span></sc-for></div>
+<div class="bar clue" style="height:64px;border-radius:14px;flex:none" aria-hidden="true"></div>
+<div class="pups" aria-hidden="true"><span class="pup"></span><span class="pup"></span><span class="pup"></span><span class="pup"></span></div>
+<div class="keys" aria-hidden="true"><sc-for list="{{rows}}" as="r" hint-placeholder-count="3"><div class="krow"><sc-for list="{{r}}" as="k" hint-placeholder-count="10"><span class="key"></span></sc-for></div></sc-for></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Mock state for this screen. Swap the token block for another theme; the markup never changes.
+    return {"tokens":"--bg:#2A0710;--panel:#3A0B15;--border:#7A2633;--accent:#F2B33D;--text:#FFF4DC;--muted:#F7D9A0;--scene-bg:#1A0409;--scene-border:3px dotted #F2B33D","eyebrow":"FILMY","line":"Run khul raha hai…","a11y":"Loading your run","iconOpacity":1,"dots":[0.4,1,0.4],"tiles":[1,1,1,1,1,1,1,1],"rows":[[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1]]};
+  }
+}
+</script>
+</body>
+</html>

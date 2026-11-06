@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Motion storyboard: Motion-Default</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&amp;family=Yatra+One&amp;display=swap">
+<style>
+/* Storyboard sheet for #109 (motion). Frames are 84x182 minis of the real screens, drawn from the theme tokens in src/themes/themes.ts.
+   The sheet itself is a neutral design board, not an app screen. Labels sit outside the frames; nothing is written inside a frame. */
+body{margin:0;background:#121014}
+.root{width:390px;box-sizing:border-box;padding:12px 12px 14px;display:flex;flex-direction:column;gap:10px;background:#121014;color:#F4EFE6;font-family:'Mukta',system-ui,sans-serif;overflow:hidden}
+.ttl{font-family:'Yatra One',serif;font-size:21px;line-height:1.15;color:#F2B33D}
+.sub{font-size:12.5px;line-height:1.3;color:#D6CEC2}
+.row{display:flex;flex-direction:column;gap:4px;flex:none}
+.rh{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.rn{font-size:13.5px;font-weight:800;line-height:1.2}
+.rm{font-size:11px;font-weight:700;line-height:1.2;color:#F2B33D;text-align:right}
+.frames{display:flex;justify-content:space-between}
+.fc{display:flex;flex-direction:column;align-items:center;gap:2px}
+.mini{width:78px;height:169px}.mini-lg{width:116px;height:251px}
+.ft{font-size:11px;font-weight:700;line-height:1.2;color:#D6CEC2}
+.rnote{font-size:11.5px;line-height:1.3;color:#D6CEC2}
+.notes{margin-top:auto;display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid #3A3430;border-radius:10px;flex:none}
+.note{font-size:11.5px;line-height:1.3;color:#D6CEC2}
+@media (max-height:779px){.mini{width:74px;height:160px}.tall-only{display:none!important}.root{gap:6px;padding:8px 12px 8px}.rnote{display:none}}
+</style>
+</helmet>
+<div class="root">
+<div style="display:flex;flex-direction:column;gap:2px;flex:none"><span class="ttl">{{title}}</span><span class="sub">{{subtitle}}</span></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+<div class="row">
+<sc-if value="{{r.name}}" hint-placeholder-val="{{true}}"><div class="rh"><span class="rn">{{r.name}}</span><span class="rm">{{r.meta}}</span></div></sc-if>
+<div class="frames">
+<sc-for list="{{r.frames}}" as="f" hint-placeholder-count="4">
+<div class="fc">
+<div class="{{f.cls}}" style="{{f.box}}" role="img" aria-label="{{f.t}}">
+<sc-for list="{{f.layers}}" as="l" hint-placeholder-count="2"><div style="{{l.s}}"><sc-for list="{{l.kids}}" as="k" hint-placeholder-count="8"><div style="{{k.s}}"><sc-if value="{{k.ic}}" hint-placeholder-val="{{false}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{k.ics}}"><sc-if value="{{k.filmy}}" hint-placeholder-val="{{false}}"><rect x="3" y="9.5" width="18" height="11" rx="1.5"></rect><path d="M3.2 9.2L19.8 4.6l.8 3L4 12.2z"></path><path d="M8.3 7.8l2.4 2.9M13.4 6.4l2.4 2.9"></path></sc-if><sc-if value="{{k.khana}}" hint-placeholder-val="{{false}}"><path d="M3 12h18a9 7.5 0 0 1-18 0z"></path><path d="M8 3.5c-1.2 1.5 1.2 2.5 0 4.5M12 2.5c-1.2 1.5 1.2 2.5 0 4.5M16 3.5c-1.2 1.5 1.2 2.5 0 4.5"></path></sc-if><sc-if value="{{k.safar}}" hint-placeholder-val="{{false}}"><rect x="5" y="3" width="14" height="14" rx="3"></rect><path d="M5 10h14"></path><circle cx="9" cy="13.5" r="1"></circle><circle cx="15" cy="13.5" r="1"></circle><path d="M8 17l-2 4M16 17l2 4"></path></sc-if><sc-if value="{{k.cricket}}" hint-placeholder-val="{{false}}"><path d="M15 3l3 3-9 9-3-3z"></path><path d="M6 12l-3 3 3 3 3-3"></path><circle cx="18" cy="18" r="2.6"></circle></sc-if><sc-if value="{{k.tyohar}}" hint-placeholder-val="{{false}}"><path d="M3 14c2.5 5.5 15.5 5.5 18 0z"></path><path d="M12 3.5c2.2 3 2.6 5.2 0 7.8-2.6-2.6-2.2-4.8 0-7.8z"></path></sc-if><sc-if value="{{k.masala}}" hint-placeholder-val="{{false}}"><path d="M17 3.5c-.8.3-1.4 1.1-1.4 2"></path><path d="M15.6 5.5c3.3.6 3.8 5 .6 8.4-3 3.2-7.6 5.3-12.2 5.6 3.6-2.2 5.5-5.2 6.5-8.2 1-3 2.9-5.6 5.1-5.8z"></path></sc-if></svg></sc-if></div></sc-for></div></sc-for>
+</div>
+<span class="ft">{{f.t}}</span>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{r.note}}" hint-placeholder-val="{{true}}"><span class="rnote">{{r.note}}</span></sc-if>
+</div>
+</sc-for>
+<sc-if value="{{notes.length}}" hint-placeholder-val="{{true}}"><div class="notes tall-only"><sc-for list="{{notes}}" as="n" hint-placeholder-count="2"><span class="note">• {{n}}</span></sc-for></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Mini-frame builder shared by the motion storyboards (same block in each Motion-*.dc.html).
+    // Shared builder: pasted verbatim into each sheet's renderVals so every .dc.html stays standalone.
+    const T = {
+     filmy:{name:'Filmy',bg:'#2A0710',panel:'#3A0B15',border:'#7A2633',accent:'#F2B33D',text:'#FFF4DC',muted:'#F7D9A0',scene:'#1A0409',primary:'#F28C28',card:'#FFF4DC'},
+     khana:{name:'Khana',bg:'#2B1606',panel:'#3D200B',border:'#6B3A16',accent:'#F2B705',text:'#FFF4DC',muted:'#F6DFA8',scene:'#2E1A0C',primary:'#F2B705',card:'#FFF4DC'},
+     safar:{name:'Safar',bg:'#0F1E3D',panel:'#1A2C55',border:'#2F4A80',accent:'#F5A524',text:'#F4F1E8',muted:'#CFE0FF',scene:'#18305E',primary:'#F5A524',card:'#F4F1E8'},
+     cricket:{name:'Cricket',bg:'#0B2A1A',panel:'#12402A',border:'#1F6B45',accent:'#E9F07A',text:'#F4F1E8',muted:'#CDEBD5',scene:'#0A1F2E',primary:'#E9F07A',card:'#F4F1E8'},
+     tyohar:{name:'Tyohar',bg:'#2A0E3A',panel:'#3B1652',border:'#6A2C8C',accent:'#FF9F1C',text:'#FFF4E6',muted:'#F3D6FF',scene:'#2A0E3A',primary:'#FF9F1C',card:'#FFF4E6'},
+     masala:{name:'Masala Mix',bg:'#1E1A17',panel:'#2C2621',border:'#4A3F35',accent:'#F2B705',text:'#FFF4DC',muted:'#EAD9C0',scene:'#2C2621',primary:'#F2B705',card:'#FFF4DC'}
+    };
+    const ORDER=['filmy','khana','safar','cricket','tyohar','masala'];
+    const r=(x,y,w,h,e)=>({s:'position:absolute;left:'+x+'%;top:'+y+'%;width:'+w+'%;height:'+h+'%;box-sizing:border-box;'+(e||'')});
+    const bgK=(t)=>r(0,0,100,100,'background:'+t.bg);
+    function header(t,ghost){const k=[r(4,2.2,10,4.6,'border-radius:50%;background:'+t.panel+';border:1px solid '+t.border),r(38,2.4,24,1.1,'border-radius:2px;background:'+t.accent),r(30,4.4,40,1.8,'border-radius:2px;background:'+(ghost?t.border:t.text))];
+     if(!ghost)k.push(r(72,2.8,24,3.6,'border-radius:8px;background:'+t.accent));return k;}
+    function scene(t,y,h,icon){const k=[r(3,y,94,h,'border-radius:6px;background:'+t.scene+';border:1.5px '+(t===T.filmy?'dotted ':'solid ')+(t===T.filmy?t.accent:t.border))];
+     if(icon){k.push(Object.assign(r(36,y+h/2-6,28,12,'display:flex;align-items:center;justify-content:center;color:'+t.accent),{ic:true,ics:'width:70%;height:70%',[icon]:true}));return k;}
+     k.push(r(3.6,y+h*0.72,92.8,h*0.25,'border-radius:0 0 5px 5px;background:'+t.border));
+     k.push(r(46,y+h*0.22,7,3.2,'border-radius:50%;background:'+t.text));
+     k.push(r(48.8,y+h*0.22+3,1.4,h*0.38,'background:'+t.text));
+     k.push(r(80,y+h*0.12,6,2.8,'border-radius:50%;background:'+t.text+';opacity:.8'));return k;}
+    function tiles(t,y,ghost,filled){const k=[];for(let i=0;i<8;i++){const on=!ghost&&(filled?true:[1,3,4,6].includes(i));k.push(r(4+i*11.6,y,9.6,4.4,'border-radius:2px;background:'+(on?t.card:t.panel)+';border-bottom:1.5px solid '+(ghost?t.border:t.accent)));}return k;}
+    function keys(t,y,ghost,hit){const k=[];[10,9,7].forEach((n,row)=>{const w=8.4,g=1.3,tot=n*w+(n-1)*g,x0=(100-tot)/2;for(let i=0;i<n;i++){const isHit=hit&&row===1&&i===0;k.push(r(x0+i*(w+g),y+row*7,w,5.6,'border-radius:2px;background:'+(ghost?t.panel:(isHit||(row===0&&i===6)?t.accent:t.text))+(ghost?';border:1px solid '+t.border:'')));}});return k;}
+    const SCR={
+     home(t){const F=T.filmy;const k=[r(18,6,64,4,'border-radius:3px;background:'+F.accent),r(16,11.6,68,1.3,'border-radius:2px;background:'+F.muted),r(4,16,30,1.1,'background:'+F.accent)];
+      ORDER.forEach((id,i)=>{const c=T[id],x=4+(i%2)*47,y=19+Math.floor(i/2)*22;k.push(r(x,y,45,20,'border-radius:6px;background:'+c.panel+';border:1px solid '+c.border));k.push(r(x+4,y+3,10,4.6,'border-radius:50%;background:'+c.accent));k.push(r(x+4,y+10,26,2,'border-radius:2px;background:'+c.text));k.push(r(x+4,y+14,32,1.3,'border-radius:2px;background:'+c.muted));});return k;},
+     picker(t){let k=header(t,true).slice(0,2).concat([r(30,4.4,40,1.8,'border-radius:2px;background:'+t.text)]);k=k.concat(scene(t,9.5,23));k.push(r(3,34.6,30,1.1,'background:'+t.accent));
+      for(let i=0;i<3;i++){const y=37.5+i*14;k.push(r(3,y,94,12,'border-radius:6px;background:'+t.panel+';border:'+(i===1?'1.5px solid '+t.accent:'1px solid '+t.border)));k.push(r(7,y+2.2,24,2.4,'border-radius:2px;background:'+t.text));k.push(r(7,y+6.2,36,1.3,'border-radius:2px;background:'+t.muted));k.push(r(84,y+3.6,8,3.7,'border-radius:50%;background:'+t.accent));}
+      k.push(r(18,91,64,1.3,'border-radius:2px;background:'+t.muted));return k;},
+     game(t,o){o=o||{};let k=header(t).concat([r(3,9,70,1,'background:'+t.accent),r(74,9,23,1,'background:'+t.border)]).concat(scene(t,11.5,23)).concat(tiles(t,37.5,false,o.solved));
+      k.push(r(3,45.5,94,10,'border-radius:6px;background:'+t.panel+';border:1px solid '+t.border));k.push(r(7,48.5,50,1.4,'border-radius:2px;background:'+t.text));k.push(r(7,51.5,36,1.4,'border-radius:2px;background:'+t.muted));
+      for(let i=0;i<4;i++)k.push(r(3+i*24.3,69,22.5,6,'border-radius:4px;background:'+t.panel+';border:1px solid '+t.border));return k.concat(keys(t,77.5,false,o.hit));},
+     flop(t){let k=header(t).concat(scene(t,9.5,27));k.push(r(16,38.4,68,6,'border-radius:4px;border:2px solid #FF5A64;transform:rotate(-4deg)'));k.push(r(24,40.4,52,2,'border-radius:2px;background:#FF5A64;transform:rotate(-4deg)'));
+      k=k.concat(tiles(t,48,false,true));k.push(r(3,57,94,15,'border-radius:6px;background:'+t.panel+';border:1px solid '+t.border));k.push(r(3,80,94,6.5,'border-radius:5px;background:'+t.primary));k.push(r(3,89,94,6,'border-radius:5px;border:1.5px solid '+t.accent));return k;},
+     loading(t){let k=header(t,true).concat([r(3,9,94,1,'background:'+t.border)]).concat(scene(t,11.5,23,t.id));k.push(r(20,37.4,60,1.8,'border-radius:2px;background:'+t.text));
+      for(let i=0;i<3;i++)k.push(r(43.5+i*5,40.6,3,1.4,'border-radius:50%;background:'+t.accent+';opacity:'+(i===1?1:.4)));
+      k=k.concat(tiles(t,44,true));k.push(r(3,51.5,94,9,'border-radius:6px;background:'+t.panel+';border:1px solid '+t.border));
+      for(let i=0;i<4;i++)k.push(r(3+i*24.3,69,22.5,6,'border-radius:4px;background:'+t.panel+';border:1px solid '+t.border));return k.concat(keys(t,77.5,true));}
+    };
+    ORDER.forEach(id=>T[id].id=id);
+    // A layer: a screen (or overlay) as a group with its own transform/clip/opacity.
+    function L(kids,style){return{s:'position:absolute;inset:0;'+(style||''),kids:kids};}
+    function S(kind,t,style,o){return L([bgK(t)].concat(SCR[kind](t,o)),style);}
+    function C(kind,t,style,o){return L(SCR[kind](t,o),style);} // content only, no background
+    const BOX='';
+    function F(t,layers,box){return{t:t,box:'position:relative;overflow:hidden;border-radius:10px;outline:1px solid #3A3430;'+(box||BOX),cls:box?'mini-lg':'mini',layers:layers};}
+    const tap=(x,y)=>r(x,y,14,6.5,'border-radius:50%;border:2px solid #FFFFFF;box-shadow:0 0 0 2px rgba(0,0,0,.6);background:rgba(255,255,255,.25)');
+    
+    
+    
+    
+    const cr=(x,y,w,h,e)=>{const a=Math.max(x,0),b=Math.min(x+w,100);return b<=a?r(0,0,0,0,'display:none'):r(a,y,b-a,h,e);};
+    
+    // Each spec returns {title, subtitle, rows:[{name,meta,note,frames}], notes:[]}
+    const SPECS = {};
+    SPECS['Motion-Default'] = function(){
+     const F_=T.filmy,s=T.safar;
+     const slide=(oldK,oldT,newK,newT,steps)=>steps.map(([t,ox,sc,nx])=>F(t,[S(oldK,oldT,'transform:translateX('+ox+'%)'),L([r(0,0,100,100,'background:#000;opacity:'+sc)]),S(newK,newT,'transform:translateX('+nx+'%);box-shadow:-6px 0 12px rgba(0,0,0,.45)')]));
+     const st=[['0 ms',0,0,100],['90 ms',-10,.15,55],['170 ms',-22,.3,14],['260 ms',-30,.4,0]];
+     return {title:'Default transition: slide-over',subtitle:'Home and neutral screens. 260 ms forward, 220 ms back. Ease-out (0.2, 0, 0, 1).',
+     rows:[
+      {name:'Home → Safar picker',meta:'route push · 260 ms',note:'The new screen is opaque from its first frame and slides over. Only the two screens\' own colours ever show.',frames:slide('home',F_,'picker',s,st)},
+      {name:'Picker → run',meta:'route push · 260 ms',note:'Same slide until #115 swaps in the theme\'s own transition here.',frames:slide('picker',s,'game',s,st)},
+      {name:'Game → flop (and milestone)',meta:'in-screen · 240 ms',note:'Starts at the end of the 900 ms hold. The background never changes; the new content fades in and rises 2%.',frames:[
+       F('0 ms',[L([bgK(s)]),C('game',s)]),
+       F('80 ms',[L([bgK(s)]),C('game',s,'opacity:.35'),C('flop',s,'opacity:.2;transform:translateY(3%)')]),
+       F('160 ms',[L([bgK(s)]),C('flop',s,'opacity:.7;transform:translateY(1.5%)')]),
+       F('240 ms',[L([bgK(s)]),C('flop',s)])]}
+     ],
+     notes:[]};
+    };
+    SPECS['Motion-Themed-1'] = function(){
+     const f=T.filmy,k=T.khana,s=T.safar;
+     const curtain=(t,w)=>L([r(0,0,w,100,'background:repeating-linear-gradient(90deg,#4A0E1A 0 4px,#7A2633 4px 7px,#5A1420 7px 10px);border-right:'+(w>0?'1.5px solid '+t.accent:'0')),r(100-w,0,w,100,'background:repeating-linear-gradient(90deg,#5A1420 0 3px,#7A2633 3px 6px,#4A0E1A 6px 10px);border-left:'+(w>0?'1.5px solid '+t.accent:'0')),r(0,0,100,6.5,'background:'+t.panel+';border-bottom:2px solid '+t.accent)]);
+     const plate=(t,top)=>{const cy=top+39.3;const yp=(top/100*173+68).toFixed(1);return L([r(0,0,100,100,'background:radial-gradient(circle at 50% '+yp+'px,'+t.panel+' 0 58px,'+t.bg+' 58px 63px,'+t.accent+' 63px 67px,transparent 67px)'),r(22,cy-14,20,9.2,'border-radius:50%;background:'+t.bg+';border:2px solid '+t.accent),r(56,cy-17,20,9.2,'border-radius:50%;background:'+t.bg+';border:2px solid '+t.accent),r(37,cy-2,26,12,'border-radius:50%;background:'+t.border+';border:2px solid '+t.muted)]);};
+     const train=(t,x)=>L([cr(x,0,75,100,'background:'+t.panel+';border-left:2px solid '+t.accent+';border-radius:22px 0 0 22px'),cr(x+5,0,2,100,'background:'+t.accent),
+      cr(x+14,6,20,88,'border-radius:3px;background:repeating-linear-gradient(180deg,'+t.bg+' 0 9px,'+t.border+' 9px 15px);box-shadow:inset 0 0 0 1.5px '+t.accent),cr(x+44,6,20,88,'border-radius:3px;background:repeating-linear-gradient(180deg,'+t.bg+' 0 9px,'+t.border+' 9px 15px);box-shadow:inset 0 0 0 1.5px '+t.accent),
+      cr(x+1.5,45,5,6,'border-radius:50%;background:'+t.text)]);
+     return {title:'Themed transitions 1 of 2',subtitle:'Picker → run, game → milestone and game → flop. Cap 400 ms. Back uses the default slide.',
+     rows:[
+      {name:'Filmy · curtain',meta:'360 ms · in 0–160 ease-in, out 160–360 ease-out',note:'Velvet curtains close under a gold pelmet, then open on the new screen.',frames:[
+       F('0 ms',[S('picker',f),curtain(f,4)]),F('160 ms',[S('game',f),curtain(f,50)]),F('260 ms',[S('game',f),curtain(f,22)]),F('360 ms',[S('game',f)])]},
+      {name:'Khana · thali',meta:'320 ms · ease-in-out',note:'A thali with katoris rises from the bottom and clears off the top, uncovering the new screen.',frames:[
+       F('0 ms',[S('game',k),S('picker',k,'clip-path:inset(0 0 8% 0)'),plate(k,92)]),F('110 ms',[S('game',k),S('picker',k,'clip-path:inset(0 0 55% 0)'),plate(k,45)]),F('200 ms',[S('game',k),plate(k,-14)]),F('320 ms',[S('game',k)])]},
+      {name:'Safar · train wipe',meta:'340 ms · ease-in-out',note:'A coach sweeps right to left. The new screen is uncovered behind it.',frames:[
+       F('0 ms',[S('game',s),S('picker',s,'clip-path:inset(0 12% 0 0)'),train(s,88)]),F('120 ms',[S('game',s),S('picker',s,'clip-path:inset(0 70% 0 0)'),train(s,30)]),F('220 ms',[S('game',s),train(s,-25)]),F('340 ms',[S('game',s)])]}
+     ],notes:[]};
+    };
+    SPECS['Motion-Themed-2'] = function(){
+     const c=T.cricket,ty=T.tyohar,m=T.masala;
+     const band=(t,a,b,cc,d)=>L([r(0,0,100,100,'background:'+t.panel+';clip-path:polygon(0 '+a+'%,100% '+b+'%,100% '+d+'%,0 '+cc+'%)'),r(0,0,100,100,'background:'+t.accent+';clip-path:polygon(0 '+a+'%,100% '+b+'%,100% '+(b+2)+'%,0 '+(a+2)+'%)'),r(0,0,100,100,'background:'+t.text+';opacity:.5;clip-path:polygon(0 '+(cc-3)+'%,100% '+(d-3)+'%,100% '+(d-2)+'%,0 '+(cc-2)+'%)')]);
+     const ball=(x,y)=>r(x-5,y-2.3,10,4.6,'border-radius:50%;background:linear-gradient(60deg,#F4F1E8 44%,#1F6B45 44% 56%,#F4F1E8 56%);border:1px solid #1F6B45');
+     const above=(a,b)=>'clip-path:polygon(0 0,100% 0,100% '+b+'%,0 '+a+'%)';
+     const below=(a,b)=>'clip-path:polygon(0 '+a+'%,100% '+b+'%,100% 100%,0 100%)';
+     const bloom=(t,sc,rot,op)=>{const kids=[r(10,10,80,80,'border-radius:50%;background:'+t.panel+';border:2px solid '+t.accent)];for(let i=0;i<8;i++)kids.push(r(42,33,16,34,'border-radius:50%;background:'+t.border+';border:1.5px solid '+t.accent+';transform:rotate('+(i*45)+'deg) translateY(-62%)'));kids.push(r(42,42,16,16,'border-radius:50%;background:'+t.accent));for(let i=0;i<8;i++)kids.push(r(48,48,4,4,'border-radius:50%;background:'+t.muted+';transform:rotate('+(i*45+22.5)+'deg) translateY(-900%)'));
+      return {s:'position:absolute;left:0;top:50%;width:100%;aspect-ratio:1;transform:translateY(-50%) scale('+sc+') rotate('+rot+'deg);opacity:'+op,kids:kids};};
+     const strip=(t,y)=>L([r(0,y,100,6,'background:'+t.panel+';border-top:1.5px solid '+t.accent+';border-bottom:1.5px solid '+t.accent),r(0,y+1,100,1.2,'background:repeating-linear-gradient(90deg,'+t.accent+' 0 4px,transparent 4px 9px)'),r(0,y+3.8,100,1.2,'background:repeating-linear-gradient(90deg,'+t.accent+' 0 4px,transparent 4px 9px)')]);
+     return {title:'Themed transitions 2 of 2',subtitle:'Same rules: cap 400 ms, plays once, the new screen takes taps from 0 ms.',
+     rows:[
+      {name:'Cricket · cover drive',meta:'320 ms · ease-out',note:'A ball races up the pitch on a diagonal; the turf band behind it uncovers the new screen.',frames:[
+       F('0 ms',[S('game',c),S('picker',c,above(88,113)),band(c,88,113,130,150),ball(10,90.5)]),F('120 ms',[S('game',c),S('picker',c,above(40,75)),band(c,40,75,130,150),ball(50,57.5)]),F('200 ms',[S('game',c,below(48,83)),S('picker',c,above(-15,20)),band(c,-15,20,48,83),ball(86,15)]),F('320 ms',[S('game',c)])]},
+      {name:'Tyohar · rangoli bloom',meta:'360 ms · ease-out',note:'A rangoli opens from the centre and turns an eighth, then fades off the new screen.',frames:[
+       F('0 ms',[S('picker',ty),bloom(ty,.18,0,1)]),F('120 ms',[S('picker',ty),bloom(ty,1,15,1)]),F('220 ms',[S('game',ty),L([r(0,0,100,100,'background:radial-gradient(circle at 50% 50%,'+ty.panel+' 0 70%,'+ty.border+' 70% 74%,'+ty.accent+' 74% 76%,'+ty.panel+' 76%)')],'opacity:.85'),bloom(ty,1,30,.85)]),F('360 ms',[S('game',ty)])]},
+      {name:'Masala Mix · reel roll',meta:'300 ms · ease-out, 3% overshoot',note:'Like the reel: both screens roll up on a film strip, the new one settles with a small bounce.',frames:[
+       F('0 ms',[S('picker',m)]),F('100 ms',[S('picker',m,'transform:translateY(-45%)'),strip(m,55),S('game',m,'transform:translateY(61%)')]),F('200 ms',[S('game',m,'transform:translateY(-3%)')]),F('300 ms',[S('game',m)])]}
+     ],notes:[]};
+    };
+    SPECS['Motion-Rules'] = function(){
+     const f=T.filmy,s=T.safar,F_=T.filmy;
+     const curtain=(t,w)=>L([r(0,0,w,100,'background:repeating-linear-gradient(90deg,#4A0E1A 0 4px,#7A2633 4px 7px,#5A1420 7px 10px);border-right:1.5px solid '+t.accent),r(100-w,0,w,100,'background:repeating-linear-gradient(90deg,#5A1420 0 3px,#7A2633 3px 6px,#4A0E1A 6px 10px);border-left:1.5px solid '+t.accent),r(0,0,100,6.5,'background:'+t.panel+';border-bottom:2px solid '+t.accent)]);
+     return {title:'Reduce motion, taps and back',subtitle:'One fallback for every transition, and the arriving screen is always live.',
+     rows:[
+      {name:'Reduce motion · any transition',meta:'150 ms fade, linear',note:'The background cuts to the new screen\'s colour on the first frame; only the content fades in. Same in all six themes.',frames:[
+       F('0 ms',[S('home',F_)]),F('1st frame',[L([bgK(s)]),C('picker',s,'opacity:.08')]),F('75 ms',[L([bgK(s)]),C('picker',s,'opacity:.5')]),F('150 ms',[S('picker',s)])]},
+      {name:'Tap during a transition',meta:'the tap wins',note:'A tap on the arriving screen jumps the transition to its end on the next frame and is taken at once. A second tap on a nav button is ignored.',frames:[
+       F('120 ms · tap',[S('game',f),curtain(f,40),L([tap(3.5,82)])]),F('next frame',[S('game',f,'',{hit:true})]),F('tap, tap',[S('picker',f),L([tap(80,49.5),tap(70,53)])]),F('one push',[S('game',f)])]},
+      {name:'Back · every screen',meta:'220 ms · ease-out',note:'Back always uses the default slide in reverse, so the system back gesture and the browser back button feel the same.',frames:[
+       F('0 ms',[S('game',s)]),F('70 ms',[S('picker',s,'transform:translateX(-20%)'),L([r(0,0,100,100,'background:#000;opacity:.3')]),S('game',s,'transform:translateX(40%);box-shadow:-6px 0 12px rgba(0,0,0,.45)')]),F('150 ms',[S('picker',s,'transform:translateX(-6%)'),L([r(0,0,100,100,'background:#000;opacity:.1')]),S('game',s,'transform:translateX(86%);box-shadow:-6px 0 12px rgba(0,0,0,.45)')]),F('220 ms',[S('picker',s)])]}
+     ],notes:[]};
+    };
+    SPECS['Motion-Loading-Themes'] = function(){
+     const BX='width:116px;height:251px';
+     const fr=id=>F(T[id].name,[S('loading',T[id])],BX);
+     return {title:'Loading state in each theme',subtitle:'Shown only when a saved run or challenge takes over 300 ms. Same layout, theme tokens only.',
+     rows:[{name:'',meta:'',note:'',frames:['filmy','khana','safar'].map(fr)},{name:'',meta:'',note:'Icon in the empty scene frame (no words in the scene); the line and dots sit below it.',frames:['cricket','tyohar','masala'].map(fr)}],
+     notes:['Timing: wait 300 ms before showing it; once shown, keep it at least 400 ms so it never blinks.','Icon breathes between 60% and 100% opacity over 1.6 s; the dots step every 400 ms. Both well under 3 changes a second.','Back stays live the whole time.','Reduce motion: the icon and dots stand still (all three dots full).','Still loading after 8 s: the line swaps to the slow-net line; nothing else changes.']};
+    };
+    
+    return SPECS["Motion-Default"]();
+  }
+}
+</script>
+</body>
+</html>
