@@ -13,7 +13,7 @@ import { displayAnswer } from '@/game/answer';
 import { lifeMarks } from '@/game/difficulty';
 import { clubLong, clubShort, ladder } from '@/game/milestones';
 import type { RunState } from '@/game/run';
-import { ladderOf, type SavedRules } from '@/game/runSnapshot';
+import { bestToShow, ladderOf, type SavedRules } from '@/game/runSnapshot';
 import type { Word } from '@/game/types';
 import type { Best } from '@/lib/storage';
 import { challengeUrl } from '@/lib/share';
@@ -50,8 +50,7 @@ export function FlopView({ theme, run, best, isNewBest, onRestart, onChangeDiffi
   const reached = rungs.reached(run.hits);
   const progress = rungs.progress(run.hits);
   const miss = nearMiss(clubLong(progress.to), progress.remaining);
-  const bestHits = Math.max(best?.hits ?? 0, run.hits);
-  const bestClub = rungs.reached(bestHits);
+  const shownBest = bestToShow(best, run.hits, reached?.crore ?? null);
   const Scene = theme.scenes.Lose;
 
   return (
@@ -87,8 +86,8 @@ export function FlopView({ theme, run, best, isNewBest, onRestart, onChangeDiffi
         <Stat label={ui.thisRun} value={ui.hits(run.hits)} sub={reached ? clubLong(reached) : ui.noClub} theme={theme} />
         <Stat
           label={isNewBest ? ui.newBest.toUpperCase() : ui.yourBest(run.difficulty)}
-          value={ui.hits(bestHits)}
-          sub={bestClub ? clubLong(bestClub) : ui.noClub}
+          value={ui.hits(shownBest.hits)}
+          sub={shownBest.club !== null ? clubLong({ crore: shownBest.club }) : ui.noClub}
           theme={theme}
         />
       </View>

@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MAX_WIDTH } from '@/components/Screen';
 import { Txt } from '@/components/Txt';
 import { GAME_NAME, home } from '@/copy/strings';
-import { clubShort, ladder } from '@/game/milestones';
+import { clubShort } from '@/game/milestones';
 import type { ThemeId } from '@/game/types';
 import type { BestScore } from '@/game/runSnapshot';
 import { bestForTheme } from '@/lib/runController';
@@ -57,7 +57,7 @@ export default function Home() {
           {THEME_ORDER.map((id) => {
             const t = THEMES[id];
             const best = bests[id];
-            const club = best ? ladder.reached(best.hits) : null;
+            const club = best?.club != null ? { crore: best.club } : null;
             return (
               <Pressable
                 key={id}

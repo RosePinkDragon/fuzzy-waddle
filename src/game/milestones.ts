@@ -99,11 +99,11 @@ export interface Progress {
 export const ladder = new Ladder();
 
 /** "100 Cr Club" — for badges and the progress row. */
-export function clubShort(club: Club): string {
+export function clubShort(club: Pick<Club, 'crore'>): string {
   return `${club.crore} Cr Club`;
 }
 
 /** "100 Crore Club" — for headings and sentences. */
-export function clubLong(club: Club): string {
+export function clubLong(club: Pick<Club, 'crore'>): string {
   return `${club.crore} Crore Club`;
 }
