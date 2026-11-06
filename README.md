@@ -25,6 +25,8 @@ npx expo export --platform web   # static web build in dist/
 
 The web build is a single-page app (`web.output: "single"`). Whatever hosts `dist/` must serve `index.html` for every path, so `/c/<wordId>` challenge links work.
 
+**Live site:** https://hangman-desi.vercel.app. Vercel deploys every merge to main there, and posts a preview link on every pull request. `vercel.json` sets the build (`RELEASE_BUILD=1 npx expo export -p web`, so the release-mode guard on test switches applies) and rewrites every path to the single-page app.
+
 ### Test builds
 
 Two build-time switches exist for testing only. Release builds refuse them: a build with `RELEASE_BUILD=1`, or an EAS build on the `preview` or `production` profile, fails in `app.config.ts` if either one is set to any non-empty value (see `src/lib/releaseGuard.ts`).
@@ -54,10 +56,10 @@ src/
     themes.ts          the six themes
     scenes/ported/     scene art ported from the mockups (generated, see below)
   copy/strings.ts      every line of copy, including all themed lines
-  config/game.json     game name, web domain and bundle IDs (placeholders)
+  config/game.json     game name, web origin and bundle IDs (name and bundle IDs are placeholders)
   components/          shared UI
   screens/             game, milestone and run-over screens
-  hooks/useRun.ts      connects the game logic to the screens: bag and best-score storage, haptics
+  hooks/useRun.ts      connects a saved run (lib/runController) to the run screen: app lifecycle, haptics, the Masala Mix reel
 scripts/port-scenes.js converts the mockup SVG scenes into react-native-svg components
 ```
 
@@ -115,18 +117,16 @@ No new screens are needed.
   - the Play service-account key and App Store Connect API key stored in EAS
   - real bundle IDs in `src/config/game.json`
   - the App Store Connect app ID in `eas.json`
-  - a web host for `dist/`
   - a GitHub `production` environment with reviewers
 
-  Its header comment lists the triggers to switch on: merge to main for web and preview builds, and a release tag for production.
+  Its header comment lists the triggers to switch on: merge to main for preview builds, and a release tag for production. It has no web job, because Vercel deploys the web version (see `vercel.json`).
 - `eas.json` has a `preview` profile (Play internal testing and TestFlight) and a `production` profile.
 
 ## Flagged for design review
 
-These three screens have no mockups. They are built in the same visual language and need a designer's eye:
+These two screens have no mockups. They are built in the same visual language and need a designer's eye. (The difficulty picker is designed: `design/screens/Resume-*.png`, #57.)
 
 - **Home** (category picker): 2×3 grid of themed cards with each category's glyph and your best score.
-- **Difficulty picker**: the theme's scene, then three cards, each with its lives and clue rules, a preview of the lives sign (locked marks drawn faint) and your best.
 - **Challenge landing** (`/c/<wordId>?from=<name>`): "<name> ne challenge kiya!", then a one-word game, then a result screen with "Challenge back" and "Play a full run".
 
 ## Decisions made while building (please check)
@@ -148,7 +148,7 @@ These three screens have no mockups. They are built in the same visual language 
 
 ## What's left
 
-- Name, store accounts and web domain (see open decisions). The bundle IDs `com.placeholder.hangman` and the domain `example.com` are placeholders.
+- Name and store accounts (see open decisions). The bundle IDs `com.placeholder.hangman` are placeholders. The web origin is the confirmed production address, `https://hangman-desi.vercel.app`.
 - Word bank review: every entry is a draft written for this build; facts were checked from memory, so a fan review is still needed, as the brief says. Copy lines are also waiting on that review.
 - App icon and splash art: the template's placeholder images are still in `assets/images/`.
 - Universal and app links for `/c/...` (later, per the brief).
@@ -161,4 +161,4 @@ These three screens have no mockups. They are built in the same visual language 
 
 - **Name:** Tukka, Bachao!, Akkad Bakkad or Guess Karo. Set it in `src/config/game.json`.
 - **Account owner:** whose name the store accounts go under.
-- **Web domain:** goes in `src/config/game.json` (`webOrigin`) and is used for challenge links from the native apps.
+- **Custom web domain:** optional later. The live address is in `src/config/game.json` (`webOrigin`), used for challenge links from the native apps. Change it there if the Vercel project is renamed or given a domain.

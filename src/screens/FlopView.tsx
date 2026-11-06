@@ -13,6 +13,7 @@ import { displayAnswer } from '@/game/answer';
 import { lifeMarks } from '@/game/difficulty';
 import { clubLong, clubShort, ladder } from '@/game/milestones';
 import type { RunState } from '@/game/run';
+import { ladderOf, type SavedRules } from '@/game/runSnapshot';
 import type { Word } from '@/game/types';
 import type { Best } from '@/lib/storage';
 import { challengeUrl } from '@/lib/share';
@@ -37,17 +38,20 @@ interface FlopViewProps {
   onChangeDifficulty: () => void;
   onBack: () => void;
   share: (build: (name: string) => string) => void;
+  /** The rules a saved run started under; without them the live rules apply. */
+  rules?: SavedRules;
 }
 
-export function FlopView({ theme, run, best, isNewBest, onRestart, onChangeDifficulty, onBack, share }: FlopViewProps) {
+export function FlopView({ theme, run, best, isNewBest, onRestart, onChangeDifficulty, onBack, share, rules }: FlopViewProps) {
   const { colors, copy } = theme;
   const { compact } = useScreenSize();
   const word = run.current!.word;
-  const reached = ladder.reached(run.hits);
-  const progress = ladder.progress(run.hits);
+  const rungs = rules ? ladderOf(rules) : ladder;
+  const reached = rungs.reached(run.hits);
+  const progress = rungs.progress(run.hits);
   const miss = nearMiss(clubLong(progress.to), progress.remaining);
   const bestHits = Math.max(best?.hits ?? 0, run.hits);
-  const bestClub = ladder.reached(bestHits);
+  const bestClub = rungs.reached(bestHits);
   const Scene = theme.scenes.Lose;
 
   return (
@@ -64,7 +68,7 @@ export function FlopView({ theme, run, best, isNewBest, onRestart, onChangeDiffi
         <Scene />
       </SceneBox>
 
-      <LivesSign marks={lifeMarks(run.difficulty, 99)} left={0} boxed={false} />
+      <LivesSign marks={lifeMarks(run.difficulty, 99, rules?.config.lives[run.difficulty])} left={0} boxed={false} />
 
       <View style={styles.center}>
         <Txt display size={26} lh={1.2} color={colors.text} align="center">

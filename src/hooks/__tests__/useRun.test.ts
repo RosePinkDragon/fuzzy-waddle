@@ -1,0 +1,604 @@
+/**
+ * `useRun` joins a saved run to the run route. These tests render the hook (RNTL `renderHook`) over a real
+ * run store on an in-memory storage, and "restart the app" by mounting again over a new store.
+ * They check the integration: no extra draw, no duplicate reward, no resurrected run, and that nothing but
+ * `run:*` documents is written.
+ */
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react-native';
+import * as Haptics from 'expo-haptics';
+import { StrictMode, createElement } from 'react';
+import { AppState } from 'react-native';
+
+import { newRun, recovery, ui, wordReplaced } from '@/copy/strings';
+import { ALPHABET, lettersOf } from '@/game/answer';
+import { seededRng } from '@/game/rng';
+import { startDoc } from '@/game/runSession';
+import { serializeDoc, settleBest } from '@/game/runSnapshot';
+import { emptyBag } from '@/game/shuffleBag';
+import { bankContent, BANK_WORDS, testEnv } from '@/game/__tests__/helpers';
+import type { Difficulty, ThemeId } from '@/game/types';
+import DifficultyPicker from '@/app/play/[theme]/index';
+import { markRecoveryShown, noteRecovery, pendingRecoveries, resetRecoveryRegistry, tapRecoveryCard } from '@/lib/runController';
+import { createRunStore, runStore, type RawStorage, type RunStore } from '@/lib/runStore';
+import { keys, type RawRead } from '@/lib/storage';
+
+import { useRun } from '../useRun';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+const mockRouter = { push: jest.fn(), replace: jest.fn() };
+let mockTheme = 'cricket';
+jest.mock('expo-router', () => {
+  const { useEffect } = jest.requireActual('react');
+  return {
+    useRouter: () => mockRouter,
+    useLocalSearchParams: () => ({ theme: mockTheme }),
+    useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
+    Redirect: () => null,
+  };
+});
+jest.mock('react-native-safe-area-context', () => jest.requireActual('react-native-safe-area-context/jest/mock').default);
+jest.mock('expo-haptics', () => ({
+  impactAsync: jest.fn(() => Promise.resolve()),
+  ImpactFeedbackStyle: { Medium: 'medium' },
+}));
+
+// A short ladder: the second word is the first boss round.
+beforeAll(() => {
+  process.env.EXPO_PUBLIC_TEST_LADDER = '1';
+});
+afterAll(() => {
+  delete process.env.EXPO_PUBLIC_TEST_LADDER;
+});
+beforeEach(() => {
+  resetRecoveryRegistry();
+  jest.clearAllMocks();
+});
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
+});
+
+const PAUSE = 1100;
+
+class FakeStorage implements RawStorage {
+  data = new Map<string, string>();
+  failWrites = false;
+  writes: string[] = [];
+
+  async read(key: string): Promise<RawRead> {
+    return { ok: true, raw: this.data.get(key) ?? null };
+  }
+
+  async write(key: string, raw: string): Promise<boolean> {
+    if (this.failWrites) return false;
+    this.data.set(key, raw);
+    this.writes.push(key);
+    return true;
+  }
+}
+
+/** A store over the storage that counts what reaches it. */
+function makeStore(storage: FakeStorage, seed = 1) {
+  const calls = { open: 0, act: [] as string[] };
+  const inner = createRunStore({
+    storage,
+    rng: seededRng(seed),
+    content: bankContent(BANK_WORDS),
+    newRunId: (() => {
+      let n = 0;
+      return () => `run-${seed}-${(n += 1)}`;
+    })(),
+  });
+  const store: RunStore = {
+    inspect: (t, d) => inner.inspect(t, d),
+    open: (t, d) => {
+      calls.open += 1;
+      return inner.open(t, d);
+    },
+    act: async (t, d, seen, action) => {
+      const result = await inner.act(t, d, seen, action);
+      calls.act.push(`${action.type}:${result.kind}`);
+      return result;
+    },
+  };
+  return { store, calls };
+}
+
+/** Mounts the hook on a store over `storage` (a new store is a restarted app) and waits for it to settle. */
+async function mount(storage: FakeStorage, { theme = 'filmy', difficulty = 'easy', seed = 1 }: { theme?: ThemeId; difficulty?: Difficulty; seed?: number } = {}) {
+  const { store, calls } = makeStore(storage, seed);
+  const hook = await renderHook(() => useRun(theme, difficulty, { store, pauseMs: PAUSE }));
+  await waitFor(() => expect(hook.result.current.phase).not.toBe('loading'));
+  return { hook, calls, store };
+}
+
+type Mounted = Awaited<ReturnType<typeof mount>>;
+const game = (m: Mounted) => m.hook.result.current;
+const answerOf = (m: Mounted) => game(m).run!.current!.word.answer;
+const press = (m: Mounted, letter: string) => act(async () => game(m).press(letter));
+const wrongLetters = (m: Mounted) => ALPHABET.filter((l) => !lettersOf(answerOf(m)).has(l));
+async function solve(m: Mounted) {
+  for (const l of lettersOf(answerOf(m))) await press(m, l);
+}
+
+describe('a run through the hook', () => {
+  it('resumes the same word and guesses after a remount, and writes only run documents', async () => {
+    const storage = new FakeStorage();
+    const first = await mount(storage);
+    const answer = answerOf(first);
+    await press(first, wrongLetters(first)[0]);
+    await press(first, [...lettersOf(answer)][0]);
+    const before = game(first).doc!;
+    await first.hook.unmount();
+
+    const second = await mount(storage, { seed: 7 });
+    expect(game(second).doc).toEqual(before);
+    expect(answerOf(second)).toBe(answer);
+    expect(second.calls.open).toBe(1);
+    expect(storage.writes.length).toBeGreaterThan(0);
+    expect(new Set(storage.writes)).toEqual(new Set([keys.run('filmy', 'easy')]));
+    expect([...storage.data.keys()].every((k) => k.startsWith('run:'))).toBe(true);
+  });
+
+  it('opens once and draws once when mounted under StrictMode, whose effects run twice', async () => {
+    const adds = jest.spyOn(AppState, 'addEventListener');
+    const storage = new FakeStorage();
+    const { store, calls } = makeStore(storage);
+    const hook = await renderHook(() => useRun('filmy', 'easy', { store, pauseMs: PAUSE }), { wrapper: StrictMode });
+    await waitFor(() => expect(hook.result.current.phase).toBe('ready'));
+    expect(adds).toHaveBeenCalledTimes(2); // StrictMode really did mount, clean up and mount again
+    expect(calls.open).toBe(1);
+    expect(hook.result.current.doc!.revision).toBe(0);
+    expect(hook.result.current.doc!.bag.remaining).toHaveLength(9);
+    expect(storage.writes).toHaveLength(1);
+  });
+
+  it('plays the wrong-guess haptic once for a wrong letter and not for a right one', async () => {
+    const m = await mount(new FakeStorage());
+    await press(m, [...lettersOf(answerOf(m))][0]);
+    expect(Haptics.impactAsync).not.toHaveBeenCalled();
+    await press(m, wrongLetters(m)[0]);
+    expect(Haptics.impactAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('says so when a write fails, and again when a later one lands', async () => {
+    const storage = new FakeStorage();
+    const m = await mount(storage);
+    expect(game(m).saved).toBe(true);
+    storage.failWrites = true;
+    await press(m, wrongLetters(m)[0]);
+    expect(game(m).saved).toBe(false);
+    storage.failWrites = false;
+    await press(m, wrongLetters(m)[1]);
+    expect(game(m).saved).toBe(true);
+  });
+
+  it('enables a power-up from the clue rules the run was saved with, not the live ones', async () => {
+    const storage = new FakeStorage();
+    const first = await mount(storage);
+    // Live Easy hides its extra clue, so the extra-clue power-up has something to do.
+    expect(game(first).powerEnabled[1]).toBe(true);
+    await first.hook.unmount();
+
+    // The same run saved under rules with no hidden clue: nothing is left for the power-up to unlock.
+    const key = keys.run('filmy', 'easy');
+    const saved = JSON.parse(storage.data.get(key)!);
+    saved.rules.clues = { showChips: true, shownClues: ['clue', 'extraClue'], hiddenClues: [] };
+    storage.data.set(key, JSON.stringify(saved));
+    const second = await mount(storage);
+    expect(game(second).powerEnabled[1]).toBe(false);
+    expect(game(second).powerEnabled[0]).toBe(true);
+  });
+
+  it('opens once more when the app goes to the background and comes back, however many return events arrive', async () => {
+    const handlers: ((state: string) => void)[] = [];
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, handler) => {
+      handlers.push(handler as (state: string) => void);
+      return { remove: jest.fn() };
+    });
+    const m = await mount(new FakeStorage());
+    expect(m.calls.open).toBe(1);
+    const emit = async (state: string) => act(async () => handlers.forEach((h) => h(state)));
+    await emit('inactive');
+    await emit('active');
+    expect(m.calls.open).toBe(1);
+    await emit('background');
+    await emit('active');
+    await emit('active');
+    await waitFor(() => expect(m.calls.open).toBe(2));
+    expect(game(m).doc!.revision).toBe(0);
+  });
+
+  it('continues a solved word once, even when the screen is remounted during the pause', async () => {
+    jest.useFakeTimers();
+    const storage = new FakeStorage();
+    const first = await mount(storage);
+    await solve(first);
+    expect(game(first).run!.status).toBe('solved');
+    await first.hook.unmount();
+    await act(async () => jest.advanceTimersByTimeAsync(PAUSE * 2));
+    expect(first.calls.act).not.toContain('continue:saved');
+
+    const second = await mount(storage, { seed: 3 });
+    expect(game(second).run!.status).toBe('solved');
+    await act(async () => jest.advanceTimersByTimeAsync(PAUSE));
+    await waitFor(() => expect(game(second).run!.status).toBe('playing'));
+    expect(second.calls.act.filter((a) => a === 'continue:saved')).toHaveLength(1);
+    expect(game(second).run!.hits).toBe(1);
+    expect(game(second).doc!.bag.remaining).toHaveLength(8); // two words drawn from ten, once each
+    await act(async () => jest.advanceTimersByTimeAsync(PAUSE * 3));
+    expect(second.calls.act.filter((a) => a.startsWith('continue'))).toHaveLength(1);
+  });
+
+  it('shows a lost run as over after a remount and never plays on; only restart leaves it', async () => {
+    const storage = new FakeStorage();
+    const first = await mount(storage);
+    for (const l of wrongLetters(first)) await press(first, l);
+    expect(game(first).run!.status).toBe('over');
+    await first.hook.unmount();
+
+    const second = await mount(storage);
+    expect(game(second).run!.status).toBe('over');
+    expect(game(second).doc!.terminal?.reason).toBe('lost');
+    const revision = game(second).doc!.revision;
+    await press(second, 'A');
+    expect(game(second).run!.status).toBe('over');
+    expect(game(second).doc!.revision).toBe(revision);
+
+    await act(async () => {
+      await game(second).restart();
+      await game(second).restart();
+    });
+    expect(game(second).run!.status).toBe('playing');
+    expect(game(second).doc!.terminal).toBeNull();
+    expect(second.calls.act.filter((a) => a === 'newRun:saved')).toHaveLength(1);
+  });
+
+  it('keeps a Masala Mix word concealed until its reel lands, on every mount', async () => {
+    const storage = new FakeStorage();
+    const first = await mount(storage, { theme: 'masala' });
+    expect(game(first).reelLanded).toBe(false);
+    expect(game(first).powerEnabled).toEqual([false, false, false, false]);
+    await press(first, wrongLetters(first)[0]);
+    expect(game(first).run!.current!.wrong).toEqual([]);
+    await act(async () => game(first).onReelLanded());
+    expect(game(first).reelLanded).toBe(true);
+    await press(first, wrongLetters(first)[0]);
+    expect(game(first).run!.current!.wrong).toHaveLength(1);
+    await first.hook.unmount();
+
+    const second = await mount(storage, { theme: 'masala' });
+    expect(game(second).reelLanded).toBe(false);
+    await act(async () => game(second).onReelLanded());
+    expect(game(second).reelLanded).toBe(true);
+  });
+
+  it('shows the replaced word once and clears it when dismissed', async () => {
+    const storage = new FakeStorage();
+    const first = await mount(storage);
+    await first.hook.unmount();
+    const id = game(first).run!.current!.word.id;
+    storage.data.set(
+      keys.run('filmy', 'easy'),
+      storage.data
+        .get(keys.run('filmy', 'easy'))!
+        .replace(new RegExp(`"(id|last)":"${id}"`, 'g'), '"$1":"filmy-gone"'),
+    );
+    const second = await mount(storage, { seed: 2 });
+    expect(game(second).notice).toMatchObject({ kind: 'wordReplaced' });
+    expect(game(second).run!.current!.word.id).not.toBe('filmy-gone');
+    await act(async () => game(second).dismissNotice());
+    expect(game(second).notice).toBeNull();
+  });
+});
+
+describe('recovery', () => {
+  const corrupt = (storage: FakeStorage, ...difficulties: Difficulty[]) =>
+    difficulties.forEach((d) => storage.data.set(keys.run('filmy', d), '{"schema":999}'));
+
+  it('waits for the notice, then opens the slot with a new controller once it has been shown', async () => {
+    const storage = new FakeStorage();
+    corrupt(storage, 'medium');
+    const m = await mount(storage, { difficulty: 'medium' });
+    expect(game(m).phase).toBe('recoveryPending');
+    expect(pendingRecoveries('filmy').map((e) => e.difficulty)).toEqual(['medium']);
+    expect(m.calls.open).toBe(0);
+
+    markRecoveryShown('filmy', 'medium');
+    await m.hook.rerender(undefined);
+    await waitFor(() => expect(game(m).phase).toBe('ready'));
+    expect(game(m).doc!.revision).toBe(0);
+    expect(game(m).run!.hits).toBe(0);
+  });
+
+  it('with two slots needing recovery, tapping the second one shows its notice and then lands on the game', async () => {
+    const storage = new FakeStorage();
+    corrupt(storage, 'medium', 'hard');
+    // Opening each route finds the bad data and records its notice.
+    const medium = await mount(storage, { difficulty: 'medium' });
+    const hard = await mount(storage, { difficulty: 'hard' });
+    expect(game(medium).phase).toBe('recoveryPending');
+    expect(game(hard).phase).toBe('recoveryPending');
+    expect(pendingRecoveries('filmy').map((e) => e.difficulty)).toEqual(['medium', 'hard']);
+
+    // The picker showed medium's notice (and marked it shown). A tap on hard's card shows hard's notice...
+    markRecoveryShown('filmy', 'medium');
+    expect(tapRecoveryCard('filmy', 'hard')).toBe('show notice');
+    // ...and the next tap goes on to the game, which opens the slot instead of bouncing back.
+    expect(tapRecoveryCard('filmy', 'hard')).toBe('navigate');
+    const route = await mount(storage, { difficulty: 'hard' });
+    expect(game(route).phase).toBe('ready');
+    expect(game(route).run!.hits).toBe(0);
+    expect(game(route).doc!.run.difficulty).toBe('hard');
+    expect(pendingRecoveries('filmy')).toEqual([]);
+  });
+
+  it('leaves the other slot waiting for its own notice', async () => {
+    const storage = new FakeStorage();
+    corrupt(storage, 'medium', 'hard');
+    await mount(storage, { difficulty: 'medium' });
+    await mount(storage, { difficulty: 'hard' });
+    expect(tapRecoveryCard('filmy', 'hard')).toBe('show notice');
+    expect(pendingRecoveries('filmy').map((e) => e.difficulty)).toEqual(['medium']);
+    const medium = await mount(storage, { difficulty: 'medium' });
+    expect(game(medium).phase).toBe('recoveryPending');
+  });
+});
+
+describe('copy the picker and sheets are built from', () => {
+  const best = (hits: number, club: number | null) => ({ hits, club });
+  /** The sheet's lines for a run that ends with `hits` in `club`, as the picker builds them. */
+  const lines = (
+    difficulty: Difficulty,
+    hits: number,
+    lives: number,
+    before: ReturnType<typeof best> | null,
+    club: number | null,
+  ) => newRun.lines(difficulty, hits, lives, before, settleBest(before, hits, club));
+
+  it('says what the best becomes when the run beats it', () => {
+    expect(lines('medium', 14, 4, best(9, null), 50)).toEqual([
+      'Your Medium run ends here: 14 hits, 4 lives left.',
+      'Your Medium best goes up from 9 to 14 hits.',
+      'Your Medium club best goes up to 50 Cr Club.',
+    ]);
+  });
+
+  it('says the best stays when the run does not beat it, with the best that stays', () => {
+    expect(lines('hard', 3, 5, best(12, 50), null)).toEqual([
+      'Your Hard run ends here: 3 hits, 5 lives left.',
+      'Your Hard best stays at 12 hits.',
+      'Your Hard club best stays at 50 Cr Club.',
+    ]);
+    // A tie keeps the old best, and without a club there is no club line.
+    expect(lines('easy', 5, 1, best(5, null), null)).toEqual([
+      'Your Easy run ends here: 5 hits, 1 life left.',
+      'Your Easy best stays at 5 hits.',
+    ]);
+  });
+
+  it('with no earlier best, the hits line goes up from 0', () => {
+    expect(lines('easy', 2, 9, null, null)).toEqual([
+      'Your Easy run ends here: 2 hits, 9 lives left.',
+      'Your Easy best goes up from 0 to 2 hits.',
+    ]);
+  });
+
+  it('with zero hits, one line replaces both best lines', () => {
+    expect(lines('medium', 0, 7, best(9, 50), null)).toEqual([
+      'Your Medium run ends here: 0 hits, 7 lives left.',
+      'No hits yet, so nothing is recorded.',
+    ]);
+  });
+
+  it('says "stays" for the club when more hits land in the same club', () => {
+    expect(lines('medium', 12, 3, best(9, 50), 50)).toContain('Your Medium club best stays at 50 Cr Club.');
+  });
+
+  it('gives one chip per refund over zero, named with the theme power-ups', () => {
+    const names = ["Director's Cut", 'Trailer', 'Flashback', 'Censor Board'];
+    expect(wordReplaced.refunds({ reveal: 1, clue: 0, remove: 0 }, names)).toEqual(["GOT BACK: 1 DIRECTOR'S CUT"]);
+    expect(wordReplaced.refunds({ reveal: 2, clue: 1, remove: 1 }, names)).toEqual([
+      "GOT BACK: 2 DIRECTOR'S CUT",
+      'GOT BACK: 1 TRAILER',
+      'GOT BACK: 1 CENSOR BOARD',
+    ]);
+    expect(wordReplaced.refunds({ reveal: 0, clue: 0, remove: 0 }, names)).toEqual([]);
+  });
+
+  it('keeps what was earned in the replaced-word notice, with or without a club', () => {
+    expect(wordReplaced.body2(14, 4, 50)).toBe('Your 14 hits, 4 lives and 50 Cr Club are kept.');
+    expect(wordReplaced.body2(1, 1, null)).toBe('Your 1 hit and 1 life are kept.');
+  });
+
+  it('leaves the bests line out of the recovery notice when no best survived', () => {
+    expect(recovery.body(true)).toContain('Your bests stay as they were.');
+    expect(recovery.body(false)).not.toContain('bests');
+  });
+});
+
+describe('the difficulty picker', () => {
+  // The picker reads the shared run store, so these use a theme no other test touches.
+  const theme: ThemeId = 'cricket';
+  const AsyncStorage = jest.requireMock('@react-native-async-storage/async-storage');
+  const setRaw = (difficulty: Difficulty, raw: string) => AsyncStorage.setItem(`hangman:v1:${keys.run(theme, difficulty)}`, raw);
+  const route = (difficulty: Difficulty) => `/play/${theme}/${difficulty}`;
+
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+
+  it('with two slots needing recovery, shows one notice, then the second slot\'s when its card is tapped, then goes to the game', async () => {
+    await setRaw('medium', '{"schema":999}');
+    await setRaw('hard', '{"schema":999}');
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('recovery-notice')).toBeTruthy());
+    expect(screen.getByText(recovery.title('medium'))).toBeTruthy();
+
+    // Hard's notice hasn't been shown: the tap shows it instead of going to a game that would bounce back.
+    await fireEvent.press(screen.getByTestId('difficulty-hard'));
+    await waitFor(() => expect(screen.getByText(recovery.title('hard'))).toBeTruthy());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByTestId('difficulty-hard'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route('hard')));
+    // Medium's notice was shown first, so it opens straight away too.
+    await fireEvent.press(screen.getByTestId('difficulty-medium'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route('medium')));
+  });
+
+  it('sends a tap through the recovery notice when the slot is waiting even though its card is not a recovery card', async () => {
+    noteRecovery({ theme, difficulty: 'easy', reason: 'corrupt', best: { hits: 4, club: null } });
+    await render(createElement(DifficultyPicker));
+    // The waiting notice is shown (and marked shown) when the picker opens; a second notice for another slot waits.
+    await waitFor(() => expect(screen.getByTestId('recovery-notice')).toBeTruthy());
+    noteRecovery({ theme, difficulty: 'hard', reason: 'unsupported', best: null });
+    expect(pendingRecoveries(theme).map((e) => e.difficulty)).toEqual(['hard']);
+
+    await fireEvent.press(screen.getByTestId('difficulty-hard'));
+    await waitFor(() => expect(screen.getByText(recovery.title('hard'))).toBeTruthy());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(pendingRecoveries(theme)).toEqual([]);
+    await fireEvent.press(screen.getByTestId('difficulty-hard'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route('hard')));
+  });
+});
+
+describe('the difficulty picker: New run and finished runs', () => {
+  const AsyncStorage = jest.requireMock('@react-native-async-storage/async-storage');
+  const route = (theme: ThemeId, difficulty: Difficulty) => `/play/${theme}/${difficulty}`;
+
+  /** Each test uses its own theme: the picker reads the shared `runStore`, which remembers its slots. */
+  const use = (theme: ThemeId) => {
+    mockTheme = theme;
+    return theme;
+  };
+  const stored = async (theme: ThemeId, difficulty: Difficulty) => {
+    const view = await runStore.inspect(theme, difficulty);
+    if (view.kind !== 'resumable' && view.kind !== 'terminal') throw new Error(`no run: ${view.kind}`);
+    return view.doc;
+  };
+  const tap = (testId: string) => fireEvent.press(screen.getByTestId(testId));
+
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+  afterEach(() => {
+    mockTheme = 'cricket';
+  });
+
+  it('shows a saved run\'s lives sign under the lives it started with', async () => {
+    const theme = use('tyohar');
+    // The run was started with 6 lives (live Easy has 9) and 2 are gone.
+    const doc = startDoc(theme, 'easy', { bag: emptyBag(), best: null }, testEnv(1))!;
+    const config = { ...doc.rules.config, lives: { ...doc.rules.config.lives, easy: 6 } };
+    const run = { ...doc.run, livesLost: 2 };
+    await AsyncStorage.setItem(`hangman:v1:${keys.run(theme, 'easy')}`, serializeDoc({ ...doc, rules: { ...doc.rules, config }, run }));
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('saved-easy')).toBeTruthy());
+    expect(screen.getByLabelText(`${ui.livesLeft(4)}, 3 locked`)).toBeTruthy();
+  });
+
+  it('with a notice waiting for a saved slot, New run shows the notice first and the next tap opens the sheet', async () => {
+    const theme = use('khana');
+    await AsyncStorage.setItem(`hangman:v1:${keys.run(theme, 'easy')}`, '{"schema":999}');
+    await runStore.open(theme, 'hard');
+    noteRecovery({ theme, difficulty: 'hard', reason: 'corrupt', best: null });
+    await render(createElement(DifficultyPicker));
+    // Easy's notice shows first. Hard's is still waiting, though its card is a saved run.
+    await waitFor(() => expect(screen.getByText(recovery.title('easy'))).toBeTruthy());
+    expect(pendingRecoveries(theme).map((e) => e.difficulty)).toEqual(['hard']);
+
+    await tap('new-run-hard');
+    await waitFor(() => expect(screen.getByText(recovery.title('hard'))).toBeTruthy());
+    expect(screen.queryByText(newRun.title)).toBeNull();
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(pendingRecoveries(theme)).toEqual([]);
+
+    await tap('new-run-hard');
+    await waitFor(() => expect(screen.getByText(newRun.title)).toBeTruthy());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+  });
+
+  it('confirming ends the run the sheet showed, goes to the game once, and sends one new run for two quick taps', async () => {
+    const theme = use('safar');
+    const before = (await runStore.open(theme, 'medium')).kind === 'saved' ? await stored(theme, 'medium') : null;
+    expect(before).not.toBeNull();
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('new-run-medium')).toBeTruthy());
+    await tap('new-run-medium');
+    await waitFor(() => expect(screen.getByTestId('new-run-confirm')).toBeTruthy());
+
+    // The open takes a moment, so the second tap lands while the first is still working.
+    const realOpen = runStore.open.bind(runStore);
+    const open = jest.spyOn(runStore, 'open').mockImplementation(async (t, d) => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return realOpen(t, d);
+    });
+    await fireEvent.press(screen.getByTestId('new-run-confirm'));
+    await fireEvent.press(screen.getByTestId('new-run-confirm'));
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route(theme, 'medium')));
+    expect(mockRouter.push).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledTimes(1);
+    const after = await stored(theme, 'medium');
+    expect(after.runId).not.toBe(before!.runId);
+    expect(after.revision).toBe(before!.revision + 1);
+    expect(after.terminal).toBeNull();
+  });
+
+  it('keeping the run changes nothing', async () => {
+    const theme = use('tyohar');
+    await runStore.open(theme, 'easy');
+    const before = await stored(theme, 'easy');
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('new-run-easy')).toBeTruthy());
+    await tap('new-run-easy');
+    await waitFor(() => expect(screen.getByTestId('new-run-keep')).toBeTruthy());
+    await tap('new-run-keep');
+    await waitFor(() => expect(screen.queryByText(newRun.title)).toBeNull());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(await stored(theme, 'easy')).toEqual(before);
+  });
+
+  it('when the run changed since the sheet opened, it sends no new run, closes the sheet and looks again', async () => {
+    const theme = use('masala');
+    await runStore.open(theme, 'medium');
+    const seen = await stored(theme, 'medium');
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('new-run-medium')).toBeTruthy());
+    await tap('new-run-medium');
+    await waitFor(() => expect(screen.getByTestId('new-run-confirm')).toBeTruthy());
+    // Another tab started a new run in the meantime.
+    const other = await runStore.act(theme, 'medium', { runId: seen.runId, revision: seen.revision }, { type: 'newRun' });
+    expect(other.kind).toBe('saved');
+    const inspect = jest.spyOn(runStore, 'inspect');
+
+    await tap('new-run-confirm');
+    await waitFor(() => expect(screen.queryByText(newRun.title)).toBeNull());
+    await waitFor(() => expect(inspect).toHaveBeenCalled());
+    expect(mockRouter.push).not.toHaveBeenCalled();
+    const now = await stored(theme, 'medium');
+    expect(now.runId).not.toBe(seen.runId);
+    expect(now.revision).toBe(seen.revision + 1); // the other tab's new run only: nothing was ended on the player's behalf
+  });
+
+  it('tapping a finished run starts a new one of that run, then opens the game', async () => {
+    const theme = use('filmy');
+    await runStore.open(theme, 'easy');
+    const seen = await stored(theme, 'easy');
+    await runStore.act(theme, 'easy', { runId: seen.runId, revision: seen.revision }, { type: 'abandon' });
+    const finished = await stored(theme, 'easy');
+    expect(finished.terminal).not.toBeNull();
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getAllByText('Not played yet')).toHaveLength(3));
+
+    await tap('difficulty-easy');
+    await waitFor(() => expect(mockRouter.push).toHaveBeenCalledWith(route(theme, 'easy')));
+    const fresh = await stored(theme, 'easy');
+    expect(fresh.terminal).toBeNull();
+    expect(fresh.runId).not.toBe(finished.runId);
+    expect(fresh.revision).toBe(finished.revision + 1);
+  });
+});

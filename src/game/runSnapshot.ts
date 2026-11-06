@@ -235,9 +235,9 @@ function readPlay(v: unknown, rules: SavedRules): WordPlay {
 }
 
 function readRun(v: unknown, theme: ThemeId, difficulty: Difficulty, rules: SavedRules, ladder: Ladder): RunState {
-  need(isRecord(v), 'run: missing');
+  need(isRecord(v), 'the run is missing');
   const r = v as Record<string, unknown>;
-  need(r.theme === theme && r.difficulty === difficulty, 'run: wrong theme or difficulty for this slot');
+  need(r.theme === theme && r.difficulty === difficulty, 'the run is for another theme or difficulty');
   need(isCount(r.hits), 'run.hits');
   const hits = r.hits as number;
   need(isCount(r.livesLost) && (r.livesLost as number) <= rules.config.lives[difficulty], 'run.livesLost');

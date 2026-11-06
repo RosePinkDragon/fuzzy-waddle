@@ -9,8 +9,9 @@ import { assertReleaseEnv } from './src/lib/releaseGuard.ts';
 assertReleaseEnv(process.env);
 
 /**
- * App config. The name, bundle IDs and web domain are placeholders until the
- * open decisions are made; they all live in src/config/game.json.
+ * App config. The name and bundle IDs are placeholders until the open
+ * decisions are made. The web origin is the real production address
+ * (https://hangman-desi.vercel.app). They all live in src/config/game.json.
  */
 const config: ExpoConfig = {
   name: game.name,

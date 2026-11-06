@@ -25,7 +25,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 | `npm run verify` | Lint, typecheck, unit tests (`--ci`), then the web export. Stops at the first failure. | Before every push that opens or updates a PR |
 | `npm run verify:quick` | The same without the web export | While iterating |
 | `npm run screenshots` | Builds into `dist-test/` with the test ladder and test hooks, then screenshots each screen at 390×700 and 390×844 into `design/build-screenshots/`. Lists overflow, clipped text and scrolling. Exits 1 on problems. | After UI changes. `--screens game` also shoots the first boss round (`<theme>-game-boss`, the second word on the test ladder). `--screens prompt` opens the first-share name prompt over win, flop and challenge result (`<theme>-prompt-win`, `-flop`, `-challenge`). |
-| `npm run screenshots -- --screens game,win --themes filmy` | Only the screens and themes affected | Everyday UI PRs |
+| `npm run screenshots -- --screens game,win --themes filmy` | Only the screens and themes affected. Screens: `home`, `difficulty`, `game`, `win`, `flop`, `challenge`, `prompt`, and the saved-run states `resume` (bests, a saved run, the New run sheets for best-goes-up, best-stays and zero hits, and three saved runs), `recovery`, `unsaved` (storage blocked, in its own browser context) and `replaced`. Every scenario starts from empty storage, because a run is resumed on reload. | Everyday UI PRs |
 | `npm run screenshots -- --skip-build` | Reuses the last `dist-test/` build | When re-running quickly |
 | `npm run words:check` | The word-bank tests, then a report: tier counts per category (flags any under 5), answers repeated across categories, and the `draft` list. Exits 1 on problems. | When words change, and before a release |
 | `node scripts/render-mockups.js` | Renders `design/source/*.dc.html` to PNGs and lists layout problems | Making or reviewing mockups |
@@ -52,7 +52,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 - `EXPO_PUBLIC_TEST_LADDER=1`: short club ladder (`TEST_CLUB_LADDER` in `src/game/config.ts`).
 - `EXPO_PUBLIC_TEST_HOOKS=1`: puts the current answer and run status on `globalThis.__HANGMAN__` (`exposeRunForTests` in `src/lib/device.ts`, used by `useChallenge`; the legacy `useRun` keeps its own copy until #94).
 
-Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, which fails a build when `RELEASE_BUILD=1` or the EAS profile is `preview` or `production` and either switch is set. `release.yml` sets `RELEASE_BUILD`.
+Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, which fails a build when `RELEASE_BUILD=1` or the EAS profile is `preview` or `production` and either switch is set. `vercel.json`'s build command sets `RELEASE_BUILD=1`, so the deployed web bundle gets the same guard.
 
 ## CI and PR rules
 
@@ -70,10 +70,10 @@ Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, whi
 
 ## Building and releasing
 
-- **Release pipeline:** `release.yml` is written but switched off until the store accounts exist. It runs only when started by hand, and only if `vars.RELEASES_ENABLED == 'true'`. The file's header lists what it needs.
+- **Release pipeline:** `release.yml` is written but switched off until the store accounts exist. It runs only when started by hand, and only if `vars.RELEASES_ENABLED == 'true'`. The file's header lists what it needs. It covers store builds only.
 - **EAS profiles** in `eas.json` are `preview` (Play internal testing and TestFlight) and `production`. Run the CLI as `npx eas-cli@latest <command>`.
-- **Placeholders:** the name, bundle IDs and web origin are placeholders in `src/config/game.json`.
-- **Web hosting:** Vercel is planned in #43.
+- **Placeholders:** the name and bundle IDs are placeholders in `src/config/game.json`. `webOrigin` is the live Vercel address.
+- **Web hosting:** Vercel's Git integration deploys every merge to main to production and every PR to a preview. `vercel.json` sets the build (`RELEASE_BUILD=1 npx expo export -p web`, output `dist`) and rewrites all paths to the single-page app. `release.yml` has no web job. `src/config/__tests__/vercelConfig.test.ts` checks the file and `webOrigin`. The project is set up in the Vercel dashboard (owner step), and preview access is a Vercel project setting.
 
 ## Snags
 

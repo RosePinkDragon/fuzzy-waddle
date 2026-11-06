@@ -8,11 +8,13 @@
 #   - Google Play service-account key and App Store Connect API key stored in EAS
 #     (`eas credentials`), plus real bundle IDs in src/config/game.json
 #   - The App Store Connect app ID in eas.json (submit.*.ios.ascAppId)
-#   - A web host for the export (the deploy step below is a placeholder)
 #   - A GitHub environment named "production" with required reviewers
 #
+# The web version is not deployed from here: Vercel's Git integration deploys
+# every merge to main to production and every PR to a preview (see vercel.json).
+#
 # When ready, change `on:` to:
-#   push: { branches: [main] }        -> deploy web + preview builds
+#   push: { branches: [main] }        -> preview builds
 #   push: { tags: ['v*'] }            -> production submit (after approval)
 name: Release
 
@@ -30,24 +32,6 @@ permissions:
   contents: read
 
 jobs:
-  web:
-    if: vars.RELEASES_ENABLED == 'true'
-    runs-on: ubuntu-latest
-    env:
-      # Makes app.config.ts refuse test-only switches (src/lib/releaseGuard.ts).
-      RELEASE_BUILD: '1'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx expo export --platform web
-      # Placeholder: deploy dist/ to the chosen host. It must serve index.html
-      # for every path so /c/<wordId> links work (single-page app rewrite).
-      - run: echo "Deploy dist/ to the web host here"
-
   preview-builds:
     if: vars.RELEASES_ENABLED == 'true' && inputs.target == 'preview'
     runs-on: ubuntu-latest
