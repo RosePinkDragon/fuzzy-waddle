@@ -13,7 +13,7 @@ import { Tiles } from '@/components/Tiles';
 import { DIFFICULTY_LABEL, challenge, ui } from '@/copy/strings';
 import { lettersOf } from '@/game/answer';
 import { lifeMarks } from '@/game/difficulty';
-import { clubShort, ladder } from '@/game/milestones';
+import { clubShort, ladder, progressLabel } from '@/game/milestones';
 import type { PowerUpSlot } from '@/game/powerUps';
 import { livesLeft, type RunState } from '@/game/run';
 import type { Theme } from '@/themes/types';
@@ -80,7 +80,7 @@ export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, 
       ) : (
         <Header label={challenge.label} title={`${theme.copy.name} · ${challenge.oneWord}`} onBack={onBack} backLabel={challenge.home} />
       )}
-      {mode === 'run' && <ProgressRow progress={ladder.progress(run.hits)} />}
+      {mode === 'run' && <ProgressRow progress={ladder.progress(run.hits)} label={progressLabel(run)} />}
 
       <View
         style={styles.sceneRegion}

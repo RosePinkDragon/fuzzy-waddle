@@ -1,5 +1,5 @@
-import { CLUB_LADDER } from '../config';
-import { Ladder, clubLong, clubShort } from '../milestones';
+import { CLUB_LADDER, TEST_CLUB_LADDER } from '../config';
+import { Ladder, clubLong, clubShort, progressLabel } from '../milestones';
 
 describe('milestone ladder', () => {
   const ladder = new Ladder(CLUB_LADDER);
@@ -62,5 +62,67 @@ describe('milestone ladder', () => {
   it('formats club names', () => {
     expect(clubShort(ladder.clubAt(1))).toBe('100 Cr Club');
     expect(clubLong(ladder.clubAt(1))).toBe('100 Crore Club');
+  });
+});
+
+describe('progress label', () => {
+  const play = (isBoss: boolean) => ({ isBoss });
+
+  // The production ladder and the test ladder (EXPO_PUBLIC_TEST_LADDER=1).
+  const cases = [
+    { name: 'production', ladder: new Ladder(CLUB_LADDER), bossHits: 9, club: 50, normalHits: 3, remaining: 7 },
+    { name: 'test', ladder: new Ladder(TEST_CLUB_LADDER), bossHits: 1, club: 50, normalHits: 0, remaining: 2 },
+  ];
+
+  describe.each(cases)('$name ladder', ({ ladder: l, bossHits, club, normalHits, remaining }) => {
+    it('a normal word counts down to the next club', () => {
+      expect(progressLabel({ hits: normalHits, status: 'playing', current: play(false) }, l)).toEqual({
+        kind: 'countdown',
+        remaining,
+        club: expect.objectContaining({ crore: club }),
+      });
+    });
+
+    it('the boss word names the club it enters, from the ladder', () => {
+      expect(l.isBossWord(bossHits)).toBe(true);
+      expect(progressLabel({ hits: bossHits, status: 'playing', current: play(true) }, l)).toEqual({
+        kind: 'boss',
+        club: expect.objectContaining({ crore: club }),
+      });
+    });
+
+    it('the word solved just before the boss is not the boss', () => {
+      // hits already includes it, so one hit remains, but the word in play was a normal one.
+      expect(progressLabel({ hits: bossHits, status: 'solved', current: play(false) }, l)).toMatchObject({
+        kind: 'countdown',
+        remaining: 1,
+      });
+    });
+
+    it('a cleared boss counts down to the club after the one just entered', () => {
+      const entered = l.clubAt(0);
+      const label = progressLabel({ hits: entered.hits, status: 'milestone', current: play(true) }, l);
+      expect(label).toMatchObject({ kind: 'countdown', club: { index: 1 } });
+    });
+
+    it('a boss lost on the last life is run over, not a boss label', () => {
+      expect(progressLabel({ hits: bossHits, status: 'over', current: play(true) }, l)).toMatchObject({
+        kind: 'countdown',
+        remaining: 1,
+        club: { crore: club },
+      });
+    });
+  });
+
+  it('follows a custom ladder rather than fixed hit counts', () => {
+    const custom = new Ladder([{ crore: 10, hits: 5 }, { crore: 20, hits: 9 }]);
+    expect(progressLabel({ hits: 4, status: 'playing', current: play(true) }, custom)).toMatchObject({
+      kind: 'boss',
+      club: { crore: 10 },
+    });
+    expect(progressLabel({ hits: 8, status: 'playing', current: play(true) }, custom)).toMatchObject({
+      kind: 'boss',
+      club: { crore: 20 },
+    });
   });
 });

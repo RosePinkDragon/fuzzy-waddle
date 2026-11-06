@@ -1,23 +1,25 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ui } from '@/copy/strings';
-import { clubShort, type Progress } from '@/game/milestones';
+import { clubShort, type Progress, type ProgressLabel } from '@/game/milestones';
 
 import { Segments } from './Segments';
 import { useTheme } from './ThemeContext';
 import { Txt } from './Txt';
 
-/** Club progress on the game screen: segments plus "2 more to 100 Cr Club" or "Next hit: boss round". */
-export function ProgressRow({ progress }: { progress: Progress }) {
+/**
+ * Club progress on the game screen: segments plus "2 more to 100 Cr Club", or
+ * "Boss round · Win for 100 Cr Club" while the word in play is the boss round.
+ */
+export function ProgressRow({ progress, label }: { progress: Progress; label: ProgressLabel }) {
   const { colors } = useTheme();
-  const boss = progress.remaining === 1;
   return (
     <View style={styles.row}>
       <Segments total={progress.segments} filled={progress.filled} />
       <Txt size={12} weight={700} lh={1.3} color={colors.text} numberOfLines={1}>
-        {boss ? ui.nextHit : ui.moreTo(progress.remaining)}
+        {label.kind === 'boss' ? ui.bossWinFor : ui.moreTo(label.remaining)}
         <Txt size={12} weight={700} lh={1.3} color={colors.accent}>
-          {boss ? ui.bossRound : clubShort(progress.to)}
+          {clubShort(label.club)}
         </Txt>
       </Txt>
     </View>

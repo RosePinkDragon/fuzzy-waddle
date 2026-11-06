@@ -25,8 +25,8 @@ export const ui = {
   runOver: 'Run over',
   noClub: 'No club yet',
   moreTo: (n: number) => `${n} more to `,
-  nextHit: 'Next hit: ',
-  bossRound: 'boss round',
+  /** Before the club name (shown highlighted) while the word in play is a boss round. */
+  bossWinFor: 'Boss round · Win for ',
   clueLocked: (powerUp: string) => `Clue locked. Use ${powerUp} to unlock it.`,
   bossCleared: 'BOSS ROUND CLEARED',
   livesRefilled: (n: number) => `Lives refilled: ${n} of ${n}`,
