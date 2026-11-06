@@ -254,7 +254,7 @@ export function themeFor(id: ThemeId): Theme {
 }
 
 export function isThemeId(id: string | undefined): id is ThemeId {
-  return !!id && Object.hasOwn(THEMES, id);
+  return !!id && Object.prototype.hasOwnProperty.call(THEMES, id);
 }
 
 /**
