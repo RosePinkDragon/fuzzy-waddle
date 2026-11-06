@@ -149,7 +149,7 @@ These three screens have no mockups. They are built in the same visual language 
 
 ## What's left
 
-- Name and store accounts (see open decisions). The bundle IDs `com.placeholder.hangman` are placeholders. The web origin is `https://hangman-desi.vercel.app`; confirm it matches the address Vercel assigned.
+- Name and store accounts (see open decisions). The bundle IDs `com.placeholder.hangman` are placeholders. The web origin is the confirmed production address, `https://hangman-desi.vercel.app`.
 - Word bank review: every entry is a draft written for this build; facts were checked from memory, so a fan review is still needed, as the brief says. Copy lines are also waiting on that review.
 - App icon and splash art: the template's placeholder images are still in `assets/images/`.
 - Universal and app links for `/c/...` (later, per the brief).
