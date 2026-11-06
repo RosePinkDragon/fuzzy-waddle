@@ -64,7 +64,8 @@ The web build is a single-page app (`web.output: 'single'` in `app.config.ts`), 
 - `src/game/__tests__/runSession.test.ts` covers the saved-run document and reducer. `helpers.ts` also holds a small fixed word bank (`bankContent`, `testEnv`).
 - `scripts/simulate/__tests__/` covers the simulator: run loop and golden runs, players and policies, the report, and the CLI through a fake `Io`. They run in Jest; the CLI itself runs under `tsx`.
 - Hook tests use `@testing-library/react-native` `renderHook` (see [expo-tooling.md](expo-tooling.md)): `src/hooks/__tests__/useRun.test.ts` mounts `useRun` over a real `runStore` on an in-memory storage, and "restarts the app" by mounting again over a new store. It also renders `DifficultyPicker` with `expo-router` mocked, to check the picker's taps. `src/hooks/__tests__/useChallengeShare.test.tsx` (#39) renders the name prompt to check its theme, submit and cancel.
-- There are no snapshot tests, and no other screen tests. Screens are checked with `npm run screenshots`.
+- `src/screens/__tests__/runLoading.test.tsx` (#107) renders the run route while its saved run loads, to check the themed placeholder. `src/themes/__tests__/backdrop.test.ts` covers `themeIdForPath` and `backdropForPath`, which the root layout uses to paint its backdrop in the URL's theme (Filmy for any other path).
+- There are no snapshot tests. Screens are checked with `npm run screenshots`.
 
 ## Sizing a change
 
