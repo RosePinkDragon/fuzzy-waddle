@@ -81,7 +81,7 @@ export function useRun(theme: ThemeId, difficulty: Difficulty, options: RunContr
   const restart = useCallback(() => controller.restart(), [controller]);
   const dismissNotice = useCallback(() => controller.dismissNotice(), [controller]);
 
-  const powerEnabled = SLOTS.map((s) => reelLanded && !!run && canUse(run, s));
+  const powerEnabled = SLOTS.map((s) => reelLanded && !!run && canUse(run, s, doc?.rules.clues));
 
   return {
     phase: snapshot.phase,

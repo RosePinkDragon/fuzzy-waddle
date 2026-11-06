@@ -9,10 +9,14 @@ export type LifeMark = 'locked' | 'used' | 'live';
 
 /**
  * The nine marks on the lives sign, left to right: pre-locked marks first,
- * then lives lost, then lives left.
+ * then lives lost, then lives left. A saved run passes the lives it started with
+ * (`SavedRules.config.lives[difficulty]`), and the rest are locked; everything
+ * else reads the live rules.
  */
-export function lifeMarks(difficulty: Difficulty, livesLost: number): LifeMark[] {
-  const { lives, locked } = rulesFor(difficulty);
+export function lifeMarks(difficulty: Difficulty, livesLost: number, savedLives?: number): LifeMark[] {
+  const live = rulesFor(difficulty);
+  const lives = savedLives ?? live.lives;
+  const locked = savedLives === undefined ? live.locked : LIVES_MARKS - savedLives;
   const used = Math.min(Math.max(livesLost, 0), lives);
   return Array.from({ length: LIVES_MARKS }, (_, i) => {
     if (i < locked) return 'locked';

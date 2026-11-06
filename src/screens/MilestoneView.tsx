@@ -11,9 +11,10 @@ import { Stamp } from '@/components/Stamp';
 import { Tiles } from '@/components/Tiles';
 import { Txt } from '@/components/Txt';
 import { DIFFICULTY_LABEL, milestoneHeading, shareLineFor, shareMessage, ui } from '@/copy/strings';
-import { MILESTONE_REWARD } from '@/game/config';
+import { defaultGameConfig } from '@/game/gameConfig';
 import { clubLong, clubShort, ladder } from '@/game/milestones';
 import { maxLives, type RunState } from '@/game/run';
+import { ladderOf, type SavedRules } from '@/game/runSnapshot';
 import type { Word } from '@/game/types';
 import { challengeUrl } from '@/lib/share';
 import { THEMES } from '@/themes/themes';
@@ -31,15 +32,19 @@ interface MilestoneViewProps {
   onKeepPlaying: () => void;
   onBack: () => void;
   share: (build: (name: string) => string) => void;
+  /** The rules a saved run started under; without them the live rules apply. */
+  rules?: SavedRules;
 }
 
-export function MilestoneView({ theme, run, onKeepPlaying, onBack, share }: MilestoneViewProps) {
+export function MilestoneView({ theme, run, onKeepPlaying, onBack, share, rules }: MilestoneViewProps) {
   const { colors, copy } = theme;
   const { contentWidth, compact } = useScreenSize();
-  const club = run.lastClub ?? ladder.reached(run.hits)!;
+  const rungs = rules ? ladderOf(rules) : ladder;
+  const reward = (rules?.config ?? defaultGameConfig).milestoneReward;
+  const club = run.lastClub ?? rungs.reached(run.hits)!;
   const word = run.current!.word;
-  const next = ladder.progress(run.hits);
-  const lives = maxLives(run);
+  const next = rungs.progress(run.hits);
+  const lives = maxLives(run, rules?.config);
   const line = shareLineFor(theme.id, clubLong(club));
   const Scene = theme.scenes.Win;
 
@@ -87,7 +92,7 @@ export function MilestoneView({ theme, run, onKeepPlaying, onBack, share }: Mile
         </Txt>
         <View style={styles.chips}>
           <Chip text={ui.livesRefilled(lives)} />
-          <Chip text={ui.plusOne(copy.powerUps[MILESTONE_REWARD.slot])} />
+          <Chip text={ui.plusOne(copy.powerUps[reward.slot], reward.amount)} />
         </View>
       </View>
 

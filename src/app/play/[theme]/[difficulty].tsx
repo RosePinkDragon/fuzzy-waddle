@@ -43,7 +43,7 @@ function Run({ themeId, difficulty }: { themeId: ThemeId; difficulty: Difficulty
   if (run.status === 'milestone') {
     return (
       <>
-        <MilestoneView theme={theme} run={run} onKeepPlaying={game.keepPlaying} onBack={home} share={share} />
+        <MilestoneView theme={theme} run={run} rules={doc.rules} onKeepPlaying={game.keepPlaying} onBack={home} share={share} />
         {prompt}
       </>
     );
@@ -55,6 +55,7 @@ function Run({ themeId, difficulty }: { themeId: ThemeId; difficulty: Difficulty
         <FlopView
           theme={theme}
           run={run}
+          rules={doc.rules}
           best={game.best}
           isNewBest={game.isNewBest}
           onRestart={game.restart}
@@ -74,6 +75,7 @@ function Run({ themeId, difficulty }: { themeId: ThemeId; difficulty: Difficulty
       <GameView
         theme={theme}
         run={run}
+        rules={doc.rules}
         mode="run"
         reelLanded={game.reelLanded}
         onReelLanded={game.onReelLanded}

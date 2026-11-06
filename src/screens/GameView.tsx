@@ -17,6 +17,7 @@ import { lifeMarks } from '@/game/difficulty';
 import { clubShort, ladder } from '@/game/milestones';
 import type { PowerUpSlot } from '@/game/powerUps';
 import { livesLeft, type RunState } from '@/game/run';
+import { ladderOf, type SavedRules } from '@/game/runSnapshot';
 import type { Theme } from '@/themes/types';
 
 /** Below this scene height the lives sign moves above the scene so it does not cover the hero. */
@@ -34,15 +35,18 @@ interface GameViewProps {
   onBack: () => void;
   /** False when the run only exists in memory: a strip (or a header chip on compact screens) says so. */
   saved?: boolean;
+  /** The rules a saved run started under. Without them (a challenge) the live rules apply. */
+  rules?: SavedRules;
 }
 
-export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, onPower, powerEnabled, onBack, saved = true }: GameViewProps) {
+export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, onPower, powerEnabled, onBack, saved = true, rules }: GameViewProps) {
   const { contentWidth, compact } = useScreenSize();
   const [sceneHeight, setSceneHeight] = useState(200);
   const play = run.current!;
   const answer = play.word.answer;
-  const marks = lifeMarks(run.difficulty, run.livesLost);
-  const left = livesLeft(run);
+  const marks = lifeMarks(run.difficulty, run.livesLost, rules?.config.lives[run.difficulty]);
+  const left = livesLeft(run, rules?.config);
+  const rungs = rules ? ladderOf(rules) : ladder;
   const signAbove = sceneHeight < SIGN_INSIDE_MIN;
   const concealed = !!theme.mixed && !reelLanded;
   const playing = run.status === 'playing' && !concealed;
@@ -67,7 +71,7 @@ export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, 
     return () => window.removeEventListener('keydown', onKey);
   }, [onPress]);
 
-  const reached = ladder.reached(run.hits);
+  const reached = rungs.reached(run.hits);
   const Scene = theme.scenes.Game;
   const sign = <LivesSign marks={marks} left={left} />;
 
@@ -84,7 +88,7 @@ export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, 
       ) : (
         <Header label={challenge.label} title={`${theme.copy.name} · ${challenge.oneWord}`} onBack={onBack} backLabel={challenge.home} />
       )}
-      {mode === 'run' && <ProgressRow progress={ladder.progress(run.hits)} />}
+      {mode === 'run' && <ProgressRow progress={rungs.progress(run.hits)} />}
       {mode === 'run' && !saved && !compact && (
         <Notice variant="strip" icon="cloudOff" title={unsaved.gameStripTitle} body={unsaved.gameStripBody} testID="unsaved-strip" />
       )}
@@ -119,7 +123,7 @@ export function GameView({ theme, run, mode, reelLanded, onReelLanded, onPress, 
         concealed={concealed}
       />
 
-      <CluePanel word={play.word} difficulty={run.difficulty} cluesRevealed={play.cluesRevealed} concealed={concealed} />
+      <CluePanel word={play.word} difficulty={run.difficulty} cluesRevealed={play.cluesRevealed} clues={rules?.clues} concealed={concealed} />
 
       <View style={styles.bottom}>
         <PowerUpBar counts={run.powerUps} enabled={playing ? powerEnabled : [false, false, false, false]} onUse={onPower} />

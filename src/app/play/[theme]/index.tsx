@@ -377,7 +377,7 @@ function SavedCard({
         </Txt>
       </View>
       <View style={[styles.optionTop, styles.between]}>
-        <LivesSign marks={lifeMarks(difficulty, doc.run.livesLost)} left={lives} boxed={false} />
+        <LivesSign marks={lifeMarks(difficulty, doc.run.livesLost, doc.rules.config.lives[difficulty])} left={lives} boxed={false} />
         <Txt size={13} weight={700} lh={1.3} color={colors.text} align="right" style={styles.run}>
           {picker.runProgress(doc.run.hits, club?.crore ?? null)}
         </Txt>

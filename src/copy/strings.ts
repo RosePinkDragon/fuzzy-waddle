@@ -36,7 +36,7 @@ export const ui = {
   clueLocked: (powerUp: string) => `Clue locked. Use ${powerUp} to unlock it.`,
   bossCleared: 'BOSS ROUND CLEARED',
   livesRefilled: (n: number) => `Lives refilled: ${n} of ${n}`,
-  plusOne: (powerUp: string) => `+1 ${powerUp}`,
+  plusOne: (powerUp: string, amount = 1) => `+${amount} ${powerUp}`,
   next: 'Next: ',
   hitsToGo: (n: number) => `${plural(n, 'hit', 'hits')} to go`,
   shareCard: (label: string) => `${label} · SHARE CARD`,

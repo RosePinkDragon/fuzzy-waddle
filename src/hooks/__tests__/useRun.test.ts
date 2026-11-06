@@ -9,11 +9,13 @@ import * as Haptics from 'expo-haptics';
 import { StrictMode, createElement } from 'react';
 import { AppState } from 'react-native';
 
-import { newRun, recovery, wordReplaced } from '@/copy/strings';
+import { newRun, recovery, ui, wordReplaced } from '@/copy/strings';
 import { ALPHABET, lettersOf } from '@/game/answer';
 import { seededRng } from '@/game/rng';
-import { settleBest } from '@/game/runSnapshot';
-import { bankContent, BANK_WORDS } from '@/game/__tests__/helpers';
+import { startDoc } from '@/game/runSession';
+import { serializeDoc, settleBest } from '@/game/runSnapshot';
+import { emptyBag } from '@/game/shuffleBag';
+import { bankContent, BANK_WORDS, testEnv } from '@/game/__tests__/helpers';
 import type { Difficulty, ThemeId } from '@/game/types';
 import DifficultyPicker from '@/app/play/[theme]/index';
 import { markRecoveryShown, noteRecovery, pendingRecoveries, resetRecoveryRegistry, tapRecoveryCard } from '@/lib/runController';
@@ -171,6 +173,23 @@ describe('a run through the hook', () => {
     storage.failWrites = false;
     await press(m, wrongLetters(m)[1]);
     expect(game(m).saved).toBe(true);
+  });
+
+  it('enables a power-up from the clue rules the run was saved with, not the live ones', async () => {
+    const storage = new FakeStorage();
+    const first = await mount(storage);
+    // Live Easy hides its extra clue, so the extra-clue power-up has something to do.
+    expect(game(first).powerEnabled[1]).toBe(true);
+    await first.hook.unmount();
+
+    // The same run saved under rules with no hidden clue: nothing is left for the power-up to unlock.
+    const key = keys.run('filmy', 'easy');
+    const saved = JSON.parse(storage.data.get(key)!);
+    saved.rules.clues = { showChips: true, shownClues: ['clue', 'extraClue'], hiddenClues: [] };
+    storage.data.set(key, JSON.stringify(saved));
+    const second = await mount(storage);
+    expect(game(second).powerEnabled[1]).toBe(false);
+    expect(game(second).powerEnabled[0]).toBe(true);
   });
 
   it('opens once more when the app goes to the background and comes back, however many return events arrive', async () => {
@@ -468,6 +487,18 @@ describe('the difficulty picker: New run and finished runs', () => {
   });
   afterEach(() => {
     mockTheme = 'cricket';
+  });
+
+  it('shows a saved run\'s lives sign under the lives it started with', async () => {
+    const theme = use('tyohar');
+    // The run was started with 6 lives (live Easy has 9) and 2 are gone.
+    const doc = startDoc(theme, 'easy', { bag: emptyBag(), best: null }, testEnv(1))!;
+    const config = { ...doc.rules.config, lives: { ...doc.rules.config.lives, easy: 6 } };
+    const run = { ...doc.run, livesLost: 2 };
+    await AsyncStorage.setItem(`hangman:v1:${keys.run(theme, 'easy')}`, serializeDoc({ ...doc, rules: { ...doc.rules, config }, run }));
+    await render(createElement(DifficultyPicker));
+    await waitFor(() => expect(screen.getByTestId('saved-easy')).toBeTruthy());
+    expect(screen.getByLabelText(`${ui.livesLeft(4)}, 3 locked`)).toBeTruthy();
   });
 
   it('with a notice waiting for a saved slot, New run shows the notice first and the next tap opens the sheet', async () => {
