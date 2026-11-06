@@ -38,7 +38,10 @@ function Run({ themeId, difficulty }: { themeId: ThemeId; difficulty: Difficulty
 
   // Bad data waits for its notice, which the picker shows; with no word to play there is nothing to open.
   if (game.phase === 'recoveryPending' || game.phase === 'empty') return <Redirect href={`/play/${themeId}`} />;
-  if (game.phase === 'loading' || !run?.current || !doc) return null;
+  // Hold the theme's own background while the saved run loads, so the stack's backdrop never shows through.
+  if (game.phase === 'loading' || !run?.current || !doc) {
+    return <View style={[styles.loading, { backgroundColor: theme.colors.bg }]} testID="run-loading" />;
+  }
 
   if (run.status === 'milestone') {
     return (
@@ -120,6 +123,7 @@ function Run({ themeId, difficulty }: { themeId: ThemeId; difficulty: Difficulty
 }
 
 const styles = StyleSheet.create({
+  loading: { flex: 1 },
   lines: { gap: 6 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },

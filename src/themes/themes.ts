@@ -254,5 +254,19 @@ export function themeFor(id: ThemeId): Theme {
 }
 
 export function isThemeId(id: string | undefined): id is ThemeId {
-  return !!id && id in THEMES;
+  return !!id && Object.hasOwn(THEMES, id);
+}
+
+/**
+ * The theme a `/play/<theme>` path belongs to, or null for any other path (home, challenge links,
+ * unknown routes) and for an unknown theme id. The root layout paints its backdrop from this.
+ */
+export function themeIdForPath(pathname: string | undefined): ThemeId | null {
+  const id = /^\/play\/([^/?#]+)/.exec(pathname ?? '')?.[1];
+  return isThemeId(id) ? id : null;
+}
+
+/** Background for frames the root layout paints itself (fonts loading, screens between routes). Filmy unless the path is a known theme's play route. */
+export function backdropForPath(pathname: string | undefined): string {
+  return THEMES[themeIdForPath(pathname) ?? 'filmy'].colors.bg;
 }
