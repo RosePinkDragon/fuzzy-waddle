@@ -102,6 +102,17 @@ export function betterBest(a: BestScore | null, b: BestScore | null): BestScore 
   return b.hits > a.hits ? b : a;
 }
 
+/**
+ * The best to show beside a run's result. A best from an earlier run (or tied with this one) is shown as
+ * stored, club included, so it keeps its name even if the ladder changed since. Only a run that is itself
+ * the best (nothing stored, or fewer hits stored) uses its own club, which is what settlement stores.
+ * A stored `club: null` means no club was reached when it was settled and is shown that way, never
+ * looked up again in another ladder.
+ */
+export function bestToShow(best: BestScore | null, hits: number, runClub: number | null): BestScore {
+  return best && best.hits >= hits ? best : { hits, club: runClub };
+}
+
 /** Folds a finished run into the best. Zero-hit endings change nothing; positive bests never drop. */
 export function settleBest(best: BestScore | null, hits: number, club: number | null): BestScore | null {
   return hits > 0 ? betterBest(best, { hits, club }) : best;
