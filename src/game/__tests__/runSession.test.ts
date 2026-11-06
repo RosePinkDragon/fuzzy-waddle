@@ -347,6 +347,15 @@ describe('original rules', () => {
     expect(removed.run.current!.removed).toHaveLength(1);
   });
 
+  it('draws the next word from the saved pool, not the live tiers', () => {
+    const env = testEnv(16);
+    const doc = fresh(env);
+    expect(doc.rules.pool).toEqual(['easy']);
+    const custom: SlotDoc = { ...doc, rules: { ...doc.rules, pool: ['hard'] }, bag: emptyBag() };
+    const next = act(solve(custom, env), { type: 'continue' }, env);
+    expect(next.run.current!.word.difficulty).toBe('hard');
+  });
+
   it('executes the saved ladder: a different ladder gives a different boss round', () => {
     const env = testEnv(15);
     const doc = fresh(env);

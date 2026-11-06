@@ -24,6 +24,13 @@ describe('lives', () => {
     expect(lifeMarks('hard', 99).filter((m) => m === 'used')).toHaveLength(5);
   });
 
+  it('locks every mark beyond the lives a saved run started with', () => {
+    expect(lifeMarks('easy', 2, 6)).toEqual([...Array(3).fill('locked'), 'used', 'used', ...Array(4).fill('live')]);
+    expect(lifeMarks('easy', 99, 6).filter((m) => m === 'used')).toHaveLength(6);
+    // The same lives as the live rules give the same marks.
+    expect(lifeMarks('medium', 3, 7)).toEqual(lifeMarks('medium', 3));
+  });
+
   it('loses a life per wrong guess and ignores repeats', () => {
     let run = beginWord(startRun('filmy', 'easy'), word('DON'), false);
     run = guess(run, 'z', ladder).run;

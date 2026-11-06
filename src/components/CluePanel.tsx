@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ui } from '@/copy/strings';
-import { visibleClues } from '@/game/difficulty';
+import { visibleClues, type ClueSettings } from '@/game/difficulty';
 import type { Difficulty, Word } from '@/game/types';
 import { Icon } from '@/themes/icons';
 import { THEMES } from '@/themes/themes';
@@ -14,16 +14,18 @@ interface CluePanelProps {
   word: Word;
   difficulty: Difficulty;
   cluesRevealed: number;
+  /** The clue settings a saved run started with; without them the live ones for `difficulty` apply. */
+  clues?: ClueSettings;
   /** Hidden while the Masala Mix reel is still spinning. */
   concealed?: boolean;
 }
 
-export function CluePanel({ word, difficulty, cluesRevealed, concealed }: CluePanelProps) {
+export function CluePanel({ word, difficulty, cluesRevealed, clues, concealed }: CluePanelProps) {
   const theme = useTheme();
   // Masala Mix shows the word's category as the first clue.
   const showCategory = !!theme.mixed;
   const { colors } = theme;
-  const v = visibleClues(difficulty, cluesRevealed);
+  const v = visibleClues(difficulty, cluesRevealed, clues);
   const slot2 = theme.copy.powerUps[1];
   // Hard shows "category only": the category chip even outside Masala Mix.
   const categoryChip = showCategory || difficulty === 'hard';
