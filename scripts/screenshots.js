@@ -53,6 +53,14 @@ function themeIds() {
   return m[1].split(',').map((s) => s.trim().replace(/'/g, '')).filter(Boolean);
 }
 
+/** The boss round text the game screen shows, read from src/copy/strings.ts. */
+function bossLabel() {
+  const src = fs.readFileSync(path.join(ROOT, 'src/copy/strings.ts'), 'utf8');
+  const m = src.match(/bossWinFor: '([^']+)'/);
+  if (!m) fail('could not find bossWinFor in src/copy/strings.ts');
+  return m[1].trim();
+}
+
 /** Every word in the bank. */
 function allWords() {
   const dir = path.join(ROOT, 'src/data/words');
@@ -252,7 +260,11 @@ class Shooter {
       await this.solve(first);
       const boss = await this.currentAnswer(first);
       await this.settle();
-      if (want.has('game')) await this.shot(`${theme}-game-boss`);
+      if (want.has('game')) {
+        const seen = await this.page.locator(byTestId('game-screen')).innerText();
+        const label = bossLabel();
+        await this.shot(`${theme}-game-boss`, seen.includes(label) ? [] : [`not a boss round: no "${label}" on screen`]);
+      }
       if (want.has('win')) {
         // The win screen is the milestone screen; the test ladder puts it after two words.
         await this.solve(boss);

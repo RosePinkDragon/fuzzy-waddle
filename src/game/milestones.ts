@@ -4,6 +4,7 @@ import {
   MAX_PROGRESS_SEGMENTS,
   TEST_CLUB_LADDER,
 } from './config';
+import type { RunState } from './run';
 import type { Club } from './types';
 
 export type Rung = { crore: number; hits: number };
@@ -112,7 +113,7 @@ export type ProgressLabel =
  * `remaining === 1` alone does not mean the word in play is the boss.
  */
 export function progressLabel(
-  run: { hits: number; status: string; current: { isBoss: boolean } | null },
+  run: Pick<RunState, 'hits' | 'status' | 'current'>,
   l: Ladder = ladder,
 ): ProgressLabel {
   const to = l.next(run.hits);
