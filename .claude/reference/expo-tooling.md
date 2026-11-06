@@ -52,7 +52,7 @@ Platform versions, the helper commands, testing, building and the usual snags. R
 - `EXPO_PUBLIC_TEST_LADDER=1`: short club ladder (`TEST_CLUB_LADDER` in `src/game/config.ts`).
 - `EXPO_PUBLIC_TEST_HOOKS=1`: puts the current answer and run status on `globalThis.__HANGMAN__` (`exposeRunForTests` in `src/lib/device.ts`, used by `useChallenge`; the legacy `useRun` keeps its own copy until #94).
 
-Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, which fails a build when `RELEASE_BUILD=1` or the EAS profile is `preview` or `production` and either switch is set. `release.yml` sets `RELEASE_BUILD`.
+Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, which fails a build when `RELEASE_BUILD=1` or the EAS profile is `preview` or `production` and either switch is set. `vercel.json`'s build command sets `RELEASE_BUILD=1`, so the deployed web bundle gets the same guard.
 
 ## CI and PR rules
 
@@ -70,10 +70,10 @@ Release builds refuse both. `app.config.ts` calls `src/lib/releaseGuard.ts`, whi
 
 ## Building and releasing
 
-- **Release pipeline:** `release.yml` is written but switched off until the store accounts exist. It runs only when started by hand, and only if `vars.RELEASES_ENABLED == 'true'`. The file's header lists what it needs.
+- **Release pipeline:** `release.yml` is written but switched off until the store accounts exist. It runs only when started by hand, and only if `vars.RELEASES_ENABLED == 'true'`. The file's header lists what it needs. It covers store builds only.
 - **EAS profiles** in `eas.json` are `preview` (Play internal testing and TestFlight) and `production`. Run the CLI as `npx eas-cli@latest <command>`.
-- **Placeholders:** the name, bundle IDs and web origin are placeholders in `src/config/game.json`.
-- **Web hosting:** Vercel is planned in #43.
+- **Placeholders:** the name and bundle IDs are placeholders in `src/config/game.json`. `webOrigin` is the live Vercel address.
+- **Web hosting:** Vercel's Git integration deploys every merge to main to production and every PR to a preview. `vercel.json` sets the build (`RELEASE_BUILD=1 npx expo export -p web`, output `dist`) and rewrites all paths to the single-page app. `release.yml` has no web job. `src/config/__tests__/vercelConfig.test.ts` checks the file and `webOrigin`. The project is set up in the Vercel dashboard (owner step), and preview access is a Vercel project setting.
 
 ## Snags
 

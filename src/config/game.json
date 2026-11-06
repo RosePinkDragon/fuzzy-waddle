@@ -2,7 +2,7 @@
   "name": "[Game name]",
   "slug": "hangman-app",
   "scheme": "hangman",
-  "webOrigin": "https://example.com",
+  "webOrigin": "https://hangman-desi.vercel.app",
   "iosBundleId": "com.placeholder.hangman",
   "androidPackage": "com.placeholder.hangman"
 }
